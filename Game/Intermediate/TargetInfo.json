@@ -1,0 +1,14 @@
+{
+	"Targets": [
+		{
+			"Name": "hukuokaGame",
+			"Path": "D:\\testUnreal\\game\\hukuokaGame\\Source\\hukuokaGame.Target.cs",
+			"Type": "Game"
+		},
+		{
+			"Name": "hukuokaGameEditor",
+			"Path": "D:\\testUnreal\\game\\hukuokaGame\\Source\\hukuokaGameEditor.Target.cs",
+			"Type": "Editor"
+		}
+	]
+}
