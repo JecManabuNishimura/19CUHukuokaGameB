@@ -1,8 +1,0 @@
-{
-	"SourceFiles": [
-		"D:\\testUnreal\\game\\hukuokaGame\\Source\\hukuokaGame\\hukuokaGame.Build.cs",
-		"D:\\testUnreal\\game\\hukuokaGame\\Source\\hukuokaGame.Target.cs",
-		"D:\\testUnreal\\game\\hukuokaGame\\Source\\hukuokaGameEditor.Target.cs"
-	],
-	"EngineVersion": "4.24.3"
-}

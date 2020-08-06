@@ -1,2 +1,0 @@
-D:\testUnreal\game\hukuokaGame\Intermediate\Build\Win64\UE4Editor\Development\hukuokaGame\Definitions.hukuokaGame.h
-D:\testUnreal\game\hukuokaGame\Source\hukuokaGame\hukuokaGame.h
