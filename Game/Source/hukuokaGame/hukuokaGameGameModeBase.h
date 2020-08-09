@@ -13,5 +13,7 @@ UCLASS()
 class HUKUOKAGAME_API AhukuokaGameGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+public:
+	// AActorÉNÉâÉXÇ©ÇÁÇÃåpè≥
+	virtual void StartPlay() override;
 };
