@@ -3,6 +3,7 @@
 #include "Engine.h"						// GEngineを呼び出すのに必要なヘッダ
 #include "hukuokaGameGameModeBase.h"
 
+
 void AhukuokaGameGameModeBase::StartPlay()
 {
 	Super::StartPlay();
