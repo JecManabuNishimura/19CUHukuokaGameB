@@ -43,6 +43,9 @@ private:
 	// ベクトルの長さを返す
 	float ReturnVector2DLength(const FVector2D* _pFvector2d);
 
+	// ベクトルを正規化する
+	void NormalizedVector2D(float _vectorLength, FVector2D* _pFvector2d);
+
 private:
 	// 入力バインド
 	// カメラ回転：Pitch(Y軸)
@@ -65,6 +68,15 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Move")
 		float m_playerWalkSpeed;				// プレイヤーの走る速度
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+		float m_cameraPitchLimitMin;			// カメラのPitch制限最小角度
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+		float m_cameraPitchLimitMax;			// カメラのPitch制限最大角度
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	class UCameraComponent* m_pCamera;			// カメラ
 
 	float m_playerMoveSpeed;					// プレイヤーの移動速度
 
