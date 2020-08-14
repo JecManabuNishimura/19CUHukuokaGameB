@@ -10,16 +10,22 @@
 
 // コンストラクタ
 APlayerCharacter::APlayerCharacter()
-	:m_playerThresholdToRun(1.0f)
-	,m_playerRunSpeed(10.0f)
-	,m_playerWalkSpeed(5.0f)
-	,m_playerMoveSpeed(0.0f)
-	,m_playerMoveInput(FVector2D::ZeroVector)
-	,m_cameraRotateInput(FVector2D::ZeroVector)
+	: m_playerThresholdToRun(1.0f)
+	, m_playerRunSpeed(10.0f)
+	, m_playerWalkSpeed(5.0f)
+	, m_cameraPitchLimitMin(-90.0f)
+	, m_cameraPitchLimitMax(90.0f)
+	, m_playerMoveSpeed(0.0f)
+	, m_playerMoveInput(FVector2D::ZeroVector)
+	, m_cameraRotateInput(FVector2D::ZeroVector)
 {
  	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
 
+	// カメラを生成
+	m_pCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("m_pCamera"));
+	// カプセルコライダーにカメラをアタッチ
+	m_pCamera->SetupAttachment(GetCapsuleComponent());
 }
 
 // デストラクタ
@@ -66,7 +72,23 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 // カメラの更新
 void APlayerCharacter::UpdateCamera(const float _deltaTime)
 {
+	// 現在のプレイヤーの回転情報を取得
+//	FRotator newRotationPlayer = GetActorRotation();
 
+	// 現在のカメラの回転情報を取得
+	FRotator newRotationCamera = m_pCamera->GetRelativeRotation();
+
+	// Yaw(プレイヤーを回転させる)
+//	newRotationPlayer.Yaw += m_cameraRotateInput.X;
+
+	// Yaw
+	newRotationCamera.Yaw += m_cameraRotateInput.X;
+	
+	// Pitch(カメラを回転させる)
+	newRotationCamera.Pitch = FMath::Clamp((newRotationCamera.Pitch - m_cameraRotateInput.Y), m_cameraPitchLimitMin, m_cameraPitchLimitMax);
+
+	// プレイヤー、カメラそれぞれに回転情報を設定
+	m_pCamera->SetRelativeRotation(newRotationCamera);
 }
 
 // プレイヤーの移動処理
@@ -95,28 +117,42 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 		m_playerMoveSpeed = 0.0f;
 	}
 
+	// ベクトルの正規化
+	NormalizedVector2D(vectorLength, &m_playerMoveInput);
 	// プレイヤーの向いている方向を取得し各移動量を渡す(ifは0を割ることを回避するため)
 	if (m_playerMoveInput.X != 0)
 	{
 		FVector forwardVec = GetActorForwardVector();
-		AddMovementInput(forwardVec, m_playerMoveSpeed * (FMath::Abs(m_playerMoveInput.X) / m_playerMoveInput.X));
+		AddMovementInput(forwardVec, m_playerMoveSpeed * m_playerMoveInput.X);
 	}
 	if (m_playerMoveInput.Y != 0)
 	{
 		FVector rightVec = GetActorRightVector();
-		AddMovementInput(rightVec, m_playerMoveSpeed * (FMath::Abs(m_playerMoveInput.Y) / m_playerMoveInput.Y));
+		AddMovementInput(rightVec, m_playerMoveSpeed * m_playerMoveInput.Y);
 	}
 
-	//---------------------------------------------------------------------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------------------------------------------------------
 	// 入力値ログ
 	UE_LOG(LogTemp, Log, TEXT("LeftStick(X, Y) = (%.2f, %.2f) RightStick(X, Y) = (%.2f, %.2f)"),
 		m_playerMoveInput.X, m_playerMoveInput.Y, m_cameraRotateInput.X, m_cameraRotateInput.Y);
-	// ベクトルの長さログ
-	UE_LOG(LogTemp, Log, TEXT("Right Stick VectorLength : %.2f"), vectorLength);
+
+	// プレイヤーの現在のForwardVec
+	UE_LOG(LogTemp, Log, TEXT("ForwardVec(X, Y, Z) : (%.2f, %.2f, %.2f)"),
+		GetActorForwardVector().X, GetActorForwardVector().Y, GetActorForwardVector().Z);
+	// プレイヤーの現在のRightVec
+	UE_LOG(LogTemp, Log, TEXT("RightVec(X, Y, Z) : (%.2f, %.2f, %.2f)"),
+		GetActorRightVector().X, GetActorRightVector().Y, GetActorRightVector().Z);
+
 	// 各ベクトルの移動量
 	UE_LOG(LogTemp, Log, TEXT("forward : %.2f  right : %.2f"),
-		m_playerMoveSpeed * (FMath::Abs(m_playerMoveInput.X) / m_playerMoveInput.X), m_playerMoveSpeed * (FMath::Abs(m_playerMoveInput.Y) / m_playerMoveInput.Y));
-	//---------------------------------------------------------------------------------------------------------------------------------------------------------------
+		m_playerMoveSpeed * m_playerMoveInput.X, m_playerMoveSpeed * m_playerMoveInput.Y);
+
+	// ベクトルの長さログ
+	UE_LOG(LogTemp, Log, TEXT("VectorLength is %.2f"),
+		ReturnVector2DLength(&m_playerMoveInput));
+	////-----------------------------------------------------------------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------------------------------------------------------------------
 }
 
 // ベクトルの長さを返す
@@ -125,16 +161,25 @@ float APlayerCharacter::ReturnVector2DLength(const FVector2D* _pFvector2d)
 	return FMath::Sqrt((_pFvector2d->X * _pFvector2d->X) + (_pFvector2d->Y * _pFvector2d->Y));
 }
 
+// ベクトルを正規化する
+void APlayerCharacter::NormalizedVector2D(float _vectorLength, FVector2D* _pFvector2d)
+{
+	float multipleNum = 1.0f / _vectorLength;
+
+	_pFvector2d->X *= multipleNum;
+	_pFvector2d->Y *= multipleNum;
+}
+
 // 入力バインド
 // カメラ回転：Pitch(Y軸)
 void APlayerCharacter::CameraRotatePitch(float _axisValue)
 {
-	m_cameraRotateInput.X = _axisValue;
+	m_cameraRotateInput.Y = _axisValue;
 }
 // カメラ回転：Yaw(Z軸)
 void APlayerCharacter::CameraRotateYaw(float _axisValue)
 {
-	m_cameraRotateInput.Y = _axisValue;
+	m_cameraRotateInput.X = _axisValue;
 }
 
 // プレイヤー移動：移動X軸方向(縦)
