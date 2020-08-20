@@ -15,9 +15,6 @@ APlayerCharacter::APlayerCharacter()
 	, m_playerWalkSpeed(5.0f)
 	, m_cameraPitchLimitMin(-90.0f)
 	, m_cameraPitchLimitMax(90.0f)
-	, m_pCamera(NULL)
-	, m_eyeLevelWhenStanding(170.0f)
-	, isStanding(true)
 	, m_playerMoveSpeed(0.0f)
 	, m_playerMoveInput(FVector2D::ZeroVector)
 	, m_cameraRotateInput(FVector2D::ZeroVector)
@@ -25,14 +22,10 @@ APlayerCharacter::APlayerCharacter()
  	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
 
-	// デフォルトプレイヤーとして設定
-	AutoPossessPlayer = EAutoReceiveInput::Player0;
-
 	// カメラを生成
 	m_pCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("m_pCamera"));
-
 	// カプセルコライダーにカメラをアタッチ
-	m_pCamera->SetupAttachment(RootComponent);
+	m_pCamera->SetupAttachment(GetCapsuleComponent());
 }
 
 // デストラクタ
@@ -56,17 +49,12 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// 地面のとの距離を測りプレイヤーの高さを設定
-	SetEyeLevel(DeltaTime);
-
-	// カメラ(Pitch)の更新
-	UpdateCameraPitch();
-
-	// カメラ(Yaw)の更新
-	UpdateCameraYaw();
+	// カメラの更新
+	UpdateCamera(DeltaTime);
 
 	// プレイヤーキャラクターの更新
 	UpdatePlayerMove(DeltaTime);
+
 }
 
 // 各入力関係メソッドとのバインド処理
@@ -80,80 +68,27 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	// カメラの回転
 	InputComponent->BindAxis("CameraPitch", this, &APlayerCharacter::CameraRotatePitch);
 	InputComponent->BindAxis("CameraYaw", this, &APlayerCharacter::CameraRotateYaw);
-
-	// 立ち上がる、しゃがむ
-	InputComponent->BindAction("PlayerSquat", IE_Pressed, this, &APlayerCharacter::PlayerSquat);
-	InputComponent->BindAction("PlayerSquat", IE_Released, this, &APlayerCharacter::PlayerStand);
 }
-
-// 地面との距離を測りプレイヤーの高さを設定
-void APlayerCharacter::SetEyeLevel(const float _deltaTime)
-{
-	// トレースに必要な変数を宣言
-	FHitResult outHit;
-
-	// 現在位置を取得
-	FVector startLocation = GetActorLocation();
-
-	if (GetWorld()->LineTraceSingleByChannel(outHit, startLocation, (startLocation + FVector(0.0f, 0.0f, -300.0f)), ECollisionChannel::ECC_GameTraceChannel2))
-	{
-		// トレースがヒットしたZ座標を取得
-		float hitLocationZ = outHit.Location.Z;
-
-		// 座標設定の際、現在のZ座標の情報はいらないので0に変更
-		startLocation.Z = 0.0f;
-
-		// 立っていれば設定したアイレベルのまま
-		if (isStanding)
-		{
-			SetActorLocation(startLocation + FVector(0.0f, 0.0f, (hitLocationZ + m_eyeLevelWhenStanding)));
-			GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, TEXT("Player is Standing"));
-		}
-		// しゃがんでいれば設定したアイレベルの1/2の高さにする
-		else
-		{
-			SetActorLocation(startLocation + FVector(0, 0, (hitLocationZ + (m_eyeLevelWhenStanding / 2.0f))));
-			GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, TEXT("Player is Squatting"));
-		}
-
-		//--------------------------------------------------------------------------------------------------
-		// ログ
-		// ヒットしたオブジェクトの名前を表示TEX
-		UE_LOG(LogClass, Log, TEXT("The Component Being Hit is: %s"), *outHit.GetActor()->GetName());
-		UE_LOG(LogClass, Log, TEXT("Hit Z Location : %.2f"), outHit.Location.Z);
-		//--------------------------------------------------------------------------------------------------
-	}
-}
-
-// カメラ(Pitch)の更新
-void APlayerCharacter::UpdateCameraPitch()
-{
-	if (m_pCamera != NULL)
-	{
-		// 現在のカメラの回転情報を取得
-		FRotator newRotationCamera = m_pCamera->GetRelativeRotation();
-
-		// Pitch(カメラを回転させる)
-		newRotationCamera.Pitch = FMath::Clamp((newRotationCamera.Pitch - m_cameraRotateInput.Y), m_cameraPitchLimitMin, m_cameraPitchLimitMax);
-
-		// カメラに回転情報を設定
-		m_pCamera->SetRelativeRotation(newRotationCamera);
-	}
-}
-
-// カメラ(Yaw)の更新
-void APlayerCharacter::UpdateCameraYaw()
+// カメラの更新
+void APlayerCharacter::UpdateCamera(const float _deltaTime)
 {
 	// 現在のプレイヤーの回転情報を取得
-	FRotator newRotationPlayer = GetActorRotation();
+//	FRotator newRotationPlayer = GetActorRotation();
 
-	UE_LOG(LogTemp, Log, TEXT("newRotationPlayer(%.2f, %.2f, %.2f)"),newRotationPlayer.Roll, newRotationPlayer.Pitch, newRotationPlayer.Yaw);
-	
+	// 現在のカメラの回転情報を取得
+	FRotator newRotationCamera = m_pCamera->GetRelativeRotation();
+
 	// Yaw(プレイヤーを回転させる)
-	newRotationPlayer.Yaw += m_cameraRotateInput.X;
+//	newRotationPlayer.Yaw += m_cameraRotateInput.X;
 
-	// プレイヤーに回転情報を設定
-	SetActorRotation(newRotationPlayer);
+	// Yaw
+	newRotationCamera.Yaw += m_cameraRotateInput.X;
+	
+	// Pitch(カメラを回転させる)
+	newRotationCamera.Pitch = FMath::Clamp((newRotationCamera.Pitch - m_cameraRotateInput.Y), m_cameraPitchLimitMin, m_cameraPitchLimitMax);
+
+	// プレイヤー、カメラそれぞれに回転情報を設定
+	m_pCamera->SetRelativeRotation(newRotationCamera);
 }
 
 // プレイヤーの移動処理
@@ -161,8 +96,6 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 {
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
-
-	FVector newLocation = GetActorLocation();
 
 	// 移動量を決定
 	// 走る
@@ -186,51 +119,38 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 
 	// ベクトルの正規化
 	NormalizedVector2D(vectorLength, &m_playerMoveInput);
-
-	// しゃがんでいた場合移動速度を1/2に
-	if (!isStanding)
+	// プレイヤーの向いている方向を取得し各移動量を渡す(ifは0を割ることを回避するため)
+	if (m_playerMoveInput.X != 0)
 	{
-		m_playerMoveSpeed /= 2.0f;
+		FVector forwardVec = GetActorForwardVector();
+		AddMovementInput(forwardVec, m_playerMoveSpeed * m_playerMoveInput.X);
 	}
-
-	// 移動量加算
-	newLocation += GetActorForwardVector() * (m_playerMoveSpeed * m_playerMoveInput.X);
-	newLocation += GetActorRightVector() * (m_playerMoveSpeed * m_playerMoveInput.Y);
-
-	SetActorLocation(newLocation);
-
-	//// プレイヤーの向いている方向を取得し各移動量を渡す(ifは0を割ることを回避するため)
-	//if (m_playerMoveInput.X != 0)
-	//{
-	//	FVector forwardVec = GetActorForwardVector();
-	//	AddMovementInput(forwardVec, m_playerMoveSpeed * m_playerMoveInput.X);
-	//}
-	//if (m_playerMoveInput.Y != 0)
-	//{
-	//	FVector rightVec = GetActorRightVector();
-	//	AddMovementInput(rightVec, m_playerMoveSpeed * m_playerMoveInput.Y);
-	//}
+	if (m_playerMoveInput.Y != 0)
+	{
+		FVector rightVec = GetActorRightVector();
+		AddMovementInput(rightVec, m_playerMoveSpeed * m_playerMoveInput.Y);
+	}
 
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------
 	// 入力値ログ
-	//UE_LOG(LogTemp, Log, TEXT("LeftStick(X, Y) = (%.2f, %.2f) RightStick(X, Y) = (%.2f, %.2f)"),
-	//	m_playerMoveInput.X, m_playerMoveInput.Y, m_cameraRotateInput.X, m_cameraRotateInput.Y);
+	UE_LOG(LogTemp, Log, TEXT("LeftStick(X, Y) = (%.2f, %.2f) RightStick(X, Y) = (%.2f, %.2f)"),
+		m_playerMoveInput.X, m_playerMoveInput.Y, m_cameraRotateInput.X, m_cameraRotateInput.Y);
 
-	//// プレイヤーの現在のForwardVec
+	// プレイヤーの現在のForwardVec
 	UE_LOG(LogTemp, Log, TEXT("ForwardVec(X, Y, Z) : (%.2f, %.2f, %.2f)"),
 		GetActorForwardVector().X, GetActorForwardVector().Y, GetActorForwardVector().Z);
-	//// プレイヤーの現在のRightVec
+	// プレイヤーの現在のRightVec
 	UE_LOG(LogTemp, Log, TEXT("RightVec(X, Y, Z) : (%.2f, %.2f, %.2f)"),
 		GetActorRightVector().X, GetActorRightVector().Y, GetActorRightVector().Z);
 
-	//// 各ベクトルの移動量
-	//UE_LOG(LogTemp, Log, TEXT("forward : %.2f  right : %.2f"),
-	//	m_playerMoveSpeed * m_playerMoveInput.X, m_playerMoveSpeed * m_playerMoveInput.Y);
+	// 各ベクトルの移動量
+	UE_LOG(LogTemp, Log, TEXT("forward : %.2f  right : %.2f"),
+		m_playerMoveSpeed * m_playerMoveInput.X, m_playerMoveSpeed * m_playerMoveInput.Y);
 
-	//// ベクトルの長さログ
-	//UE_LOG(LogTemp, Log, TEXT("VectorLength is %.2f"),
-	//	ReturnVector2DLength(&m_playerMoveInput));
+	// ベクトルの長さログ
+	UE_LOG(LogTemp, Log, TEXT("VectorLength is %.2f"),
+		ReturnVector2DLength(&m_playerMoveInput));
 	////-----------------------------------------------------------------------------------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------
 }
