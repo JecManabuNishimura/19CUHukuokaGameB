@@ -38,7 +38,8 @@ ATP_VirtualRealityPawn_Motion::ATP_VirtualRealityPawn_Motion()
 	bRightStickDown = false;
 	bLeftStickDown = false;
 	DefaultPlayerHeight = 180.0f;
-	bUseControllerRollToRotate = false;
+	bUseControllerRollToRotate = true;
+	//bUseControllerRollToRotate = false;
 }
 
 // Called when the game starts or when spawned
