@@ -5,8 +5,18 @@
 // 作成日		：2020/08/07
 //-------------------------------------------------------------------
 
+//-------------------------------------------------------------------
+// ファイル		：PlayerCharacter.cpp
+// 概要			：VRカメラの作成
+// 作成者		：19CU0217 朱適
+// 作成日		：2020/08/18
+//-------------------------------------------------------------------
+
 #include "PlayerCharacter.h"
 #include "Engine.h"				// GEngineを呼び出すためのヘッダ
+#include "SteamVRChaperoneComponent.h"
+#include "HeadMountedDisplayFunctionLibrary.h"
+
 
 // コンストラクタ
 APlayerCharacter::APlayerCharacter()
@@ -22,10 +32,27 @@ APlayerCharacter::APlayerCharacter()
  	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
 
+<<<<<<< HEAD
 	// カメラを生成
 	m_pCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("m_pCamera"));
 	// カプセルコライダーにカメラをアタッチ
 	m_pCamera->SetupAttachment(GetCapsuleComponent());
+=======
+	// デフォルトプレイヤーとして設定
+	AutoPossessPlayer = EAutoReceiveInput::Player0;
+
+	// カメラ原点の生成
+	m_pCameraBase = CreateDefaultSubobject<USceneComponent>(TEXT("VROrigin"));
+
+	// カメラを生成
+	m_pCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("m_pCamera"));
+
+	// カプセルコライダーにカメラ原点をアタッチ
+	m_pCameraBase->SetupAttachment(RootComponent);
+
+	// カメラ原点にカメラをアタッチ
+	m_pCamera->SetupAttachment(m_pCameraBase);
+>>>>>>> VRCameraMerge
 }
 
 // デストラクタ
@@ -42,6 +69,18 @@ void APlayerCharacter::BeginPlay()
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("We are using PlayerCharacter."));
 	}
 
+	// Epic Comment :D // Setup Player Height for various Platforms (PS4, Vive, Oculus)
+	FName DeviceName = UHeadMountedDisplayFunctionLibrary::GetHMDDeviceName();
+
+	if (DeviceName == "SteamVR" || DeviceName == "OculusHMD")
+	{
+		// Epic Comment :D // Windows (Oculus / Vive)
+		UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Floor);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("Can't find VR Divice"));
+	}
 }
 
 // 毎フレーム呼ばれる
