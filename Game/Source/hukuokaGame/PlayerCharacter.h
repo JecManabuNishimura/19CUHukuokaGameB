@@ -40,8 +40,14 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 private:
-	// カメラの更新
-	void UpdateCamera(const float _deltaTime);
+	// 地面のとの距離を測りプレイヤーの高さを設定
+	void SetEyeLevel(const float _deltaTime);
+
+	// カメラ(Pitch)の更新
+	void UpdateCameraPitch();
+
+	// カメラ(Yaw)の更新
+	void UpdateCameraYaw();
 
 	// プレイヤーの移動処理
 	void UpdatePlayerMove(const float _deltaTime);
@@ -63,6 +69,11 @@ private:
 	void PlayerMoveX(float _axisValue);
 	// プレイヤー移動：移動Y軸方向(横)
 	void PlayerMoveY(float _axisValue);
+
+	// プレイヤーアクション：立ちあがる
+	void PlayerStand() { isStanding = true; };
+	// プレイヤーアクション：しゃがむ
+	void PlayerSquat() { isStanding = false; };
 
 private:
 	// プロパティ
@@ -87,15 +98,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 	class UCameraComponent* m_pCamera;			// カメラ
 
-<<<<<<< HEAD
-=======
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
 
 	bool isStanding;							// 立っているかどうかのフラグ
 	bool isVRCamera;							// VRカメラかどうか
 
->>>>>>> VRCameraMerge
 	float m_playerMoveSpeed;					// プレイヤーの移動速度
 
 	FVector2D m_playerMoveInput;				// プレイヤーの移動入力量
