@@ -5,6 +5,12 @@
 // 作成日		：2020/08/07
 //-------------------------------------------------------------------
 
+//-------------------------------------------------------------------
+// ファイル		：PlayerCharacter.h
+// 概要			：VRカメラの作成
+// 作成者		：19CU0217 朱適
+// 作成日		：2020/08/18
+//-------------------------------------------------------------------
 #pragma once
 
 #include "CoreMinimal.h"
@@ -87,12 +93,16 @@ private:
 		float m_cameraPitchLimitMax;			// カメラのPitch制限最大角度
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
+		class USceneComponent* m_pCameraBase;	// カメラの原点
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
 	class UCameraComponent* m_pCamera;			// カメラ
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
 
 	bool isStanding;							// 立っているかどうかのフラグ
+	bool isVRCamera;							// VRカメラかどうか
 
 	float m_playerMoveSpeed;					// プレイヤーの移動速度
 
