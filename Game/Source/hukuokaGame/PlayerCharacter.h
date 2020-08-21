@@ -38,10 +38,10 @@ private:
 	void SetEyeLevel(const float _deltaTime);
 
 	// カメラ(Pitch)の更新
-	void UpdateCameraPitch();
+	void UpdateCameraPitch(const float _deltaTime);
 
 	// カメラ(Yaw)の更新
-	void UpdateCameraYaw();
+	void UpdateCameraYaw(const float _deltaTime);
 
 	// プレイヤーの移動処理
 	void UpdatePlayerMove(const float _deltaTime);
@@ -65,9 +65,9 @@ private:
 	void PlayerMoveY(float _axisValue);
 
 	// プレイヤーアクション：立ちあがる
-	void PlayerStand() { isStanding = true; };
+	void PlayerStand() { m_isStanding = true; };
 	// プレイヤーアクション：しゃがむ
-	void PlayerSquat() { isStanding = false; };
+	void PlayerSquat() { m_isStanding = false; };
 
 private:
 	// プロパティ
@@ -92,7 +92,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
 
-	bool isStanding;							// 立っているかどうかのフラグ
+	UPROPERTY(EditAnywhere, Category = "Camera")
+		float m_cameraRotateSpeed;				// カメラの回転スピード
+
+	bool m_isStanding;							// 立っているかどうかのフラグ
 
 	float m_playerMoveSpeed;					// プレイヤーの移動速度
 

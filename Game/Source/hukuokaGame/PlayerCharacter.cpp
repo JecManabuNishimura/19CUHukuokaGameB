@@ -17,7 +17,8 @@ APlayerCharacter::APlayerCharacter()
 	, m_cameraPitchLimitMax(90.0f)
 	, m_pCamera(NULL)
 	, m_eyeLevelWhenStanding(170.0f)
-	, isStanding(true)
+	, m_cameraRotateSpeed(100.0f)	
+	, m_isStanding(true)
 	, m_playerMoveSpeed(0.0f)
 	, m_playerMoveInput(FVector2D::ZeroVector)
 	, m_cameraRotateInput(FVector2D::ZeroVector)
@@ -60,10 +61,10 @@ void APlayerCharacter::Tick(float DeltaTime)
 	SetEyeLevel(DeltaTime);
 
 	// カメラ(Pitch)の更新
-	UpdateCameraPitch();
+	UpdateCameraPitch(DeltaTime);
 
 	// カメラ(Yaw)の更新
-	UpdateCameraYaw();
+	UpdateCameraYaw(DeltaTime);
 
 	// プレイヤーキャラクターの更新
 	UpdatePlayerMove(DeltaTime);
@@ -104,7 +105,7 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime)
 		startLocation.Z = 0.0f;
 
 		// 立っていれば設定したアイレベルのまま
-		if (isStanding)
+		if (m_isStanding)
 		{
 			SetActorLocation(startLocation + FVector(0.0f, 0.0f, (hitLocationZ + m_eyeLevelWhenStanding)));
 			GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, TEXT("Player is Standing"));
@@ -126,7 +127,7 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime)
 }
 
 // カメラ(Pitch)の更新
-void APlayerCharacter::UpdateCameraPitch()
+void APlayerCharacter::UpdateCameraPitch(const float _deltaTime)
 {
 	if (m_pCamera != NULL)
 	{
@@ -134,7 +135,7 @@ void APlayerCharacter::UpdateCameraPitch()
 		FRotator newRotationCamera = m_pCamera->GetRelativeRotation();
 
 		// Pitch(カメラを回転させる)
-		newRotationCamera.Pitch = FMath::Clamp((newRotationCamera.Pitch - m_cameraRotateInput.Y), m_cameraPitchLimitMin, m_cameraPitchLimitMax);
+		newRotationCamera.Pitch = FMath::Clamp((newRotationCamera.Pitch - (m_cameraRotateInput.Y * m_cameraRotateSpeed * _deltaTime)), m_cameraPitchLimitMin, m_cameraPitchLimitMax);
 
 		// カメラに回転情報を設定
 		m_pCamera->SetRelativeRotation(newRotationCamera);
@@ -142,7 +143,7 @@ void APlayerCharacter::UpdateCameraPitch()
 }
 
 // カメラ(Yaw)の更新
-void APlayerCharacter::UpdateCameraYaw()
+void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 {
 	// 現在のプレイヤーの回転情報を取得
 	FRotator newRotationPlayer = GetActorRotation();
@@ -150,7 +151,7 @@ void APlayerCharacter::UpdateCameraYaw()
 	UE_LOG(LogTemp, Log, TEXT("newRotationPlayer(%.2f, %.2f, %.2f)"),newRotationPlayer.Roll, newRotationPlayer.Pitch, newRotationPlayer.Yaw);
 	
 	// Yaw(プレイヤーを回転させる)
-	newRotationPlayer.Yaw += m_cameraRotateInput.X;
+	newRotationPlayer.Yaw += m_cameraRotateInput.X * m_cameraRotateSpeed * _deltaTime;
 
 	// プレイヤーに回転情報を設定
 	SetActorRotation(newRotationPlayer);
@@ -188,14 +189,14 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	NormalizedVector2D(vectorLength, &m_playerMoveInput);
 
 	// しゃがんでいた場合移動速度を1/2に
-	if (!isStanding)
+	if (!m_isStanding)
 	{
 		m_playerMoveSpeed /= 2.0f;
 	}
 
 	// 移動量加算
-	newLocation += GetActorForwardVector() * (m_playerMoveSpeed * m_playerMoveInput.X);
-	newLocation += GetActorRightVector() * (m_playerMoveSpeed * m_playerMoveInput.Y);
+	newLocation += GetActorForwardVector() * (m_playerMoveSpeed * m_playerMoveInput.X * _deltaTime);
+	newLocation += GetActorRightVector() * (m_playerMoveSpeed * m_playerMoveInput.Y * _deltaTime);
 
 	SetActorLocation(newLocation);
 
