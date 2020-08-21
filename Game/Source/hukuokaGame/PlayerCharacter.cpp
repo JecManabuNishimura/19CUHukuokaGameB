@@ -228,18 +228,6 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 
 	SetActorLocation(newLocation);
 
-	//// プレイヤーの向いている方向を取得し各移動量を渡す(ifは0を割ることを回避するため)
-	//if (m_playerMoveInput.X != 0)
-	//{
-	//	FVector forwardVec = GetActorForwardVector();
-	//	AddMovementInput(forwardVec, m_playerMoveSpeed * m_playerMoveInput.X);
-	//}
-	//if (m_playerMoveInput.Y != 0)
-	//{
-	//	FVector rightVec = GetActorRightVector();
-	//	AddMovementInput(rightVec, m_playerMoveSpeed * m_playerMoveInput.Y);
-	//}
-
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------
 	// 入力値ログ
