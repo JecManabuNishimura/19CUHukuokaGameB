@@ -12,11 +12,8 @@ public class hukuokaGame : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		// SomWorks :D // Add HeadMountedDisplay Modules for Use HeadMountedDisplayFunctionLibrary // 4.20, Add NavigationSystem Module
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "NavigationSystem" });
 
-		// SomWorks :D // Add SteamVR, SteamVRController Modules for Use Vive Components
-		// SomWorks :D // 4.24 Update, Module Change // SteamVRController -> SteamVRInput
 		PrivateDependencyModuleNames.AddRange(new string[] { "SteamVR", "SteamVRInput" });
 
 		// Uncomment if you are using Slate UI
