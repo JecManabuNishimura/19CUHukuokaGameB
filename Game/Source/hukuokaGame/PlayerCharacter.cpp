@@ -23,10 +23,12 @@ APlayerCharacter::APlayerCharacter()
 	: m_playerThresholdToRun(1.0f)
 	, m_playerRunSpeed(10.0f)
 	, m_playerWalkSpeed(5.0f)
-	, m_cameraPitchLimitMin(-90.0f)
-	, m_cameraPitchLimitMax(90.0f)
+	, m_cameraPitchLimitMin(-89.0f)
+	, m_cameraPitchLimitMax(89.0f)
 	, m_pCamera(NULL)
 	, m_eyeLevelWhenStanding(170.0f)
+	, m_reverseInputPitch(false)
+	, m_reverseInputYaw(false)
 	, m_cameraRotateSpeed(100.0f)	
 	, m_isStanding(true)
 	, m_playerMoveSpeed(0.0f)
@@ -271,12 +273,18 @@ void APlayerCharacter::NormalizedVector2D(float _vectorLength, FVector2D* _pFvec
 // カメラ回転：Pitch(Y軸)
 void APlayerCharacter::CameraRotatePitch(float _axisValue)
 {
-	m_cameraRotateInput.Y = _axisValue;
+	// Pitchの操作反転フラグが立っていたら反転
+	if (m_reverseInputPitch) m_cameraRotateInput.Y = _axisValue * -1.0f;
+	// 降りていたらそのままの入力値
+	else                     m_cameraRotateInput.Y = _axisValue;
 }
 // カメラ回転：Yaw(Z軸)
 void APlayerCharacter::CameraRotateYaw(float _axisValue)
 {
-	m_cameraRotateInput.X = _axisValue;
+	// Pitchの操作反転フラグが立っていたら反転
+	if (m_reverseInputYaw) m_cameraRotateInput.X = _axisValue * -1.0f;
+	// 降りていたらそのままの入力値
+	else                   m_cameraRotateInput.X = _axisValue;
 }
 
 // プレイヤー移動：移動X軸方向(縦)
