@@ -101,11 +101,17 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
 
-	bool isStanding;							// 立っているかどうかのフラグ
-	bool isVRCamera;							// VRカメラかどうか
+	UPROPERTY(EditAnywhere, Category = "Camera")
+		bool m_reverseInputPitch;				// Pitch操作反転
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+		bool m_reverseInputYaw;					// Yaw操作反転
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_cameraRotateSpeed;				// カメラの回転スピード
+
+	bool isStanding;							// 立っているかどうかのフラグ
+	bool isVRCamera;							// VRカメラかどうか
 
 	bool m_isStanding;							// 立っているかどうかのフラグ
 
