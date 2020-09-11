@@ -13,6 +13,7 @@
 //-------------------------------------------------------------------
 
 #include "PlayerCharacter.h"
+#include "AutomaticDoorLever.h"
 #include "Engine.h"				// GEngineを呼び出すためのヘッダ
 #include "SteamVRChaperoneComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
@@ -29,11 +30,14 @@ APlayerCharacter::APlayerCharacter()
 	, m_eyeLevelWhenStanding(170.0f)
 	, m_reverseInputPitch(false)
 	, m_reverseInputYaw(false)
-	, m_cameraRotateSpeed(100.0f)	
+	, m_cameraRotateSpeed(100.0f)
+	, m_CheckToActorRayRange(1300.0f)
 	, m_isStanding(true)
 	, m_playerMoveSpeed(0.0f)
 	, m_playerMoveInput(FVector2D::ZeroVector)
 	, m_cameraRotateInput(FVector2D::ZeroVector)
+	, m_pCheckingActor(NULL)
+	, m_pPrevCheckActor(NULL)
 {
  	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
@@ -98,6 +102,9 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	// プレイヤーキャラクターの更新
 	UpdatePlayerMove(DeltaTime);
+
+	// アイテムのチェック
+	CheckItem();
 }
 
 // 各入力関係メソッドとのバインド処理
@@ -115,6 +122,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	// 立ち上がる、しゃがむ
 	InputComponent->BindAction("PlayerSquat", IE_Pressed, this, &APlayerCharacter::PlayerSquat);
 	InputComponent->BindAction("PlayerSquat", IE_Released, this, &APlayerCharacter::PlayerStand);
+
+	// プレイヤーアクション：拾う、調べる、作動させる
+	InputComponent->BindAction("PickUpandCheck", IE_Released, this, &APlayerCharacter::CheckToActor);
 }
 
 // 地面との距離を測りプレイヤーの高さを設定
@@ -126,7 +136,7 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime)
 	// 現在位置を取得
 	FVector startLocation = GetActorLocation();
 
-	if (GetWorld()->LineTraceSingleByChannel(outHit, startLocation, (startLocation + FVector(0.0f, 0.0f, -300.0f)), ECollisionChannel::ECC_GameTraceChannel2))
+	if (GetWorld()->LineTraceSingleByChannel(outHit, startLocation, (startLocation + FVector(0.0f, 0.0f, -300.0f)), ECC_GameTraceChannel2))
 	{
 		// トレースがヒットしたZ座標を取得
 		float hitLocationZ = outHit.Location.Z;
@@ -138,20 +148,20 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime)
 		if (m_isStanding)
 		{
 			SetActorLocation(startLocation + FVector(0.0f, 0.0f, (hitLocationZ + m_eyeLevelWhenStanding)));
-			GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, TEXT("Player is Standing"));
+			GEngine->AddOnScreenDebugMessage(13, _deltaTime, FColor::Green, TEXT("Player is Standing"));
 		}
 		// しゃがんでいれば設定したアイレベルの1/2の高さにする
 		else
 		{
 			SetActorLocation(startLocation + FVector(0, 0, (hitLocationZ + (m_eyeLevelWhenStanding / 2.0f))));
-			GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, TEXT("Player is Squatting"));
+			GEngine->AddOnScreenDebugMessage(13, _deltaTime, FColor::Green, TEXT("Player is Squatting"));
 		}
 
 		//--------------------------------------------------------------------------------------------------
 		// ログ
 		// ヒットしたオブジェクトの名前を表示TEX
-		UE_LOG(LogClass, Log, TEXT("The Component Being Hit is: %s"), *outHit.GetActor()->GetName());
-		UE_LOG(LogClass, Log, TEXT("Hit Z Location : %.2f"), outHit.Location.Z);
+		//UE_LOG(LogClass, Log, TEXT("The Component Being Hit is: %s"), *outHit.GetActor()->GetName());
+		//UE_LOG(LogClass, Log, TEXT("Hit Z Location : %.2f"), outHit.Location.Z);
 		//--------------------------------------------------------------------------------------------------
 	}
 }
@@ -199,19 +209,19 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// 走る
 	if (vectorLength >= m_playerThresholdToRun)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Running"));
+		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Running"));
 		m_playerMoveSpeed = m_playerRunSpeed;
 	}
 	// 歩く
 	else if (vectorLength > 0.0f)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Walking"));
+		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Walking"));
 		m_playerMoveSpeed = m_playerWalkSpeed;
 	}
 	// 止まる
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Stop"));
+		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Stop"));
 		m_playerMoveSpeed = 0.0f;
 	}
 
@@ -252,6 +262,56 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	//	ReturnVector2DLength(&m_playerMoveInput));
 	////-----------------------------------------------------------------------------------------------------------------------------------------------------
 	//-----------------------------------------------------------------------------------------------------------------------------------------------------
+}
+
+void APlayerCharacter::CheckItem()
+{
+	// トレースに必要な変数を宣言
+	FHitResult outHit;
+
+	// 現在位置を取得
+	FVector start = m_pCamera->GetComponentLocation();
+	FVector end = start + (m_pCamera->GetForwardVector() * m_CheckToActorRayRange);
+
+	// 1フレーム前のActorの情報を移す
+	m_pPrevCheckActor = m_pCheckingActor;
+
+	if (GetWorld()->LineTraceSingleByChannel(outHit, start, end, ECC_GameTraceChannel3))
+	{
+		m_pCheckingActor = outHit.GetActor();
+		// 1フレーム前のActorと違うなら更新
+		if (m_pCheckingActor != m_pPrevCheckActor)
+		{
+			// チェック中のアクターを更新する
+			AItemBase* itemBase = Cast<AItemBase>(m_pCheckingActor);
+			if (itemBase != NULL)
+			{
+				itemBase->m_isChecked = true;
+				if (m_pPrevCheckActor != NULL)
+				{
+					if (itemBase != NULL)
+					{
+						itemBase = Cast<AItemBase>(m_pPrevCheckActor);
+						itemBase->m_isChecked = false;
+					}
+				}
+			}
+		}
+		if (m_pCheckingActor != NULL)	GEngine->AddOnScreenDebugMessage(14, 0.05f, FColor::Blue, FString::Printf(TEXT("Checking %s."), *m_pCheckingActor->GetName()));
+	}
+	else
+	{
+		// 前フレームでは検知していた場合そのActorの接触フラグを下げる
+		if (m_pPrevCheckActor != NULL)
+		{
+			AItemBase* itemBase = Cast<AItemBase>(m_pCheckingActor);
+			if (itemBase != NULL)
+			{
+				itemBase->m_isChecked = false;
+			}
+		}
+		m_pCheckingActor = NULL;
+	}
 }
 
 // ベクトルの長さを返す
@@ -296,4 +356,38 @@ void APlayerCharacter::PlayerMoveX(float _axisValue)
 void APlayerCharacter::PlayerMoveY(float _axisValue)
 {
 	m_playerMoveInput.Y = _axisValue;
+}
+// プレイヤーアクション：拾う、調べる、作動させる
+void APlayerCharacter::CheckToActor()
+{
+	UE_LOG(LogTemp, Warning, TEXT("R is Pressed"));
+	if (m_pCheckingActor != NULL)
+	{
+		// 拾えるActor-->拾う(ここでは対象のActorを消す)
+		if (m_pCheckingActor->ActorHasTag("CanPickUpActor"))
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, FString::Printf(TEXT("Picked up %s."), *m_pCheckingActor->GetName()));
+
+			// 何かしての拾ったActorの情報を保存
+
+			// 拾ったActorを削除
+			m_pCheckingActor->Destroy();
+			m_pCheckingActor = NULL;
+		}
+		// 調べられるActor-->調べる
+		else if (m_pCheckingActor->ActorHasTag("CanCheckActor"))
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, FString::Printf(TEXT("Check %s."), *m_pCheckingActor->GetName()));
+			// 説明文表示
+		}
+		// 作動させることができるActor-->作動
+		else if (m_pCheckingActor->ActorHasTag("CanActuateActor"))
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, FString::Printf(TEXT("Actuate %s."), *m_pCheckingActor->GetName()));
+
+			// レバーを反転(現状作動させるActorはドアのレバーのみ)
+			AAutomaticDoorLever* pLever = Cast<AAutomaticDoorLever>(m_pCheckingActor);
+			pLever->m_isLeverOn = !pLever->m_isLeverOn;
+		}
+	}
 }

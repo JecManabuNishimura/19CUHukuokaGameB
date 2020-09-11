@@ -52,6 +52,9 @@ private:
 	// プレイヤーの移動処理
 	void UpdatePlayerMove(const float _deltaTime);
 
+	// アイテムチェック
+	void CheckItem();
+
 	// ベクトルの長さを返す
 	float ReturnVector2DLength(const FVector2D* _pFvector2d);
 
@@ -71,9 +74,12 @@ private:
 	void PlayerMoveY(float _axisValue);
 
 	// プレイヤーアクション：立ちあがる
-	void PlayerStand() { m_isStanding = true; };
+	void PlayerStand() { m_isStanding = true; }
 	// プレイヤーアクション：しゃがむ
-	void PlayerSquat() { m_isStanding = false; };
+	void PlayerSquat() { m_isStanding = false; }
+
+	// プレイヤーアクション：拾う、調べる、作動させる
+	void CheckToActor();
 
 private:
 	// プロパティ
@@ -110,6 +116,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_cameraRotateSpeed;				// カメラの回転スピード
 
+	UPROPERTY(EditAnywhere, Category = "Check")
+		float m_CheckToActorRayRange;
+
 	bool isStanding;							// 立っているかどうかのフラグ
 	bool isVRCamera;							// VRカメラかどうか
 
@@ -119,4 +128,7 @@ private:
 
 	FVector2D m_playerMoveInput;				// プレイヤーの移動入力量
 	FVector2D m_cameraRotateInput;				// カメラの回転入力量
+
+	AActor* m_pCheckingActor;					// チェック中のアクター
+	AActor* m_pPrevCheckActor;					// 1フレーム前にチェックしていたアクター
 };
