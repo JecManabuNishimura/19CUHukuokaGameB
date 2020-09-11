@@ -8,11 +8,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "ItemBase.h"
 #include "AutomaticDoorLever.generated.h"
 
 UCLASS()
-class HUKUOKAGAME_API AAutomaticDoorLever : public AActor
+class HUKUOKAGAME_API AAutomaticDoorLever : public AItemBase
 {
 	GENERATED_BODY()
 	
@@ -28,4 +28,14 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+public:
+
+	UFUNCTION(BlueprintCallable, Category = "ReturnState")
+		bool ReturnLeverState(){ return m_isLeverOn; }
+
+	UPROPERTY(EditAnywhere)
+		int m_leverFilter;					// レバーとドアを対応させるための数字
+
+	UPROPERTY(EditAnywhere)
+		bool m_isLeverOn;
 };
