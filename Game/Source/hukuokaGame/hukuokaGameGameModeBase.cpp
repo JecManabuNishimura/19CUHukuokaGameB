@@ -1,8 +1,7 @@
 // Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
-#include "Engine.h"						// GEngineを呼び出すのに必要なヘッダ
 #include "hukuokaGameGameModeBase.h"
-
+#include "Engine.h"						// GEngineを呼び出すのに必要なヘッダ
 
 void AhukuokaGameGameModeBase::StartPlay()
 {

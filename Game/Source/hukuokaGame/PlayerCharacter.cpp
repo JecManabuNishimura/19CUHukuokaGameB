@@ -125,6 +125,11 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	// プレイヤーアクション：拾う、調べる、作動させる
 	InputComponent->BindAction("PickUpandCheck", IE_Released, this, &APlayerCharacter::CheckToActor);
+
+	// スマホを構える・構えを解除(作成者：尾崎)
+	InputComponent->BindAction("HaveSmartphone", IE_Pressed, this, &APlayerCharacter::ChangeHaveSmartphoneFlag);
+	InputComponent->BindAction("Smartphone_Light", IE_Pressed, this, &APlayerCharacter::ChangeLightFlag);
+	InputComponent->BindAction("Smartphone_Shutter", IE_Pressed, this, &APlayerCharacter::ChangeShutterFlag);
 }
 
 // 地面との距離を測りプレイヤーの高さを設定
@@ -390,4 +395,22 @@ void APlayerCharacter::CheckToActor()
 			pLever->m_isLeverOn = !pLever->m_isLeverOn;
 		}
 	}
+}
+
+// プレイヤーアクション：スマホのシャッターフラグを変更(作成者：尾崎)
+bool APlayerCharacter::GetShatterFlag()
+{
+	return shatterFlag;
+}
+
+// プレイヤーアクション：スマホのライトのフラグを変更(作成者：尾崎)
+bool APlayerCharacter::GetLightFlag()
+{
+	return lightFlag;
+}
+
+// プレイヤーアクション：スマホを構える状態のフラグを変更(作成者：尾崎)
+bool APlayerCharacter::GetisHaveSmartphoneFlag()
+{
+	return isHaveSmartphoneFlag;
 }

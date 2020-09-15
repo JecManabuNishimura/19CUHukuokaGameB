@@ -15,6 +15,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Smartphone.h"
+#include "Components/ChildActorComponent.h"
 #include "PlayerCharacter.generated.h"
 
 UCLASS()
@@ -32,13 +34,13 @@ protected:
 	// 実行時に一度呼ばれる
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// 毎フレーム呼ばれる
 	virtual void Tick(float DeltaTime) override;
 
 	// 各入力関係メソッドとのバインド処理
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
+
 private:
 	// 地面のとの距離を測りプレイヤーの高さを設定
 	void SetEyeLevel(const float _deltaTime);
@@ -81,6 +83,37 @@ private:
 	// プレイヤーアクション：拾う、調べる、作動させる
 	void CheckToActor();
 
+	// スマホ関係
+	// 構えるかどうかのフラグ(作成者：尾崎)
+	void ChangeHaveSmartphoneFlag()
+	{
+		isHaveSmartphoneFlag = !isHaveSmartphoneFlag;
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, "Push HaveSmartphone");
+	};
+	// ライトをつけるかどうか(作成者：尾崎)
+	void ChangeLightFlag()
+	{
+		lightFlag = !lightFlag;
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, "Push Smartphone_Light");
+
+	};
+	// シャッターを切るかどうか(作成者：尾崎)
+	void ChangeShutterFlag()
+	{
+		shatterFlag = !shatterFlag;
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, "Push Smartphone_Shutter");
+	};
+
+public:
+	// Smartphoneから呼び出す関数(isHaveSmartphoneFlagをSmartphoneに送る)(作成者：尾崎)
+	bool GetisHaveSmartphoneFlag();
+
+	// Smartphoneから呼び出す関数(lightFlagをSmartphoneに送る)(作成者：尾崎)
+	bool GetLightFlag();
+
+	// Smartphoneから呼び出す関数(shutterFlagをSmartphoneに送る)(作成者：尾崎)
+	bool GetShatterFlag();
+
 private:
 	// プロパティ
 	UPROPERTY(EditAnywhere, Category = "Move")
@@ -102,7 +135,7 @@ private:
 		class USceneComponent* m_pCameraBase;	// カメラの原点
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-	class UCameraComponent* m_pCamera;			// カメラ
+		class UCameraComponent* m_pCamera;			// カメラ
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
@@ -131,4 +164,11 @@ private:
 
 	AActor* m_pCheckingActor;					// チェック中のアクター
 	AActor* m_pPrevCheckActor;					// 1フレーム前にチェックしていたアクター
+
+	// スマホオブジェクト(作成者：尾崎)
+	UChildActorComponent* smartphone;
+
+	bool isHaveSmartphoneFlag;		// スマホを構えるかどうか(作成者：尾崎)
+	bool shatterFlag;				// シャッターを切るか(作成者：尾崎)
+	bool lightFlag;					// ライトの切り替え(作成者：尾崎)
 };
