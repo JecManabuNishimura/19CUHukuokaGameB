@@ -12,12 +12,28 @@
 // 作成日		：2020/08/18
 //-------------------------------------------------------------------
 
+//-------------------------------------------------------------------
+// ファイル		：PlayerCharacter.cpp
+// 概要			：VRモーションの対応
+// 作成者		：19CU0236 林雲暉
+// 作成日		：2020/08/28	VRモーションコントローラーの対応
+// 更新日		：2020/09/06	VRのrayの作成
+//				：2020/09/19	VRのスマートフォン作成
+//-------------------------------------------------------------------
+
+
 #include "PlayerCharacter.h"
 #include "AutomaticDoorLever.h"
 #include "Engine.h"				// GEngineを呼び出すためのヘッダ
 #include "SteamVRChaperoneComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
+#include "VirtualReality/ThrillerVR_MotionController.h"
+#include "Components/InputComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "MotionControllerComponent.h"
+// 以上の6点はVR用インクルード by_Rin
 
+#define LASERLENGTH 300.0f		// VR用 LASERの長さ(手の長さを代表すること) by_Rin
 
 // コンストラクタ
 APlayerCharacter::APlayerCharacter()
@@ -38,6 +54,8 @@ APlayerCharacter::APlayerCharacter()
 	, m_cameraRotateInput(FVector2D::ZeroVector)
 	, m_pCheckingActor(NULL)
 	, m_pPrevCheckActor(NULL)
+	, vr_HitResult(NULL)
+	, vr_InCameraMode(false)
 {
  	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
@@ -79,11 +97,78 @@ void APlayerCharacter::BeginPlay()
 	{
 		// Epic Comment :D // Windows (Oculus / Vive)
 		UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Floor);
-	}
+	} // end if()
 	else
 	{
 		UE_LOG(LogTemp, Log, TEXT("Can't find VR Divice"));
-	}
+	} // end else
+
+	// ===========  VR Motion Controller's Spawn and Attach  by_Rin ===========
+	// もしタイトル画面にモードを選択するなら、ifの条件を変えます
+	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+	{
+		// Epic Comment :D // Spawn and attach both motion controllers
+		const FTransform SpawnTransform = FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f), FVector(1.0f, 1.0f, 1.0f)); // = FTransform::Identity;
+		FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
+
+		// Epic Comment :D // "Hand" is available by checking "Expose on Spawn" in the variable on BP_MotionController.
+		// SomWorks :D //  Expose on Spawn Variable parameter setup in c++ -> Use SpawnActorDeferred
+		LeftController = GetWorld()->SpawnActorDeferred<AThrillerVR_MotionController>(AThrillerVR_MotionController::StaticClass(), SpawnTransform, this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+		if (LeftController)
+		{
+			// SomWorks :D // ...setstuff here..then finish spawn..
+			LeftController->Hand = EControllerHand::Left;
+			LeftController->FinishSpawning(SpawnTransform); // UGameplayStatics::FinishSpawningActor(LeftController, SpawnTransform);
+			LeftController->AttachToComponent(m_pCameraBase, AttachRules);
+
+			bp_VRphone = TSoftClassPtr<AActor>(FSoftObjectPath(*path)).LoadSynchronous();	// pathにあるクラスを取得
+			if (bp_VRphone != nullptr)
+			{
+				vr_Phone = GetWorld()->SpawnActor<AActor>(bp_VRphone);						// VRのスマートフォンをActorとして生成する
+
+				vr_Phone->AttachToComponent(LeftController->GetRootComponent()->GetChildComponent(0), AttachRules);
+				vr_Phone->SetActorEnableCollision(false);
+
+				if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+				{
+					// VR用配置
+					vr_Phone->SetActorRelativeRotation(FRotator( 0.f, -180.f, -90.f));		//   display <- ||
+					vr_Phone->SetActorRelativeLocation(FVector(370, 0, 10));
+
+					// スマホ他の方向、先に確認しました (仮(メッシュの初期方向対応め)Y X Z)
+					// vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, -90.f));		//   || -> display
+
+					// vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, 0.f));			//   ↑display
+																								//   ||
+
+					// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetActorRotation().ToString()));
+				} // end if
+				else
+				{
+					// PC確認用配置
+					vr_Phone->SetActorRelativeRotation(FRotator(-90.f, -180.f, 180.f));
+					vr_Phone->SetActorRelativeLocation(FVector(400, 0, 70));
+				} // end else
+
+				// 確認用
+				// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetName()));
+
+			} // end if()
+		} // end if()
+
+		RightController = GetWorld()->SpawnActorDeferred<AThrillerVR_MotionController>(AThrillerVR_MotionController::StaticClass(), SpawnTransform, this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+		if (RightController)
+		{
+			RightController->Hand = EControllerHand::Right;
+			RightController->FinishSpawning(SpawnTransform);
+			RightController->AttachToComponent(m_pCameraBase, AttachRules);
+		} // end if()
+	} // end if()
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("Is Not VR Mode"));
+	} // end else
+
 }
 
 // 毎フレーム呼ばれる
@@ -105,6 +190,14 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	// アイテムのチェック
 	CheckItem();
+
+	// ===========  VR Motion Controller's Laser Update by_Rin ===========
+	// 今はVRモード?
+	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
+	{
+		// VR コントローラー ポインターの更新
+		UpdateVRLaser();
+	} // end if()
 }
 
 // 各入力関係メソッドとのバインド処理
@@ -414,3 +507,62 @@ bool APlayerCharacter::GetisHaveSmartphoneFlag()
 {
 	return isHaveSmartphoneFlag;
 }
+
+
+// ===========  VR HMDのリセット  by_Rin ===========
+void APlayerCharacter::OnResetVR()
+{
+	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
+} // void APlayerCharacter::OnResetVR()
+
+// =====  VR Motion コントローラー ポインターの関数  by_Rin =====
+void APlayerCharacter::UpdateVRLaser()
+{
+	FVector StartPoint = FVector::ZeroVector;			// Laserの初期位置
+	FVector FowardActor = FVector::ZeroVector;			// モーションコントローラーの前方向
+
+	// VR's laser start point from right controller
+	if (RightController)
+	{
+		StartPoint = RightController->ActorToWorld().GetLocation();
+		FowardActor = RightController->GetRootComponent()->GetChildComponent(0)->GetForwardVector();
+	} // end if()
+	else
+	{
+		StartPoint = m_pCamera->GetComponentLocation();
+		FowardActor = m_pCamera->GetForwardVector();
+	} // end else
+
+	// for checking the start point & Foward Vector
+	// UE_LOG(LogClass, Log, TEXT("======: %s"), *StartPoint.ToString());
+	// UE_LOG(LogClass, Log, TEXT("=====: %s"), *FowardActor.ToString());
+
+	FVector EndPoint = ((FowardActor * LASERLENGTH) + StartPoint);				// Laserの終点
+
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this);
+
+	// テスト用ポインター
+	// DrawDebugLine (GetWorld (), StartPoint, EndPoint, FColor::Red, false, 1.0f);
+
+	ULineBatchComponent* const LineBatcher = GetWorld()->PersistentLineBatcher;
+
+	// Laserが最初に当たったのものを　vr_HitResult　に反映する
+	if (GetWorld()->LineTraceSingleByChannel(vr_HitResult, StartPoint, EndPoint, ECC_WorldStatic, CollisionParams))
+	{
+		if (vr_InCameraMode == false)
+		{
+			LineBatcher->DrawLine(StartPoint, EndPoint, FLinearColor::Red, 10, 0.f, 1.f);
+		} // end if()
+
+		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("RayHit: %s"), *HitResult.Actor->GetName()));
+	} // end if()
+	else
+	{
+		if (vr_InCameraMode == false)
+		{
+			LineBatcher->DrawLine(StartPoint, EndPoint, FLinearColor::Green, 10, 0.f, 1.f);
+		} // end if()
+	} // end else
+
+} // APlayerCharacter::UpdateVRLaser()

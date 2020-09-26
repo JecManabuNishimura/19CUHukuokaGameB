@@ -11,6 +11,14 @@
 // 作成者		：19CU0217 朱適
 // 作成日		：2020/08/18
 //-------------------------------------------------------------------
+
+//-------------------------------------------------------------------
+// ファイル		：PlayerCharacter.h
+// 概要			：VRモーションの対応
+// 作成者		：19CU0236 林雲暉
+// 作成日		：2020/08/28
+//-------------------------------------------------------------------
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -41,6 +49,10 @@ public:
 	// 各入力関係メソッドとのバインド処理
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	// =====  VR Motion コントローラー 関数  by_Rin =====
+	// Resets HMD orientation and position in VR
+	void OnResetVR();
+
 private:
 	// 地面のとの距離を測りプレイヤーの高さを設定
 	void SetEyeLevel(const float _deltaTime);
@@ -62,6 +74,9 @@ private:
 
 	// ベクトルを正規化する
 	void NormalizedVector2D(float _vectorLength, FVector2D* _pFvector2d);
+
+	// =====  VR Motion コントローラー ポインターの関数  by_Rin =====
+	void UpdateVRLaser();
 
 private:
 	// 入力バインド
@@ -171,4 +186,28 @@ private:
 	bool isHaveSmartphoneFlag;		// スマホを構えるかどうか(作成者：尾崎)
 	bool shatterFlag;				// シャッターを切るか(作成者：尾崎)
 	bool lightFlag;					// ライトの切り替え(作成者：尾崎)
+
+
+	// =====  VR Motion コントローラー　プロパティ  by_Rin =====
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VRMotion|Variables", meta = (AllowPrivateAccess = "true"))
+		class AThrillerVR_MotionController* LeftController;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VRMotion|Variables", meta = (AllowPrivateAccess = "true"))
+		class AThrillerVR_MotionController* RightController;
+
+	FHitResult vr_HitResult;
+
+	FString path = "Blueprint'/Game/Blueprints/BP_VRSmartPhone.BP_VRSmartPhone_C'";
+
+	// VR's smart phone component
+	UPROPERTY(EditAnywhere, Category = "VR_Phone")
+		TSubclassOf<class AActor> bp_VRphone;
+
+	UPROPERTY(EditAnywhere, Category = "VR_Phone")
+		AActor* vr_Phone;
+
+public: 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone")
+		bool vr_InCameraMode;
+
 };
