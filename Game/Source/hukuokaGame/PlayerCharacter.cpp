@@ -105,7 +105,7 @@ void APlayerCharacter::BeginPlay()
 
 	// ===========  VR Motion Controller's Spawn and Attach  by_Rin ===========
 	// もしタイトル画面にモードを選択するなら、ifの条件を変えます
-	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 	{
 		// Epic Comment :D // Spawn and attach both motion controllers
 		const FTransform SpawnTransform = FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f), FVector(1.0f, 1.0f, 1.0f)); // = FTransform::Identity;
@@ -129,7 +129,7 @@ void APlayerCharacter::BeginPlay()
 				vr_Phone->AttachToComponent(LeftController->GetRootComponent()->GetChildComponent(0), AttachRules);
 				vr_Phone->SetActorEnableCollision(false);
 
-				if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+				if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 				{
 					// VR用配置
 					vr_Phone->SetActorRelativeRotation(FRotator( 0.f, -180.f, -90.f));		//   display <- ||
