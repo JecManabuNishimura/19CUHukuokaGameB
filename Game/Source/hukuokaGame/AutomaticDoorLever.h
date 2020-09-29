@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------
 // ファイル		：AutomaticDoorLever.h
-// 概要			：自動ドアのロック、解除を管理する
+// 概要			：ItemBaseクラスを継承する自動ドアのロック、解除を管理するレバー
 // 作成者		：19CU0233 増井悠斗
 // 作成日		：2020/08/24
 //-------------------------------------------------------------------
@@ -17,25 +17,25 @@ class HUKUOKAGAME_API AAutomaticDoorLever : public AItemBase
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	AAutomaticDoorLever();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-public:
+	// プレイヤーにチェックされたら呼ばれる(作動)
+	virtual void CheckedByPlayer();
 
-	UFUNCTION(BlueprintCallable, Category = "ReturnState")
+public:
+	// レバーのON/OFF状態を返す
+	UFUNCTION(BlueprintCallable, Category = "Return State")
 		bool ReturnLeverState(){ return m_isLeverOn; }
 
 	UPROPERTY(EditAnywhere)
 		int m_leverFilter;					// レバーとドアを対応させるための数字
 
 	UPROPERTY(EditAnywhere)
-		bool m_isLeverOn;
+		bool m_isLeverOn;					// レバーのON/OFF状態
 };

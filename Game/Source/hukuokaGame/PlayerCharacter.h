@@ -17,6 +17,13 @@
 #include "GameFramework/Character.h"
 #include "PlayerCharacter.generated.h"
 
+// 前方宣言
+class AItemBase;
+
+// イベントディスパッチャー宣言
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemCheckBeginEventDispatcher);		// プレイヤーの視線がCanCheckアイテムに当たった時
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemCheckEndEventDispatcher);			// プレイヤーの視線がCanCheckアイテムから外れた時
+
 UCLASS()
 class HUKUOKAGAME_API APlayerCharacter : public ACharacter
 {
@@ -81,7 +88,23 @@ private:
 	// プレイヤーアクション：拾う、調べる、作動させる
 	void CheckToActor();
 
+public:
+	UFUNCTION(BlueprintCallable, Category = "Return State")
+		AItemBase* ReturnCheckingItem() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Return State")
+		FString ReturnCheckingItemCommandName() const;
+
 private:
+	// イベントディスパッチャー定義
+	// プレイヤーの視線がCanCheckアイテムに当たった時
+	UPROPERTY(BlueprintAssignable)
+		FOnItemCheckBeginEventDispatcher  OnItemCheckBeginEventDispatcher;
+
+	// プレイヤーの視線がCanCheckアイテムから外れた時
+	UPROPERTY(BlueprintAssignable)
+		FOnItemCheckEndEventDispatcher  OnItemCheckEndEventDispatcher;
+
 	// プロパティ
 	UPROPERTY(EditAnywhere, Category = "Move")
 		float m_playerThresholdToRun;			// 走る閾値(0 < this <= 1)
@@ -102,7 +125,7 @@ private:
 		class USceneComponent* m_pCameraBase;	// カメラの原点
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-	class UCameraComponent* m_pCamera;			// カメラ
+		class UCameraComponent* m_pCamera;			// カメラ
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
@@ -129,6 +152,6 @@ private:
 	FVector2D m_playerMoveInput;				// プレイヤーの移動入力量
 	FVector2D m_cameraRotateInput;				// カメラの回転入力量
 
-	AActor* m_pCheckingActor;					// チェック中のアクター
-	AActor* m_pPrevCheckActor;					// 1フレーム前にチェックしていたアクター
+	AItemBase* m_pCheckingItem;					// チェック中のアイテム
+	AItemBase* m_pPrevCheckItem;				// 1フレーム前にチェックしていたアイテム
 };

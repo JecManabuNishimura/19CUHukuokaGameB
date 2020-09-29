@@ -13,7 +13,7 @@
 //-------------------------------------------------------------------
 
 #include "PlayerCharacter.h"
-#include "AutomaticDoorLever.h"
+#include "ItemBase.h"
 #include "Engine.h"				// GEngineを呼び出すためのヘッダ
 #include "SteamVRChaperoneComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
@@ -36,8 +36,8 @@ APlayerCharacter::APlayerCharacter()
 	, m_playerMoveSpeed(0.0f)
 	, m_playerMoveInput(FVector2D::ZeroVector)
 	, m_cameraRotateInput(FVector2D::ZeroVector)
-	, m_pCheckingActor(NULL)
-	, m_pPrevCheckActor(NULL)
+	, m_pCheckingItem(NULL)
+	, m_pPrevCheckItem(NULL)
 {
  	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
@@ -67,10 +67,6 @@ APlayerCharacter::~APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("We are using PlayerCharacter."));
-	}
 
 	// Epic Comment :D // Setup Player Height for various Platforms (PS4, Vive, Oculus)
 	FName DeviceName = UHeadMountedDisplayFunctionLibrary::GetHMDDeviceName();
@@ -187,8 +183,6 @@ void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 {
 	// 現在のプレイヤーの回転情報を取得
 	FRotator newRotationPlayer = GetActorRotation();
-
-	UE_LOG(LogTemp, Log, TEXT("newRotationPlayer(%.2f, %.2f, %.2f)"),newRotationPlayer.Roll, newRotationPlayer.Pitch, newRotationPlayer.Yaw);
 	
 	// Yaw(プレイヤーを回転させる)
 	newRotationPlayer.Yaw += m_cameraRotateInput.X * m_cameraRotateSpeed * _deltaTime;
@@ -273,44 +267,48 @@ void APlayerCharacter::CheckItem()
 	FVector start = m_pCamera->GetComponentLocation();
 	FVector end = start + (m_pCamera->GetForwardVector() * m_CheckToActorRayRange);
 
-	// 1フレーム前のActorの情報を移す
-	m_pPrevCheckActor = m_pCheckingActor;
+	// 1フレーム前のアイテムの情報を移す
+	m_pPrevCheckItem = m_pCheckingItem;
 
 	if (GetWorld()->LineTraceSingleByChannel(outHit, start, end, ECC_GameTraceChannel3))
 	{
-		m_pCheckingActor = outHit.GetActor();
-		// 1フレーム前のActorと違うなら更新
-		if (m_pCheckingActor != m_pPrevCheckActor)
+		// アイテム基本クラスにキャスト
+		m_pCheckingItem = Cast<AItemBase>(outHit.GetActor());
+
+		// キャストが成功していれば処理を続行
+		if (m_pCheckingItem != NULL)
 		{
-			// チェック中のアクターを更新する
-			AItemBase* itemBase = Cast<AItemBase>(m_pCheckingActor);
-			if (itemBase != NULL)
+			// 1フレーム前のアイテムと違うなら更新
+			if (m_pCheckingItem != m_pPrevCheckItem)
 			{
-				itemBase->m_isChecked = true;
-				if (m_pPrevCheckActor != NULL)
+				// 前フレームで有効なオブジェクトをチェックしていたら
+				if (m_pPrevCheckItem != NULL)
 				{
-					if (itemBase != NULL)
-					{
-						itemBase = Cast<AItemBase>(m_pPrevCheckActor);
-						itemBase->m_isChecked = false;
-					}
+					// 前フレームでチェックしていたオブジェクトの被チェックを無効に
+					m_pPrevCheckItem->m_isChecked = false;
+
+					// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
+					OnItemCheckEndEventDispatcher.Broadcast();
 				}
+				// 新しくチェックしたオブジェクトの被チェックを有効に
+				m_pCheckingItem->m_isChecked = true;
+
+				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートに追加)
+				OnItemCheckBeginEventDispatcher.Broadcast();
 			}
 		}
-		if (m_pCheckingActor != NULL)	GEngine->AddOnScreenDebugMessage(14, 0.05f, FColor::Blue, FString::Printf(TEXT("Checking %s."), *m_pCheckingActor->GetName()));
 	}
 	else
 	{
-		// 前フレームでは検知していた場合そのActorの接触フラグを下げる
-		if (m_pPrevCheckActor != NULL)
+		// 前フレームでは検知していた場合そのアイテムの接触フラグを下げる
+		if (m_pPrevCheckItem != NULL)
 		{
-			AItemBase* itemBase = Cast<AItemBase>(m_pCheckingActor);
-			if (itemBase != NULL)
-			{
-				itemBase->m_isChecked = false;
-			}
+			m_pPrevCheckItem->m_isChecked = false;
+
+			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
+			OnItemCheckEndEventDispatcher.Broadcast();
 		}
-		m_pCheckingActor = NULL;
+		m_pCheckingItem = NULL;
 	}
 }
 
@@ -360,34 +358,18 @@ void APlayerCharacter::PlayerMoveY(float _axisValue)
 // プレイヤーアクション：拾う、調べる、作動させる
 void APlayerCharacter::CheckToActor()
 {
-	UE_LOG(LogTemp, Warning, TEXT("R is Pressed"));
-	if (m_pCheckingActor != NULL)
+	if (m_pCheckingItem != NULL)
 	{
-		// 拾えるActor-->拾う(ここでは対象のActorを消す)
-		if (m_pCheckingActor->ActorHasTag("CanPickUpActor"))
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, FString::Printf(TEXT("Picked up %s."), *m_pCheckingActor->GetName()));
-
-			// 何かしての拾ったActorの情報を保存
-
-			// 拾ったActorを削除
-			m_pCheckingActor->Destroy();
-			m_pCheckingActor = NULL;
-		}
-		// 調べられるActor-->調べる
-		else if (m_pCheckingActor->ActorHasTag("CanCheckActor"))
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, FString::Printf(TEXT("Check %s."), *m_pCheckingActor->GetName()));
-			// 説明文表示
-		}
-		// 作動させることができるActor-->作動
-		else if (m_pCheckingActor->ActorHasTag("CanActuateActor"))
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, FString::Printf(TEXT("Actuate %s."), *m_pCheckingActor->GetName()));
-
-			// レバーを反転(現状作動させるActorはドアのレバーのみ)
-			AAutomaticDoorLever* pLever = Cast<AAutomaticDoorLever>(m_pCheckingActor);
-			pLever->m_isLeverOn = !pLever->m_isLeverOn;
-		}
+		m_pCheckingItem->CheckedByPlayer();
 	}
+}
+
+AItemBase* APlayerCharacter::ReturnCheckingItem() const
+{
+	return m_pCheckingItem;
+}
+
+FString APlayerCharacter::ReturnCheckingItemCommandName() const
+{
+	return m_pCheckingItem->m_commandName;
 }
