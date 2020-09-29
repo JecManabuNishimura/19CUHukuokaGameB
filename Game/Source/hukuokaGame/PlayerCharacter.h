@@ -27,6 +27,13 @@
 #include "Components/ChildActorComponent.h"
 #include "PlayerCharacter.generated.h"
 
+// 前方宣言
+class AItemBase;
+
+// イベントディスパッチャー宣言
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemCheckBeginEventDispatcher);		// プレイヤーの視線がCanCheckアイテムに当たった時
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemCheckEndEventDispatcher);			// プレイヤーの視線がCanCheckアイテムから外れた時
+
 UCLASS()
 class HUKUOKAGAME_API APlayerCharacter : public ACharacter
 {
@@ -98,6 +105,7 @@ private:
 	// プレイヤーアクション：拾う、調べる、作動させる
 	void CheckToActor();
 
+<<<<<<< HEAD
 	// スマホ関係
 	// 構えるかどうかのフラグ(作成者：尾崎)
 	void ChangeHaveSmartphoneFlag()
@@ -129,7 +137,23 @@ public:
 	// Smartphoneから呼び出す関数(shutterFlagをSmartphoneに送る)(作成者：尾崎)
 	bool GetShatterFlag();
 
+public:
+	UFUNCTION(BlueprintCallable, Category = "Return State")
+		AItemBase* ReturnCheckingItem() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Return State")
+		FString ReturnCheckingItemCommandName() const;
+
 private:
+	// イベントディスパッチャー定義
+	// プレイヤーの視線がCanCheckアイテムに当たった時
+	UPROPERTY(BlueprintAssignable)
+		FOnItemCheckBeginEventDispatcher  OnItemCheckBeginEventDispatcher;
+
+	// プレイヤーの視線がCanCheckアイテムから外れた時
+	UPROPERTY(BlueprintAssignable)
+		FOnItemCheckEndEventDispatcher  OnItemCheckEndEventDispatcher;
+
 	// プロパティ
 	UPROPERTY(EditAnywhere, Category = "Move")
 		float m_playerThresholdToRun;			// 走る閾値(0 < this <= 1)
@@ -177,8 +201,8 @@ private:
 	FVector2D m_playerMoveInput;				// プレイヤーの移動入力量
 	FVector2D m_cameraRotateInput;				// カメラの回転入力量
 
-	AActor* m_pCheckingActor;					// チェック中のアクター
-	AActor* m_pPrevCheckActor;					// 1フレーム前にチェックしていたアクター
+	AItemBase* m_pCheckingItem;					// チェック中のアイテム
+	AItemBase* m_pPrevCheckItem;				// 1フレーム前にチェックしていたアイテム
 
 	// スマホオブジェクト(作成者：尾崎)
 	UChildActorComponent* smartphone;
@@ -209,5 +233,4 @@ private:
 public: 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone")
 		bool vr_InCameraMode;
-
 };
