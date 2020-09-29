@@ -34,9 +34,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-
-
-private:
 	UFUNCTION()
 		void OnOverlapBegin(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComponent, int32 _otherBodyIndex, bool _bFromSweep, const FHitResult& _sweepResult);
 
@@ -58,15 +55,12 @@ private:
 	UPROPERTY(EditAnywhere)
 		float m_openAndCloseTime;				// 開閉に要する時間
 
-		float m_leftDoorStartPosY;				// 左ドアのY座標始点
+	float m_leftDoorStartPosY;					// 左ドアのY座標始点
 
 	UPROPERTY(EditAnywhere)
 		float m_leftDoorEndPosY;				// 左ドアのY座標終点
 
-		float m_rightDoorStartPosY;				// 右ドアのY座標始点
-
-	UPROPERTY(EditAnywhere)
-		float m_rightDoorEndPosY;				// 右ドアのY座標終点
+	float m_rightDoorStartPosY;					// 右ドアのY座標始点
 
 	UPROPERTY(EditAnywhere)
 		int m_doorFilter;						// レバーとドアを対応させるための数字

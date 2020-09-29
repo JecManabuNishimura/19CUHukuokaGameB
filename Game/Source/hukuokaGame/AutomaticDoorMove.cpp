@@ -17,15 +17,14 @@ AAutomaticDoorMove::AAutomaticDoorMove()
 	, m_leftDoorStartPosY(0.0f)
 	, m_leftDoorEndPosY(0.0f)
 	, m_rightDoorStartPosY(0.0f)
-	, m_rightDoorEndPosY(0.0f)
 	, m_doorFilter(0)
 	, m_isSwitchOn(true)
 	, m_canMove(false)
 	, m_isOpened(false)
 	, m_isOpening(false)
+	, m_isOverlap(false)
 	, m_openTimeCount(0.0f)
 	, m_leftDoorMoveDirection(1.0f)
-	, m_isOverlap(false)
 	, m_distanceStartToEnd(0.0f)
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -38,7 +37,7 @@ AAutomaticDoorMove::AAutomaticDoorMove()
 	}
 	else	UE_LOG(LogTemp, Error, TEXT("m_pEventTrigerBox has not been created."));
 
-	// 左ドア生成
+	// 左ドアのもととなるメッシュ作成
 	m_pLeftDoorComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_pLeftDoorComp"));
 	if (m_pLeftDoorComp != NULL)
 	{
@@ -46,7 +45,7 @@ AAutomaticDoorMove::AAutomaticDoorMove()
 	}
 	else	UE_LOG(LogTemp, Error, TEXT("m_pLeftDoorComp has not been created."));
 
-	// 右ドア生成
+	// 右ドアのもととなるメッシュ作成
 	m_pRightDoorComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_pRightDoorComp"));
 	if (m_pRightDoorComp != NULL)
 	{
