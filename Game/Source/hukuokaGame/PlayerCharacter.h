@@ -110,20 +110,20 @@ private:
 	void ChangeHaveSmartphoneFlag()
 	{
 		isHaveSmartphoneFlag = !isHaveSmartphoneFlag;
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, "Push HaveSmartphone");
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Push HaveSmartphone");
 	};
 	// ライトをつけるかどうか(作成者：尾崎)
 	void ChangeLightFlag()
 	{
 		lightFlag = !lightFlag;
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, "Push Smartphone_Light");
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Push Smartphone_Light");
 
 	};
 	// シャッターを切るかどうか(作成者：尾崎)
 	void ChangeShutterFlag()
 	{
 		shatterFlag = !shatterFlag;
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, "Push Smartphone_Shutter");
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Push Smartphone_Shutter");
 	};
 
 public:
@@ -232,4 +232,11 @@ private:
 public: 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone")
 		bool vr_InCameraMode;
+
+	bool isFound;		// 敵の攻撃範囲内に入ったか(作成者：尾崎)
+
+	UFUNCTION(BlueprintCallable, Category = "PlayerDamage")
+		void SetIsFound(const bool _flag) { isFound = _flag; }	// 見つかった場合にisFoundを変える関数(作成者：尾崎)
+
+	void Respawn();	// リスポーンする関数(作成者：尾崎)
 };
