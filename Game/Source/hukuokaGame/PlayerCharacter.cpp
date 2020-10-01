@@ -52,12 +52,10 @@ APlayerCharacter::APlayerCharacter()
 	, m_playerMoveSpeed(0.0f)
 	, m_playerMoveInput(FVector2D::ZeroVector)
 	, m_cameraRotateInput(FVector2D::ZeroVector)
-	, m_pCheckingActor(NULL)
-	, m_pPrevCheckActor(NULL)
-	, vr_HitResult(NULL)
-	, vr_InCameraMode(false)
 	, m_pCheckingItem(NULL)
 	, m_pPrevCheckItem(NULL)
+	, vr_HitResult(NULL)
+	, vr_InCameraMode(false)
 {
  	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;

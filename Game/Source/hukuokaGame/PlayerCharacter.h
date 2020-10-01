@@ -105,7 +105,6 @@ private:
 	// プレイヤーアクション：拾う、調べる、作動させる
 	void CheckToActor();
 
-<<<<<<< HEAD
 	// スマホ関係
 	// 構えるかどうかのフラグ(作成者：尾崎)
 	void ChangeHaveSmartphoneFlag()
