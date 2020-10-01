@@ -56,6 +56,7 @@ APlayerCharacter::APlayerCharacter()
 	, m_pPrevCheckActor(NULL)
 	, vr_HitResult(NULL)
 	, vr_InCameraMode(false)
+	, isFound(false)
 {
  	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
@@ -198,6 +199,18 @@ void APlayerCharacter::Tick(float DeltaTime)
 		// VR コントローラー ポインターの更新
 		UpdateVRLaser();
 	} // end if()
+
+	//// デバッグ確認用(見つかったかどうか)
+	//UE_LOG(LogTemp, Warning, TEXT("isFound = %d"), isFound);
+
+	// 敵に捕まったら
+	if (isFound)
+	{
+		// 敵のアニメーション終了までRespawn関数は呼ばない
+
+		// リスポーン関数を呼び出し
+		Respawn();
+	}
 }
 
 // 各入力関係メソッドとのバインド処理
@@ -566,3 +579,16 @@ void APlayerCharacter::UpdateVRLaser()
 	} // end else
 
 } // APlayerCharacter::UpdateVRLaser()
+
+// リスポーン関数(作成者：尾崎)
+void APlayerCharacter::Respawn()
+{
+	// フラグの初期化
+	isFound = false;
+
+	//// デバッグ確認用(死んだときのログ)
+	//UE_LOG(LogTemp, Warning, TEXT("Player Dead... Respawn."));
+
+	// 位置の初期化
+	this->SetActorLocation(FVector(-4850.f, -3300.f, 300.f));
+}
