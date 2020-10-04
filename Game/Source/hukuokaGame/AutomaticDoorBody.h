@@ -1,21 +1,23 @@
 //-------------------------------------------------------------------
-// ファイル		：AutomaticDoorMove.h
-// 概要			：自動ドアを制御する
+// ファイル		：AutomaticDoorBody.h
+// 概要			：自動ドア本体を制御するクラス
 // 作成者		：19CU0233 増井悠斗
-// 作成日		：2020/08/20
+// 作成日		：2020/10/04
 //-------------------------------------------------------------------
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Components/BoxComponent.h"				// UBoxComponentを使うために必要なヘッダ
-#include "Components/StaticMeshComponent.h"
-#include "AutomaticDoorLever.h"
-#include "AutomaticDoorMove.generated.h"
+#include "AutomaticDoorBody.generated.h"
+
+// 前方宣言
+class UBoxComponent;
+class UStaticMeshComponent;
+class AAutomaticDoorLever;
 
 UCLASS()
-class HUKUOKAGAME_API AAutomaticDoorMove : public AActor
+class HUKUOKAGAME_API AAutomaticDoorBody : public AActor
 {
 	// ドアの状態
 	enum DOOR_STATE
@@ -24,22 +26,21 @@ class HUKUOKAGAME_API AAutomaticDoorMove : public AActor
 		DOOR_STATE_OPENED,				// 開ききっている
 		DOOR_STATE_CLOSING,				// 閉じ途中（開→閉）
 		DOOR_STATE_OPENING,				// 開き途中（閉→開）
-		DOOR_STATE_NUM,					// 状態の数
 	};
 
 	GENERATED_BODY()
-	
+
 public:
 	// コンストラクタ
-	AAutomaticDoorMove();
+	AAutomaticDoorBody();
 	// デストラクタ
-	~AAutomaticDoorMove();
+	~AAutomaticDoorBody();
 
 protected:
 	// 実行時に一度呼ばれる
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// 毎フレーム呼ばれる
 	virtual void Tick(float DeltaTime) override;
 
@@ -49,7 +50,7 @@ private:
 
 	UFUNCTION()
 		void OnOverlapEnd(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComp, int32 _otherBodyIndex);
-		
+
 	UPROPERTY(EditAnywhere)
 		UBoxComponent* m_pEventTriggerBox;		// プレイヤー、敵検知用トリガーボックス
 
@@ -75,27 +76,34 @@ private:
 	UPROPERTY(EditAnywhere)
 		int m_doorFilter;						// レバーとドアを対応させるための数字
 
-	bool m_isSwitchOn;							// 自動ドアを作動させるためのレバーフラグ
-
-	bool m_canMove;								// ドアの開閉処理を行うかのフラグ
-
-	bool m_isOpened;							// ドアが開ききっているかのフラグ
-
-	bool m_isOpening;							// ドアが開き途中かのフラグ
+	bool m_isSwitchOn;							// 自動ドアを作動させるためのフラグ
 
 	bool m_isOverlap;							// プレイヤーもしくは敵が検知内に入っているかのフラグ
 
 	float m_openTimeCount;						// 開いている時間のカウント
 
+	float m_requiredTime;						// 開閉の所要時間
+
 	float m_leftDoorMoveDirection;				// 移動するときの向き
 
 	float m_distanceStartToEnd;					// ドアの始点から終点までの距離(片方で取得し、もう片方でもそれを利用)
 
-	void CheckDetectSpan(float _deltaTime);		// ドアが開ききった後の検知チェック
+	int m_detectNum;							// 検知範囲内いるプレイヤー、敵の総和
+
+	DOOR_STATE m_doorState;						// ドアの状態
+
+	TArray<AAutomaticDoorLever*> m_filterMatchLevers;	// (対応するレバー)m_doorFilterを保存する配列
+
+	void UpdateDoorState();						// ドアの状態更新
 
 	void UpdateDoorMove(float _deltaTime);		// ドアの更新
 
-	DOOR_STATE m_doorState;
+	void CheckDetectSpan(float _deltaTime);		// ドアが開ききった後の検知チェック
 
-	TArray<AAutomaticDoorLever*> m_filterMatchLevers;	// (対応するレバー)m_doorFilterを保存する配列
+public:
+	// ドア本体のスイッチの更新
+	void UpdateSwitchState(const bool _isLeverOn = true);
+
+	// ドアのフィルター番号を返す
+	int GetDoorFilter()const { return m_doorFilter; }
 };
