@@ -26,8 +26,12 @@ AAutomaticDoorMove::AAutomaticDoorMove()
 	, m_openTimeCount(0.0f)
 	, m_leftDoorMoveDirection(1.0f)
 	, m_distanceStartToEnd(0.0f)
+	, m_doorState(DOOR_STATE_CLOSED)
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	// 動的配列の初期化
+	m_filterMatchLevers.Reset();
 
 	// 検知用イベントボックス生成
 	m_pEventTriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("m_pEventTriggerBox"));
@@ -65,34 +69,84 @@ AAutomaticDoorMove::~AAutomaticDoorMove()
 void AAutomaticDoorMove::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	// ドアの初期位置を取得
-	m_leftDoorStartPosY = m_pLeftDoorComp->GetRelativeLocation().Y;
-	m_rightDoorStartPosY = m_pRightDoorComp->GetRelativeLocation().Y;
 
-	// ドアの始点から終点までの距離を計算
-	m_distanceStartToEnd = FMath::Abs(m_leftDoorEndPosY - m_leftDoorStartPosY);
+	//// フィルター番号が一致するレバー取得、保存
+	//TSubclassOf<AAutomaticDoorLever> findClass;
+	//findClass = AAutomaticDoorLever::StaticClass();
+	//TArray<AActor*> actors;
+	//UGameplayStatics::GetAllActorsOfClass(GetWorld(), findClass, actors);
 
-	// 左ドアの開くときの移動方向を設定(右ドアはこれを反転して利用)
-	m_leftDoorMoveDirection = FMath::Abs(m_leftDoorEndPosY) / m_leftDoorEndPosY;
+	//if (actors.Num() > 0)
+	//{
+	//	for (int idx = 0; idx < actors.Num(); ++idx)
+	//	{
+	//		AAutomaticDoorLever* pLever = Cast<AAutomaticDoorLever>(actors[idx]);
+	//		// レバーのフィルター番号がドア自身のフィルター番号と一致していれば配列に追加する
+	//		if (pLever->m_leverFilter == m_doorFilter)
+	//		{
+	//			m_filterMatchLevers.Add(pLever);
+	//		}
+	//	}
+	//	// ドアに対応するレバーがレベルに配置されていないためエラー
+	//	if (m_filterMatchLevers.Num() == 0)
+	//	{
+	//		UE_LOG(LogTemp, Error, TEXT("The corresponding lever is not installed on the level"));
+	//	}
+	//}
+	//// そもそもレバーが一つもレベルに配置されていないためエラー
+	//else
+	//{
+	//	UE_LOG(LogTemp, Error, TEXT("There is no lever installed on the level"));
+	//}
+	//
+	//// ドアの初期位置を取得
+	//m_leftDoorStartPosY = m_pLeftDoorComp->GetRelativeLocation().Y;
+	//m_rightDoorStartPosY = m_pRightDoorComp->GetRelativeLocation().Y;
+
+	//// ドアの始点から終点までの距離を計算
+	//m_distanceStartToEnd = FMath::Abs(m_leftDoorEndPosY - m_leftDoorStartPosY);
+
+	//// 左ドアの開くときの移動方向を設定(右ドアはこれを反転して利用)
+	//m_leftDoorMoveDirection = FMath::Abs(m_leftDoorEndPosY) / m_leftDoorEndPosY;
 }
 
 void AAutomaticDoorMove::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	UpdateDoorMove(DeltaTime);
-
-	CheckDetectSpan(DeltaTime);
 }
 
 void AAutomaticDoorMove::UpdateDoorMove(float _deltaTime)
 {
-	// 開閉フラグが立っていなければ処理しない
-	if (m_canMove == false)	return;
+	switch (m_doorState)
+	{
+	case DOOR_STATE_CLOSED:
+		// 検知フラグが立っていたら状態をOpeningへ
+		if (m_isOverlap)
+		{
+			m_doorState = DOOR_STATE_OPENING;
+			m_openTimeCount += _deltaTime;
+		}
+		break;
 
-	if (m_isOverlap || m_isOpening)	m_openTimeCount += _deltaTime;
-	else							m_openTimeCount -= _deltaTime;					
+	case DOOR_STATE_OPENED:
+		// 検知フラグが下がっていたら状態をClosingへ
+		if (!m_isOverlap)
+		{
+			m_doorState = DOOR_STATE_CLOSING;
+		}
+		break;
+
+	case DOOR_STATE_CLOSING:
+		m_openTimeCount -= _deltaTime;
+		break;
+
+	case DOOR_STATE_OPENING:
+		m_openTimeCount += _deltaTime;
+		break;
+
+	default:
+		break;
+	}
 
 	if (m_openTimeCount > m_openAndCloseTime)
 	{
@@ -107,6 +161,13 @@ void AAutomaticDoorMove::UpdateDoorMove(float _deltaTime)
 		m_canMove = false;
 	}
 
+	if (m_openTimeCount == m_openAndCloseTime)
+	{
+		m_openTimeCount = 0.0f;
+	}
+
+
+
 	// 左ドアの処理
 	float newLocationY = m_leftDoorStartPosY + ((m_distanceStartToEnd * m_openTimeCount) * m_leftDoorMoveDirection);
 	m_pLeftDoorComp->SetRelativeLocation(FVector(0, newLocationY, 0));
@@ -114,11 +175,6 @@ void AAutomaticDoorMove::UpdateDoorMove(float _deltaTime)
 	// 右ドアの処理
 	newLocationY = m_rightDoorStartPosY + ((m_distanceStartToEnd * m_openTimeCount) * m_leftDoorMoveDirection * -1.0f);
 	m_pRightDoorComp->SetRelativeLocation(FVector(0, newLocationY, 0));
-
-	if (m_openTimeCount == m_openAndCloseTime)
-	{
-		m_openTimeCount = 0.0f;
-	}
 }
 
 void AAutomaticDoorMove::CheckDetectSpan(float _deltaTime)
@@ -149,43 +205,29 @@ void AAutomaticDoorMove::CheckDetectSpan(float _deltaTime)
 
 void AAutomaticDoorMove::OnOverlapBegin(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComponent, int32 _otherBodyIndex, bool _bFromSweep, const FHitResult& _sweepResult)
 {
-	if (m_isOpened || m_isOpening) return;
-
-	// 検知内にいるActorがPlayerだったらレバーの状態のチェックを行う
-	if (_otherActor->ActorHasTag("Player"))
-	{
-		bool isLeverFind = false;		// 対応するレバーが存在しない時にドアが開くのを防ぐ用フラグ
-
-		m_isOverlap = true;				// プレイヤーが検知内に入っているフラグを立てる
-
-		for (TActorIterator<AAutomaticDoorLever> i(GetWorld()); i; ++i)
-		{
-			if (m_doorFilter == i->m_leverFilter)
-			{
-				isLeverFind = true;
-				m_isSwitchOn &= i->m_isLeverOn;
-
-				// 一つでもfalseだった時点で処理を抜ける
-				if (m_isSwitchOn == false)
-				{
-					m_isSwitchOn = true;
-					return;
-				}
-			}
-		}
-		// ドアに対応するレバーが存在し、その全てがONなら開けるフラグを立てる
-		if (isLeverFind)
-		{
-			m_canMove = true;
-			m_isOpening = true;
-		}
-	}
+	//// 検知したActorがPlayerかEnemyだったら
+	//if (_otherActor->ActorHasTag("Player") || _otherActor->ActorHasTag("Enemy"))
+	//{
+	//	// 対応するレバーの状態を確認
+	//	for (int idx = 0; idx < m_filterMatchLevers.Num(); ++idx)
+	//	{
+	//		// 一つでもレバーの状態がOFF(=false)ならreturn
+	//		if (m_filterMatchLevers[idx]->m_leverFilter == false)
+	//		{
+	//			return;
+	//		}
+	//	}
+	//	// 対応するレバー全ての状態がON(=true)なら検知フラグを立てる
+	//	m_isOverlap = true;
+	//}
 }
 
 void AAutomaticDoorMove::OnOverlapEnd(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComp, int32 _otherBodyIndex)
 {
-	if (_otherActor->ActorHasTag("Player"))
-	{
-		m_isOverlap = false;
-	}
+	//// 検知したActorがPlayerかEnemyだったら
+	//if (_otherActor->ActorHasTag("Player") || _otherActor->ActorHasTag("Enemy"))
+	//{
+	//	// 検知フラグを下げる
+	//	m_isOverlap = false;
+	//}
 }
