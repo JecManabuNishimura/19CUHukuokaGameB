@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28315.86
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Engine", "Engine", "{3B4B7BE4-E035-42C3-84A9-DCEA4275491D}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Engine", "Engine", "{521F9749-15CE-47A9-8CA4-0BA4647F7721}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Games", "Games", "{5DC9297B-50C1-4714-A0BF-FD29B4EFDF40}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Games", "Games", "{4E319E54-4252-491A-BEEC-9BC847B0CF2A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hukuokaGame", "Intermediate\ProjectFiles\hukuokaGame.vcxproj", "{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UE4", "Intermediate\ProjectFiles\UE4.vcxproj", "{A7EF3536-416F-45E9-B53B-BB5F9C0A7D15}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Visualizers", "Visualizers", "{673184DF-1194-4C8E-BB3B-AA698B34E0D9}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Visualizers", "Visualizers", "{6AA580DC-DE82-4605-A176-5B8EB51A4C08}"
 	ProjectSection(SolutionItems) = preProject
 		F:\UE_4.24\Engine\Extras\VisualStudioDebugging\UE4.natvis = F:\UE_4.24\Engine\Extras\VisualStudioDebugging\UE4.natvis
 	EndProjectSection
@@ -81,7 +81,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{A7EF3536-416F-45E9-B53B-BB5F9C0A7D15} = {3B4B7BE4-E035-42C3-84A9-DCEA4275491D}
-		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A} = {5DC9297B-50C1-4714-A0BF-FD29B4EFDF40}
+		{A7EF3536-416F-45E9-B53B-BB5F9C0A7D15} = {521F9749-15CE-47A9-8CA4-0BA4647F7721}
+		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A} = {4E319E54-4252-491A-BEEC-9BC847B0CF2A}
 	EndGlobalSection
 EndGlobal

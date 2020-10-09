@@ -7,9 +7,9 @@
 
 //-------------------------------------------------------------------
 // ファイル		：PlayerCharacter.cpp
-// 概要			：VRカメラの作成
 // 作成者		：19CU0217 朱適
-// 作成日		：2020/08/18
+// 更新日		：2020/08/18		VRカメラの作成
+// 更新日		：2020/10/09		ゲームオーバーに遷移の機能を追加
 //-------------------------------------------------------------------
 
 //-------------------------------------------------------------------
@@ -32,6 +32,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "MotionControllerComponent.h"
 // 以上の6点はVR用インクルード by_Rin
+#include "LevelSwitchHelper.h"	// マップ遷移用クラス
+
 
 #define LASERLENGTH 300.0f		// VR用 LASERの長さ(手の長さを代表すること) by_Rin
 
@@ -565,6 +567,12 @@ void APlayerCharacter::UpdateVRLaser()
 // リスポーン関数(作成者：尾崎)
 void APlayerCharacter::Respawn()
 {
+	//--- ゲームオーバーに遷移の追加 by 朱適
+	if (GetWorld()->GetName() == "ProtoType")
+	{
+		LevelSwitchHelper::OpenGameOverLevelMap(this);
+	}
+
 	// フラグの初期化
 	isFound = false;
 
