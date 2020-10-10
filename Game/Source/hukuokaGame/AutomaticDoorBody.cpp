@@ -6,9 +6,6 @@
 //-------------------------------------------------------------------
 
 #include "AutomaticDoorBody.h"
-#include "AutomaticDoorLever.h"
-#include "Components/BoxComponent.h"
-#include "Components/StaticMeshComponent.h"
 #include "Engine.h"				// GEngine‚ğŒÄ‚Ño‚·‚½‚ß‚Ìƒwƒbƒ_
 
 AAutomaticDoorBody::AAutomaticDoorBody()

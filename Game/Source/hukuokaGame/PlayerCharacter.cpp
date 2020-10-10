@@ -40,6 +40,7 @@ APlayerCharacter::APlayerCharacter()
 	: m_playerThresholdToRun(1.0f)
 	, m_playerRunSpeed(10.0f)
 	, m_playerWalkSpeed(5.0f)
+	, player_footstep_span_(200.0f)
 	, m_cameraPitchLimitMin(-89.0f)
 	, m_cameraPitchLimitMax(89.0f)
 	, m_pCamera(NULL)
@@ -49,6 +50,8 @@ APlayerCharacter::APlayerCharacter()
 	, m_cameraRotateSpeed(100.0f)
 	, m_CheckToActorRayRange(1300.0f)
 	, m_isStanding(true)
+	, sound_player_footstep_(NULL)
+	, count_second_for_footstep_(0.0f)
 	, m_playerMoveSpeed(0.0f)
 	, m_playerMoveInput(FVector2D::ZeroVector)
 	, m_cameraRotateInput(FVector2D::ZeroVector)
@@ -75,6 +78,10 @@ APlayerCharacter::APlayerCharacter()
 
 	// カメラ原点にカメラをアタッチ
 	m_pCamera->SetupAttachment(m_pCameraBase);
+
+	// 足音のSEを検索、保存
+	ConstructorHelpers::FObjectFinder<USoundBase>find_sound(TEXT("/Game/SE/Player_Footstep_Cue"));
+	if (find_sound.Succeeded()) { sound_player_footstep_ = find_sound.Object; }
 }
 
 // デストラクタ
@@ -336,12 +343,17 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// しゃがんでいた場合移動速度を1/2に
 	if (!m_isStanding)
 	{
-		m_playerMoveSpeed /= 2.0f;
+		m_playerMoveSpeed /= 3.0f;
 	}
 
+	// 足音を立てる
+	MakeFootstep(_deltaTime, m_playerMoveSpeed, m_isStanding);
+
+	m_playerMoveSpeed *= _deltaTime;
+
 	// 移動量加算
-	newLocation += GetActorForwardVector() * (m_playerMoveSpeed * m_playerMoveInput.X * _deltaTime);
-	newLocation += GetActorRightVector() * (m_playerMoveSpeed * m_playerMoveInput.Y * _deltaTime);
+	newLocation += GetActorForwardVector() * (m_playerMoveSpeed * m_playerMoveInput.X);
+	newLocation += GetActorRightVector() * (m_playerMoveSpeed * m_playerMoveInput.Y);
 
 	SetActorLocation(newLocation);
 
@@ -421,6 +433,50 @@ void APlayerCharacter::CheckItem()
 		}
 		m_pCheckingItem = NULL;
 	}
+}
+
+// 足音を鳴らす
+void APlayerCharacter::MakeFootstep(const float _deltatime, const float _player_move_speed, const bool _is_standing)
+{
+	if (_is_standing)
+	{
+		count_second_for_footstep_ += _player_move_speed * _deltatime;
+	}
+	else
+	{
+		count_second_for_footstep_ += _player_move_speed * _deltatime * 2.0f;
+	}
+
+	if (count_second_for_footstep_ >= player_footstep_span_)
+	{
+		if (sound_player_footstep_)
+		{
+			// 音量調節
+			float volume = _player_move_speed / m_playerRunSpeed;
+
+			// ピッチ調節
+			float pitch = 1.0f;
+			if (!_is_standing) { pitch = 0.8f; } 
+
+			// 再生
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_player_footstep_, GetActorLocation(), volume, pitch, 0.0f);
+		}
+		count_second_for_footstep_ = 0.0f;
+
+	}
+}
+
+// 始点と終点を結んだ直線に存在する壁の遮音値を返す
+float APlayerCharacter::ReturnSoundInsulation(const FVector* _start_pos, const FVector* _end_pos)
+{
+
+	return 0.0f;
+
+	// トレースに必要な変数を宣言
+	FHitResult outHit;
+
+//	if (GetWorld()->LineTraceSingleByChannel(outHit, _start_pos, _end_pos, ECC_GameTraceChannel3))
+
 }
 
 // ベクトルの長さを返す

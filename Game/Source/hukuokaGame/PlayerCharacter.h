@@ -73,6 +73,12 @@ private:
 	// プレイヤーの移動処理
 	void UpdatePlayerMove(const float _deltaTime);
 
+	// 足音を鳴らす
+	void MakeFootstep(const float _deltatime, const float _player_move_spee, const bool _is_standing);
+
+	// 始点と終点を結んだ直線に存在する壁の遮音値を返す
+	float ReturnSoundInsulation(const FVector* _start_pos, const FVector* _end_pos);
+
 	// アイテムチェック
 	void CheckItem();
 
@@ -163,6 +169,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Move")
 		float m_playerWalkSpeed;				// プレイヤーの走る速度
 
+	UPROPERTY(EditAnyWhere, Category = "Move")
+		float player_footstep_span_;			// プレイヤーの足音の間隔(プレイヤーの速度 / 間隔 = 1秒間に鳴る足音の数)
+
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_cameraPitchLimitMin;			// カメラのPitch制限最小角度
 
@@ -173,7 +182,7 @@ private:
 		class USceneComponent* m_pCameraBase;	// カメラの原点
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-		class UCameraComponent* m_pCamera;			// カメラ
+		class UCameraComponent* m_pCamera;		// カメラ
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
@@ -194,6 +203,10 @@ private:
 	bool isVRCamera;							// VRカメラかどうか
 
 	bool m_isStanding;							// 立っているかどうかのフラグ
+
+	USoundBase* sound_player_footstep_;
+
+	float count_second_for_footstep_;
 
 	float m_playerMoveSpeed;					// プレイヤーの移動速度
 
