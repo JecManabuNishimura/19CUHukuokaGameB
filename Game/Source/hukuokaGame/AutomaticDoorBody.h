@@ -9,12 +9,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/BoxComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "AutomaticDoorLever.h"
 #include "AutomaticDoorBody.generated.h"
-
-// ëOï˚êÈåæ
-class UBoxComponent;
-class UStaticMeshComponent;
-class AAutomaticDoorLever;
 
 UCLASS()
 class HUKUOKAGAME_API AAutomaticDoorBody : public AActor

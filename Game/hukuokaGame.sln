@@ -39,8 +39,7 @@ Global
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.DebugGame Editor|Win32.ActiveCfg = Invalid|Win32
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.DebugGame Editor|Win64.ActiveCfg = DebugGame_Editor|x64
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.DebugGame Editor|Win64.Build.0 = DebugGame_Editor|x64
-		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.DebugGame|IOS.ActiveCfg = IOS_DebugGame|Win32
-		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.DebugGame|IOS.Build.0 = IOS_DebugGame|Win32
+		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.DebugGame|IOS.ActiveCfg = DebugGame|Win32
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.DebugGame|Win32.ActiveCfg = DebugGame|Win32
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.DebugGame|Win32.Build.0 = DebugGame|Win32
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.DebugGame|Win64.ActiveCfg = DebugGame|x64
@@ -49,14 +48,12 @@ Global
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Development Editor|Win32.ActiveCfg = Invalid|Win32
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Development Editor|Win64.ActiveCfg = Development_Editor|x64
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Development Editor|Win64.Build.0 = Development_Editor|x64
-		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Development|IOS.ActiveCfg = IOS_Development|Win32
-		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Development|IOS.Build.0 = IOS_Development|Win32
+		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Development|IOS.ActiveCfg = Development|Win32
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Development|Win32.ActiveCfg = Development|Win32
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Development|Win32.Build.0 = Development|Win32
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Development|Win64.ActiveCfg = Development|x64
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Development|Win64.Build.0 = Development|x64
-		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Shipping|IOS.ActiveCfg = IOS_Shipping|Win32
-		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Shipping|IOS.Build.0 = IOS_Shipping|Win32
+		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Shipping|IOS.ActiveCfg = Shipping|Win32
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Shipping|Win32.ActiveCfg = Shipping|Win32
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Shipping|Win32.Build.0 = Shipping|Win32
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A}.Shipping|Win64.ActiveCfg = Shipping|x64
@@ -81,7 +78,10 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{A7EF3536-416F-45E9-B53B-BB5F9C0A7D15} = {521F9749-15CE-47A9-8CA4-0BA4647F7721}
 		{8AE87CDD-7A04-478C-8AFF-4AB8AED2609A} = {4E319E54-4252-491A-BEEC-9BC847B0CF2A}
+		{A7EF3536-416F-45E9-B53B-BB5F9C0A7D15} = {521F9749-15CE-47A9-8CA4-0BA4647F7721}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CB0AC9E9-BE3E-495D-B9BB-5EF9DA9C0180}
 	EndGlobalSection
 EndGlobal
