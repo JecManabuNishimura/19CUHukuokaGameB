@@ -27,6 +27,4 @@ public:
 
 	// プレイヤーにチェックされたら呼ばれる(作動)
 	virtual void CheckedByPlayer();
-
-public:
 };

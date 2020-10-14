@@ -35,3 +35,5 @@ void AItemCanPickup::CheckedByPlayer()
 	// ƒŒƒxƒ‹ã‚©‚çŽ©g‚ðÁ‚·
 	this->Destroy();
 }
+
+
