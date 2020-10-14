@@ -10,6 +10,7 @@
 // 作成者		：19CU0217 朱適
 // 更新日		：2020/08/18		VRカメラの作成
 // 更新日		：2020/10/09		ゲームオーバーに遷移の機能を追加
+// 更新日		：2020/10/14		白枠の制御の追加
 //-------------------------------------------------------------------
 
 //-------------------------------------------------------------------
@@ -411,12 +412,16 @@ void APlayerCharacter::CheckItem()
 				{
 					// 前フレームでチェックしていたオブジェクトの被チェックを無効に
 					m_pPrevCheckItem->m_isChecked = false;
+					// 白枠を非表示にする	by	朱適
+					m_pPrevCheckItem->SetOutline(false);
 
 					// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 					OnItemCheckEndEventDispatcher.Broadcast();
 				}
 				// 新しくチェックしたオブジェクトの被チェックを有効に
 				m_pCheckingItem->m_isChecked = true;
+				// 白枠を表示にする		by	朱適
+				m_pCheckingItem->SetOutline(true);
 
 				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートに追加)
 				OnItemCheckBeginEventDispatcher.Broadcast();
@@ -429,7 +434,8 @@ void APlayerCharacter::CheckItem()
 		if (m_pPrevCheckItem != NULL)
 		{
 			m_pPrevCheckItem->m_isChecked = false;
-
+			// 白枠を非表示にする	by	朱適
+			m_pPrevCheckItem->SetOutline(false);
 			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 			OnItemCheckEndEventDispatcher.Broadcast();
 		}
