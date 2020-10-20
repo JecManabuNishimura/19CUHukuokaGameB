@@ -48,13 +48,16 @@ APlayerCharacter::APlayerCharacter()
 	, m_cameraPitchLimitMax(89.0f)
 	, m_pCamera(NULL)
 	, m_eyeLevelWhenStanding(170.0f)
+	, camera_shaking_value(10.0f)
 	, m_reverseInputPitch(false)
 	, m_reverseInputYaw(false)
 	, m_cameraRotateSpeed(100.0f)
 	, m_CheckToActorRayRange(1300.0f)
 	, m_isStanding(true)
 	, sound_player_footstep_(NULL)
-	, count_second_for_footstep_(0.0f)
+	, count_for_footstep_(0.0f)
+	, eyelevel_for_camera_shaking(0.0f)
+	, can_make_footstep(true)
 	, m_playerMoveSpeed(0.0f)
 	, m_playerMoveInput(FVector2D::ZeroVector)
 	, m_cameraRotateInput(FVector2D::ZeroVector)
@@ -183,9 +186,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// 地面のとの距離を測りプレイヤーの高さを設定
-	SetEyeLevel(DeltaTime);
-
 	// カメラ(Pitch)の更新
 	UpdateCameraPitch(DeltaTime);
 
@@ -244,45 +244,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	InputComponent->BindAction("Smartphone_Shutter", IE_Pressed, this, &APlayerCharacter::ChangeShutterFlag);
 }
 
-// 地面との距離を測りプレイヤーの高さを設定
-void APlayerCharacter::SetEyeLevel(const float _deltaTime)
-{
-	// トレースに必要な変数を宣言
-	FHitResult outHit;
-
-	// 現在位置を取得
-	FVector startLocation = GetActorLocation();
-
-	if (GetWorld()->LineTraceSingleByChannel(outHit, startLocation, (startLocation + FVector(0.0f, 0.0f, -300.0f)), ECC_GameTraceChannel2))
-	{
-		// トレースがヒットしたZ座標を取得
-		float hitLocationZ = outHit.Location.Z;
-
-		// 座標設定の際、現在のZ座標の情報はいらないので0に変更
-		startLocation.Z = 0.0f;
-
-		// 立っていれば設定したアイレベルのまま
-		if (m_isStanding)
-		{
-			SetActorLocation(startLocation + FVector(0.0f, 0.0f, (hitLocationZ + m_eyeLevelWhenStanding)));
-			GEngine->AddOnScreenDebugMessage(13, _deltaTime, FColor::Green, TEXT("Player is Standing"));
-		}
-		// しゃがんでいれば設定したアイレベルの1/2の高さにする
-		else
-		{
-			SetActorLocation(startLocation + FVector(0, 0, (hitLocationZ + (m_eyeLevelWhenStanding / 2.0f))));
-			GEngine->AddOnScreenDebugMessage(13, _deltaTime, FColor::Green, TEXT("Player is Squatting"));
-		}
-
-		//--------------------------------------------------------------------------------------------------
-		// ログ
-		// ヒットしたオブジェクトの名前を表示TEX
-		//UE_LOG(LogClass, Log, TEXT("The Component Being Hit is: %s"), *outHit.GetActor()->GetName());
-		//UE_LOG(LogClass, Log, TEXT("Hit Z Location : %.2f"), outHit.Location.Z);
-		//--------------------------------------------------------------------------------------------------
-	}
-}
-
 // カメラ(Pitch)の更新
 void APlayerCharacter::UpdateCameraPitch(const float _deltaTime)
 {
@@ -318,8 +279,6 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
 
-	FVector newLocation = GetActorLocation();
-
 	// 移動量を決定
 	// 走る
 	if (vectorLength >= m_playerThresholdToRun)
@@ -340,48 +299,98 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 		m_playerMoveSpeed = 0.0f;
 	}
 
-	// ベクトルの正規化
-	NormalizedVector2D(vectorLength, &m_playerMoveInput);
-
 	// しゃがんでいた場合移動速度を1/2に
 	if (!m_isStanding)
 	{
-		m_playerMoveSpeed /= 3.0f;
+		m_playerMoveSpeed /= 2.0f;
 	}
 
-	// 足音を立てる
-	MakeFootstep(_deltaTime, m_playerMoveSpeed, m_isStanding);
+	// ベクトルの正規化
+	NormalizedVector2D(vectorLength, &m_playerMoveInput);
 
 	m_playerMoveSpeed *= _deltaTime;
 
-	// 移動量加算
-	newLocation += GetActorForwardVector() * (m_playerMoveSpeed * m_playerMoveInput.X);
-	newLocation += GetActorRightVector() * (m_playerMoveSpeed * m_playerMoveInput.Y);
+	// 地面との距離を測りプレイヤーの高さを設定
+	SetEyeLevel(_deltaTime, m_playerMoveSpeed);
 
-	SetActorLocation(newLocation);
+	AddMovementInput(GetActorForwardVector(), (m_playerMoveSpeed * m_playerMoveInput.X));
+	AddMovementInput(GetActorRightVector(), (m_playerMoveSpeed * m_playerMoveInput.Y));
+}
 
-	//-----------------------------------------------------------------------------------------------------------------------------------------------------
-	//-----------------------------------------------------------------------------------------------------------------------------------------------------
-	// 入力値ログ
-	//UE_LOG(LogTemp, Log, TEXT("LeftStick(X, Y) = (%.2f, %.2f) RightStick(X, Y) = (%.2f, %.2f)"),
-	//	m_playerMoveInput.X, m_playerMoveInput.Y, m_cameraRotateInput.X, m_cameraRotateInput.Y);
+// 地面との距離を測りプレイヤーの高さを設定
+void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_move_speed)
+{
+	// プレイヤーの歩行による視線の縦揺れ
+	eyelevel_for_camera_shaking = ReturnCameraVerticalShaking(_deltaTime, _player_move_speed);
 
-	//// プレイヤーの現在のForwardVec
-	//UE_LOG(LogTemp, Log, TEXT("ForwardVec(X, Y, Z) : (%.2f, %.2f, %.2f)"),
-	//	GetActorForwardVector().X, GetActorForwardVector().Y, GetActorForwardVector().Z);
-	////// プレイヤーの現在のRightVec
-	//UE_LOG(LogTemp, Log, TEXT("RightVec(X, Y, Z) : (%.2f, %.2f, %.2f)"),
-	//	GetActorRightVector().X, GetActorRightVector().Y, GetActorRightVector().Z);
+	// 立っていればそのまましゃがんでいればアイレベルを1/2にして座標セット
+	if (m_isStanding)
+	{
+		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, (m_eyeLevelWhenStanding + eyelevel_for_camera_shaking)));
+	}
+	else
+	{
+		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ((m_eyeLevelWhenStanding * 0.5f) + eyelevel_for_camera_shaking)));
+	}
+}
 
-	//// 各ベクトルの移動量
-	//UE_LOG(LogTemp, Log, TEXT("forward : %.2f  right : %.2f"),
-	//	m_playerMoveSpeed * m_playerMoveInput.X, m_playerMoveSpeed * m_playerMoveInput.Y);
+// プレイヤーの歩行による視線の縦揺れ
+float APlayerCharacter::ReturnCameraVerticalShaking(const float _deltaTime, const float _player_move_speed)
+{
+	// 移動していなければデフォルトの目の高さへ移動する
+	if (_player_move_speed <= 0.0f)
+	{
+		if (count_for_footstep_ < player_footstep_span_)
+		{
+			count_for_footstep_ -= player_footstep_span_ * 0.1;
+		}
+		else
+		{
+			count_for_footstep_ += player_footstep_span_ * 0.1;
+		}
+	}
+	// 移動していれば移動量を加算
+	else
+	{
+		count_for_footstep_ += _player_move_speed;
+	}
 
-	//// ベクトルの長さログ
-	//UE_LOG(LogTemp, Log, TEXT("VectorLength is %.2f"),
-	//	ReturnVector2DLength(&m_playerMoveInput));
-	////-----------------------------------------------------------------------------------------------------------------------------------------------------
-	//-----------------------------------------------------------------------------------------------------------------------------------------------------
+	if (count_for_footstep_ >= player_footstep_span_ && can_make_footstep)
+	{
+		// 足音を立てる、許可フラグを下す
+		MakeFootstep(_deltaTime, _player_move_speed);
+		can_make_footstep = false;
+	}
+
+	// 範囲外ならリセット、足音許可フラグを立てる
+	if (count_for_footstep_ >= player_footstep_span_ * 2.0f || count_for_footstep_ < 0.0f)
+	{
+		count_for_footstep_ = 0.0f;
+		can_make_footstep = true;
+	}
+
+	float eyelevel = count_for_footstep_ * (180.0f / player_footstep_span_);
+	eyelevel = FMath::DegreesToRadians(eyelevel);
+	eyelevel = FMath::Cos(eyelevel);
+
+	// 補正
+	eyelevel += -1.0f;	// 0～-2
+	eyelevel *= 0.5f;	// 0～-1
+	eyelevel *= camera_shaking_value;	// 0～camera_shaking_value
+
+	return eyelevel;
+}
+
+// 足音を鳴らす
+void APlayerCharacter::MakeFootstep(const float _deltaTime, const float _player_move_speed)
+{
+	// 音量調節
+	float volume = _player_move_speed / (m_playerRunSpeed * _deltaTime);
+
+	// 再生
+	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_player_footstep_, GetActorLocation(), volume, 1.0f, 0.0f);
+
+	// MakeNoise()
 }
 
 void APlayerCharacter::CheckItem()
@@ -401,7 +410,6 @@ void APlayerCharacter::CheckItem()
 		// アイテム基本クラスにキャスト
 		m_pCheckingItem = Cast<AItemBase>(outHit.GetActor());
 
-		// キャストが成功していれば処理を続行
 		if (m_pCheckingItem != NULL)
 		{
 			// 1フレーム前のアイテムと違うなら更新
@@ -441,50 +449,6 @@ void APlayerCharacter::CheckItem()
 		}
 		m_pCheckingItem = NULL;
 	}
-}
-
-// 足音を鳴らす
-void APlayerCharacter::MakeFootstep(const float _deltatime, const float _player_move_speed, const bool _is_standing)
-{
-	if (_is_standing)
-	{
-		count_second_for_footstep_ += _player_move_speed * _deltatime;
-	}
-	else
-	{
-		count_second_for_footstep_ += _player_move_speed * _deltatime * 2.0f;
-	}
-
-	if (count_second_for_footstep_ >= player_footstep_span_)
-	{
-		if (sound_player_footstep_)
-		{
-			// 音量調節
-			float volume = _player_move_speed / m_playerRunSpeed;
-
-			// ピッチ調節
-			float pitch = 1.0f;
-			if (!_is_standing) { pitch = 0.8f; } 
-
-			// 再生
-			UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_player_footstep_, GetActorLocation(), volume, pitch, 0.0f);
-		}
-		count_second_for_footstep_ = 0.0f;
-
-	}
-}
-
-// 始点と終点を結んだ直線に存在する壁の遮音値を返す
-float APlayerCharacter::ReturnSoundInsulation(const FVector* _start_pos, const FVector* _end_pos)
-{
-
-	return 0.0f;
-
-	// トレースに必要な変数を宣言
-	FHitResult outHit;
-
-//	if (GetWorld()->LineTraceSingleByChannel(outHit, _start_pos, _end_pos, ECC_GameTraceChannel3))
-
 }
 
 // ベクトルの長さを返す

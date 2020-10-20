@@ -61,9 +61,6 @@ public:
 	void OnResetVR();
 
 private:
-	// 地面のとの距離を測りプレイヤーの高さを設定
-	void SetEyeLevel(const float _deltaTime);
-
 	// カメラ(Pitch)の更新
 	void UpdateCameraPitch(const float _deltaTime);
 
@@ -73,11 +70,14 @@ private:
 	// プレイヤーの移動処理
 	void UpdatePlayerMove(const float _deltaTime);
 
-	// 足音を鳴らす
-	void MakeFootstep(const float _deltatime, const float _player_move_spee, const bool _is_standing);
+	// 地面のとの距離を測りプレイヤーの高さを設定
+	void SetEyeLevel(const float _deltaTime, const float _player_move_speed);
 
-	// 始点と終点を結んだ直線に存在する壁の遮音値を返す
-	float ReturnSoundInsulation(const FVector* _start_pos, const FVector* _end_pos);
+	// プレイヤーの歩行による視線の縦揺れ
+	float ReturnCameraVerticalShaking(const float _deltaTime, const float _player_move_speed);
+
+	// 足音を鳴らす
+	void MakeFootstep(const float _deltaTime, const float _player_move_speed);
 
 	// アイテムチェック
 	void CheckItem();
@@ -188,6 +188,9 @@ private:
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
+		float camera_shaking_value;				// 歩行時のカメラの揺れ具合
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
 		bool m_reverseInputPitch;				// Pitch操作反転
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
@@ -206,7 +209,10 @@ private:
 
 	USoundBase* sound_player_footstep_;
 
-	float count_second_for_footstep_;
+	float count_for_footstep_;
+	float eyelevel_for_camera_shaking;
+
+	bool can_make_footstep;
 
 	float m_playerMoveSpeed;					// プレイヤーの移動速度
 
