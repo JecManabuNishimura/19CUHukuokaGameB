@@ -34,6 +34,7 @@
 #include "MotionControllerComponent.h"
 // 以上の6点はVR用インクルード by_Rin
 #include "LevelSwitchHelper.h"	// マップ遷移用クラス
+#include "GameFramework/Actor.h" // makeNoise用
 
 
 #define LASERLENGTH 300.0f		// VR用 LASERの長さ(手の長さを代表すること) by_Rin
@@ -386,11 +387,11 @@ void APlayerCharacter::MakeFootstep(const float _deltaTime, const float _player_
 {
 	// 音量調節
 	float volume = _player_move_speed / (m_playerRunSpeed * _deltaTime);
-
+	
 	// 再生
 	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_player_footstep_, GetActorLocation(), volume, 1.0f, 0.0f);
 
-	// MakeNoise()
+	MakeNoise(volume, this, this->GetActorLocation(), 1.0f);
 }
 
 void APlayerCharacter::CheckItem()

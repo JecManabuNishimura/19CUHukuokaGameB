@@ -258,4 +258,6 @@ public:
 		void SetIsFound(const bool _flag) { isFound = _flag; }	// 見つかった場合にisFoundを変える関数(作成者：尾崎)
 
 	void Respawn();	// リスポーンする関数(作成者：尾崎)
+
+	//UFUNCTION(BlueprintCallable, Category = "PlayerMakeNoise")
 };
