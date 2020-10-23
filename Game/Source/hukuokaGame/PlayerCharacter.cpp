@@ -266,8 +266,34 @@ void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 	// 現在のプレイヤーの回転情報を取得
 	FRotator newRotationPlayer = GetActorRotation();
 	
-	// Yaw(プレイヤーを回転させる)
-	newRotationPlayer.Yaw += m_cameraRotateInput.X * m_cameraRotateSpeed * _deltaTime;
+
+	// VR's turning by_Rin
+	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
+	{
+	
+		if (UHeadMountedDisplayFunctionLibrary::HasValidTrackingPosition())
+		{
+			FRotator HMDRotation;
+			FVector HMDLocation;
+			UHeadMountedDisplayFunctionLibrary::GetOrientationAndPosition(HMDRotation, HMDLocation);
+
+			// need to test these two
+			// newRotationPlayer.Yaw = HMDRotation.Yaw;
+			newRotationPlayer.Yaw = ( HMDRotation.Yaw - newRotationPlayer.Yaw) *_deltaTime ;
+		} // end if()
+		else
+		{ 
+			GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Red, TEXT("Can't Track the HMD In [UpdateCamera__Yaw]"));
+
+		} // end else
+
+	} // end if()
+	else
+	{
+		// Yaw(プレイヤーを回転させる)		masui
+		newRotationPlayer.Yaw += m_cameraRotateInput.X * m_cameraRotateSpeed * _deltaTime;
+
+	}
 
 	// プレイヤーに回転情報を設定
 	SetActorRotation(newRotationPlayer);
@@ -279,24 +305,33 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
 
+	// GEngine->AddOnScreenDebugMessage(30, 10.0f, FColor::Yellow, FString::SanitizeFloat(vectorLength));
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("vel: %s"), *GetCharacterMovement()->Velocity.ToString()));
+	GetCharacterMovement()->MaxAcceleration = 400.f;
+
 	// 移動量を決定
 	// 走る
-	if (vectorLength >= m_playerThresholdToRun)
+	if (vectorLength >= 0.5f)
 	{
 		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Running"));
 		m_playerMoveSpeed = m_playerRunSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = 400.f;
 	}
 	// 歩く
-	else if (vectorLength > 0.0f)
+	else if (vectorLength > 0.0f && vectorLength < 0.5f)
 	{
 		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Walking"));
 		m_playerMoveSpeed = m_playerWalkSpeed;
+		GetCharacterMovement()->MaxWalkSpeed = 250.f;
+
+
 	}
 	// 止まる
 	else
 	{
 		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Stop"));
 		m_playerMoveSpeed = 0.0f;
+		GetCharacterMovement()->MaxWalkSpeed = 250.f;
 	}
 
 	// しゃがんでいた場合移動速度を1/2に
@@ -308,13 +343,29 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// ベクトルの正規化
 	NormalizedVector2D(vectorLength, &m_playerMoveInput);
 
-	m_playerMoveSpeed *= _deltaTime;
+	//m_playerMoveSpeed *= _deltaTime;
+
+	// player's speed
+	 GEngine->AddOnScreenDebugMessage(30, 10.0f, FColor::Purple, FString::SanitizeFloat(GetCharacterMovement()->Velocity.Size()));
+
+	
 
 	// 地面との距離を測りプレイヤーの高さを設定
-	SetEyeLevel(_deltaTime, m_playerMoveSpeed);
+	SetEyeLevel(_deltaTime, (m_playerMoveSpeed* _deltaTime));
 
-	AddMovementInput(GetActorForwardVector(), (m_playerMoveSpeed * m_playerMoveInput.X));
-	AddMovementInput(GetActorRightVector(), (m_playerMoveSpeed * m_playerMoveInput.Y));
+
+	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
+	{
+		AddMovementInput(GetActorForwardVector(), (m_playerMoveSpeed * m_playerMoveInput.X));
+		AddMovementInput(GetActorRightVector(), (m_playerMoveSpeed * m_playerMoveInput.Y));
+
+	} // end if()
+	else
+	{
+		// masui
+		AddMovementInput(GetActorForwardVector(), (m_playerMoveSpeed * m_playerMoveInput.X));
+		AddMovementInput(GetActorRightVector(), (m_playerMoveSpeed * m_playerMoveInput.Y));
+	} // end else
 }
 
 // 地面との距離を測りプレイヤーの高さを設定
