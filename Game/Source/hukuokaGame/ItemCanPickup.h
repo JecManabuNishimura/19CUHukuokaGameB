@@ -8,8 +8,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PlayerCharacter.h"
 #include "ItemBase.h"
 #include "ItemCanPickup.generated.h"
+
 
 UCLASS()
 class HUKUOKAGAME_API AItemCanPickup : public AItemBase
@@ -21,6 +23,12 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+private:
+	APlayerCharacter* player_character;
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0, ClampMax = 7))
+		int cardkey_filter;
 
 public:
 	virtual void Tick(float DeltaTime) override;

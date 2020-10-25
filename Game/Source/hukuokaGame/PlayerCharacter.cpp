@@ -41,13 +41,15 @@
 
 // コンストラクタ
 APlayerCharacter::APlayerCharacter()
-	: m_playerThresholdToRun(1.0f)
+	: player_state(0)
+	, m_playerThresholdToRun(1.0f)
 	, m_playerRunSpeed(10.0f)
 	, m_playerWalkSpeed(5.0f)
 	, player_footstep_span_(200.0f)
 	, m_cameraPitchLimitMin(-89.0f)
 	, m_cameraPitchLimitMax(89.0f)
 	, m_pCamera(NULL)
+	, sound_player_footstep_(NULL)
 	, m_eyeLevelWhenStanding(170.0f)
 	, camera_shaking_value(10.0f)
 	, m_reverseInputPitch(false)
@@ -55,7 +57,6 @@ APlayerCharacter::APlayerCharacter()
 	, m_cameraRotateSpeed(100.0f)
 	, m_CheckToActorRayRange(1300.0f)
 	, m_isStanding(true)
-	, sound_player_footstep_(NULL)
 	, count_for_footstep_(0.0f)
 	, eyelevel_for_camera_shaking(0.0f)
 	, can_make_footstep(true)
@@ -85,10 +86,6 @@ APlayerCharacter::APlayerCharacter()
 
 	// カメラ原点にカメラをアタッチ
 	m_pCamera->SetupAttachment(m_pCameraBase);
-
-	// 足音のSEを検索、保存
-	ConstructorHelpers::FObjectFinder<USoundBase>find_sound(TEXT("/Game/SE/Player_Footstep_Cue"));
-	if (find_sound.Succeeded()) { sound_player_footstep_ = find_sound.Object; }
 }
 
 // デストラクタ
@@ -198,6 +195,21 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	// アイテムのチェック
 	CheckItem();
+
+	FString flag = "";
+	for (int i = 0; i < 8; ++i)
+	{
+		if (((1 << i) & player_state) != 0)
+		{
+			flag += "T";
+		}
+		else
+		{
+			flag += "F";
+		}
+	}
+
+	GEngine->AddOnScreenDebugMessage(22, DeltaTime, FColor::Green, FString::Printf(TEXT("%s"), *flag));
 
 	// ===========  VR Motion Controller's Laser Update by_Rin ===========
 	// 今はVRモード?
@@ -389,7 +401,7 @@ void APlayerCharacter::MakeFootstep(const float _deltaTime, const float _player_
 	float volume = _player_move_speed / (m_playerRunSpeed * _deltaTime);
 	
 	// 再生
-	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_player_footstep_, GetActorLocation(), volume, 1.0f, 0.0f);
+	if (sound_player_footstep_ != NULL)UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_player_footstep_, GetActorLocation(), volume, 1.0f, 0.0f);
 
 	MakeNoise(volume, this, this->GetActorLocation(), 1.0f);
 }
@@ -421,6 +433,7 @@ void APlayerCharacter::CheckItem()
 				{
 					// 前フレームでチェックしていたオブジェクトの被チェックを無効に
 					m_pPrevCheckItem->m_isChecked = false;
+
 					// 白枠を非表示にする	by	朱適
 					m_pPrevCheckItem->SetOutline(false);
 
@@ -429,6 +442,7 @@ void APlayerCharacter::CheckItem()
 				}
 				// 新しくチェックしたオブジェクトの被チェックを有効に
 				m_pCheckingItem->m_isChecked = true;
+
 				// 白枠を表示にする		by	朱適
 				m_pCheckingItem->SetOutline(true);
 
@@ -443,8 +457,10 @@ void APlayerCharacter::CheckItem()
 		if (m_pPrevCheckItem != NULL)
 		{
 			m_pPrevCheckItem->m_isChecked = false;
+
 			// 白枠を非表示にする	by	朱適
 			m_pPrevCheckItem->SetOutline(false);
+
 			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 			OnItemCheckEndEventDispatcher.Broadcast();
 		}

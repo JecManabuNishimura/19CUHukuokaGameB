@@ -56,12 +56,6 @@ void AAutomaticDoorLever::BeginPlay()
 void AAutomaticDoorLever::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	// プレイヤーにチェックされていたら
-	if (m_isChecked)
-	{
-		// メッシュを白くする
-	}
 }
 
 // プレイヤーにチェックされたら呼ばれる(作動：状態反転)

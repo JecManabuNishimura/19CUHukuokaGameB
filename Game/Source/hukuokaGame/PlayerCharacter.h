@@ -149,6 +149,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Return State")
 		FString ReturnCheckingItemCommandName() const;
 
+	unsigned char player_state;
+
 private:
 	// イベントディスパッチャー定義
 	// プレイヤーの視線がCanCheckアイテムに当たった時
@@ -184,6 +186,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		class UCameraComponent* m_pCamera;		// カメラ
 
+	UPROPERTY(EditAnywhere)
+		USoundBase* sound_player_footstep_;
+
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
 
@@ -206,8 +211,6 @@ private:
 	bool isVRCamera;							// VRカメラかどうか
 
 	bool m_isStanding;							// 立っているかどうかのフラグ
-
-	USoundBase* sound_player_footstep_;
 
 	float count_for_footstep_;
 	float eyelevel_for_camera_shaking;
