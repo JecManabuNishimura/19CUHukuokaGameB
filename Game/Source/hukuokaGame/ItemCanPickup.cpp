@@ -8,6 +8,8 @@
 #include "ItemCanPickup.h"
 
 AItemCanPickup::AItemCanPickup()
+	: player_character(NULL)
+	, cardkey_filter(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -16,22 +18,21 @@ AItemCanPickup::AItemCanPickup()
 void AItemCanPickup::BeginPlay()
 {
 	Super::BeginPlay();
+
+	player_character = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 }
 
 void AItemCanPickup::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	// プレイヤーにチェックされていたら
-	if (m_isChecked)
-	{
-		// メッシュを白くする
-	}
 }
 
 // プレイヤーにチェックされたら呼ばれる(作動：状態反転)
 void AItemCanPickup::CheckedByPlayer()
 {
+	// 対応するフラグを立てる
+	player_character->player_state = player_character->player_state | (1 << cardkey_filter);
+
 	// レベル上から自身を消す
 	this->Destroy();
 }
