@@ -104,9 +104,9 @@ private:
 	void PlayerMoveY(float _axisValue);
 
 	// プレイヤーアクション：立ちあがる
-	void PlayerStand() { m_isStanding = true; }
+	void PlayerStand();
 	// プレイヤーアクション：しゃがむ
-	void PlayerSquat() { m_isStanding = false; }
+	void PlayerSquat();
 
 	// プレイヤーアクション：拾う、調べる、作動させる
 	void CheckToActor();
@@ -183,6 +183,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		class UCameraComponent* m_pCamera;		// カメラ
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (by_林)  test
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ

@@ -20,6 +20,7 @@
 // 作成日		：2020/08/28	VRモーションコントローラーの対応
 // 更新日		：2020/09/06	VRのrayの作成
 //				：2020/09/19	VRのスマートフォン作成
+//				：2020/10/20	Player移動としゃがむの調整
 //-------------------------------------------------------------------
 
 
@@ -73,17 +74,45 @@ APlayerCharacter::APlayerCharacter()
 	// デフォルトプレイヤーとして設定
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 
+	// スプリングアームのオブジェクトを生成
+	m_pSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("m_pSpringArm"));
+
+	m_pSpringArm->SetupAttachment(RootComponent);
+
+	m_pSpringArm->TargetArmLength = 400.f;
+
+	// カメラの子リジョンテストを行うかを設定
+	m_pSpringArm->bDoCollisionTest = false;
+	// カメラ追従ラグを使うかを設定
+	m_pSpringArm->bEnableCameraLag = true;
+
+	// カメラ追従ラグの速度を設定
+	m_pSpringArm->CameraLagSpeed = 20.f;
+
+
 	// カメラ原点の生成
 	m_pCameraBase = CreateDefaultSubobject<USceneComponent>(TEXT("VROrigin"));
 
 	// カメラを生成
 	m_pCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("m_pCamera"));
 
+
+	FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
+
+	// m_pCameraBase->AttachToComponent(m_pSpringArm, AttachRules);
+
+	m_pCameraBase->SetupAttachment(m_pSpringArm, USpringArmComponent::SocketName);
+
 	// カプセルコライダーにカメラ原点をアタッチ
-	m_pCameraBase->SetupAttachment(RootComponent);
+	// m_pCameraBase->SetupAttachment(RootComponent);
+			
 
 	// カメラ原点にカメラをアタッチ
 	m_pCamera->SetupAttachment(m_pCameraBase);
+
+
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	GetCharacterMovement()->CrouchedHalfHeight = 40.f;
 
 	// 足音のSEを検索、保存
 	ConstructorHelpers::FObjectFinder<USoundBase>find_sound(TEXT("/Game/SE/Player_Footstep_Cue"));
@@ -305,40 +334,67 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
 
+	float abcc = -1.1f;
+	abcc = GetCharacterMovement()->CrouchedHalfHeight;
+
+
+	GEngine->AddOnScreenDebugMessage(1, 5.0f, FColor::Yellow, FString::SanitizeFloat(abcc));
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("tall: %s"), *m_pCamera->GetComponentToWorld().GetLocation().ToString()));
+	
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("---- camera Height: %s"), *m_pSpringArm->GetComponentLocation().ToString()));
+
+
+
+	if (abcc != -1.1f)
+	{
+		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT(" crouching")));
+
+	}
+
+
+
 	// GEngine->AddOnScreenDebugMessage(30, 10.0f, FColor::Yellow, FString::SanitizeFloat(vectorLength));
 	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("vel: %s"), *GetCharacterMovement()->Velocity.ToString()));
-	GetCharacterMovement()->MaxAcceleration = 400.f;
+	GetCharacterMovement()->MaxAcceleration = 500.f;
 
 	// 移動量を決定
-	// 走る
-	if (vectorLength >= 0.5f)
+	if (m_isStanding == true)
 	{
-		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Running"));
-		m_playerMoveSpeed = m_playerRunSpeed;
-		GetCharacterMovement()->MaxWalkSpeed = 400.f;
-	}
-	// 歩く
-	else if (vectorLength > 0.0f && vectorLength < 0.5f)
-	{
-		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Walking"));
-		m_playerMoveSpeed = m_playerWalkSpeed;
-		GetCharacterMovement()->MaxWalkSpeed = 250.f;
+		GetCharacterMovement()->UnCrouch();
 
+		// 走る
+		if (vectorLength >= 0.5f)
+		{
+			GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Running"));
+			m_playerMoveSpeed = m_playerRunSpeed;
+			GetCharacterMovement()->MaxWalkSpeed = 500.f;
+		}
+		// 歩く
+		else if (vectorLength > 0.0f && vectorLength < 0.5f)
+		{
+			GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Walking"));
+			m_playerMoveSpeed = m_playerWalkSpeed;
+			GetCharacterMovement()->MaxWalkSpeed = 250.f;
 
-	}
-	// 止まる
+		}
+		// 止まる
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Stop"));
+			m_playerMoveSpeed = 0.0f;
+			GetCharacterMovement()->MaxWalkSpeed = 250.f;
+		}
+	} // end if()
+	// しゃがんでいた場合移動速度を1/2に
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Stop"));
-		m_playerMoveSpeed = 0.0f;
-		GetCharacterMovement()->MaxWalkSpeed = 250.f;
-	}
+		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Squat"));
+		GetCharacterMovement()->MaxWalkSpeed = 150.f;
+		m_playerMoveSpeed = m_playerWalkSpeed / 2.0f;
+		GetCharacterMovement()->Crouch();
 
-	// しゃがんでいた場合移動速度を1/2に
-	if (!m_isStanding)
-	{
-		m_playerMoveSpeed /= 2.0f;
-	}
+	} // end else 
+
 
 	// ベクトルの正規化
 	NormalizedVector2D(vectorLength, &m_playerMoveInput);
@@ -346,12 +402,12 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	//m_playerMoveSpeed *= _deltaTime;
 
 	// player's speed
-	 GEngine->AddOnScreenDebugMessage(30, 10.0f, FColor::Purple, FString::SanitizeFloat(GetCharacterMovement()->Velocity.Size()));
+	GEngine->AddOnScreenDebugMessage(30, 10.0f, FColor::Purple, FString::SanitizeFloat(GetCharacterMovement()->Velocity.Size()));
 
-	
+
 
 	// 地面との距離を測りプレイヤーの高さを設定
-	SetEyeLevel(_deltaTime, (m_playerMoveSpeed* _deltaTime));
+	SetEyeLevel(_deltaTime, (m_playerMoveSpeed * _deltaTime));
 
 
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
@@ -368,6 +424,15 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	} // end else
 }
 
+
+void APlayerCharacter::PlayerStand() {
+	m_isStanding = true;
+}
+// プレイヤーアクション：しゃがむ
+void APlayerCharacter::PlayerSquat() {
+	m_isStanding = false;
+}
+
 // 地面との距離を測りプレイヤーの高さを設定
 void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_move_speed)
 {
@@ -381,7 +446,7 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 	}
 	else
 	{
-		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ((m_eyeLevelWhenStanding * 0.5f) + eyelevel_for_camera_shaking)));
+		 m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ((m_eyeLevelWhenStanding * 0.5f) + eyelevel_for_camera_shaking)));
 	}
 }
 
