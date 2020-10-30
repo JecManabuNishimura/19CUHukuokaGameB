@@ -90,6 +90,7 @@ private:
 
 	// =====  VR Motion コントローラー ポインターの関数  by_Rin =====
 	void UpdateVRLaser();
+	void CheckStandingVR() ;
 
 private:
 	// 入力バインド
@@ -104,9 +105,9 @@ private:
 	void PlayerMoveY(float _axisValue);
 
 	// プレイヤーアクション：立ちあがる
-	void PlayerStand() { m_isStanding = true; }
+	void PlayerStand();
 	// プレイヤーアクション：しゃがむ
-	void PlayerSquat() { m_isStanding = false; }
+	void PlayerSquat();
 
 	// プレイヤーアクション：拾う、調べる、作動させる
 	void CheckToActor();
@@ -190,6 +191,9 @@ private:
 		USoundBase* sound_player_footstep_;
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
+		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (by_Rin) 
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
@@ -207,10 +211,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Check")
 		float m_CheckToActorRayRange;
 
-	bool isStanding;							// 立っているかどうかのフラグ
 	bool isVRCamera;							// VRカメラかどうか
 
-	bool m_isStanding;							// 立っているかどうかのフラグ
 
 	float count_for_footstep_;
 	float eyelevel_for_camera_shaking;
@@ -252,8 +254,31 @@ private:
 		AActor* vr_Phone;
 
 public: 
+	// ===== 移動としゃがむ　プロパティ  by_Rin =====
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+		bool m_isStanding;							// 立っているかどうかのフラグ
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+		float m_MaxWalkSpeed_Walk ;					// 歩いての移動速度
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+		float m_MaxWalkSpeed_Run;					// 走るの移動速度
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+		float m_MaxWalkSpeed_Crouch;				// しゃがむの移動速度
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+		float m_VRPlayersHeight;					// VRモードの時現実プレイヤーの立っているの高さ
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+		bool m_HeightisChecked;						
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone")
-		bool vr_InCameraMode;
+		bool vr_isVRmode;							// VRモードかどうかのフラグ
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone")
+		bool vr_InCameraMode;						// VRのカメラモードかどうかのフラグ
+
 
 	bool isFound;		// 敵の攻撃範囲内に入ったか(作成者：尾崎)
 
