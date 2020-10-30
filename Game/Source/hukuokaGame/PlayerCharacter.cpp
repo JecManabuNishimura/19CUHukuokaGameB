@@ -21,6 +21,8 @@
 // 更新日		：2020/09/06	VRのrayの作成
 //				：2020/09/19	VRのスマートフォン作成
 //				：2020/10/20	Player移動としゃがむの調整
+//								スプリングアームの追加
+//				：2020/10/28	VRの移動としゃがむの調整
 //-------------------------------------------------------------------
 
 
@@ -67,6 +69,11 @@ APlayerCharacter::APlayerCharacter()
 	, vr_HitResult(NULL)
 	, vr_InCameraMode(false)
 	, isFound(false)
+	, m_MaxWalkSpeed_Walk(250.0f)
+	, m_MaxWalkSpeed_Run(500.0f)
+	, m_MaxWalkSpeed_Crouch(150.0f)
+	, m_VRPlayersHeight(175.0f)
+	, m_HeightisChecked(false)
 {
  	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
@@ -77,18 +84,20 @@ APlayerCharacter::APlayerCharacter()
 	// スプリングアームのオブジェクトを生成
 	m_pSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("m_pSpringArm"));
 
+	// スプリングアームにRootComponentをアタッチ
 	m_pSpringArm->SetupAttachment(RootComponent);
 
-	m_pSpringArm->TargetArmLength = 400.f;
+	// カメラとプレイヤーの距離
+	m_pSpringArm->TargetArmLength = 0.f;
 
 	// カメラの子リジョンテストを行うかを設定
 	m_pSpringArm->bDoCollisionTest = false;
+
 	// カメラ追従ラグを使うかを設定
 	m_pSpringArm->bEnableCameraLag = true;
 
 	// カメラ追従ラグの速度を設定
 	m_pSpringArm->CameraLagSpeed = 20.f;
-
 
 	// カメラ原点の生成
 	m_pCameraBase = CreateDefaultSubobject<USceneComponent>(TEXT("VROrigin"));
@@ -96,23 +105,11 @@ APlayerCharacter::APlayerCharacter()
 	// カメラを生成
 	m_pCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("m_pCamera"));
 
-
-	FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
-
-	// m_pCameraBase->AttachToComponent(m_pSpringArm, AttachRules);
-
-	m_pCameraBase->SetupAttachment(m_pSpringArm, USpringArmComponent::SocketName);
-
-	// カプセルコライダーにカメラ原点をアタッチ
-	// m_pCameraBase->SetupAttachment(RootComponent);
-			
+	// カメラ原点にスプリングアームをアタッチ
+	m_pCameraBase->SetupAttachment(m_pSpringArm, USpringArmComponent::SocketName);	
 
 	// カメラ原点にカメラをアタッチ
 	m_pCamera->SetupAttachment(m_pCameraBase);
-
-
-	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
-	GetCharacterMovement()->CrouchedHalfHeight = 40.f;
 
 	// 足音のSEを検索、保存
 	ConstructorHelpers::FObjectFinder<USoundBase>find_sound(TEXT("/Game/SE/Player_Footstep_Cue"));
@@ -128,6 +125,13 @@ APlayerCharacter::~APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// ===========  プレイヤー移動、しゃがむ用のプロパティ設定  by_Rin ===========
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;					// しゃがむを可能します
+	GetCharacterMovement()->CrouchedHalfHeight = 40.f;							// しゃがむ時の高さ
+	GetCharacterMovement()->bShrinkProxyCapsule = true;							// しゃがむ時のcollisionの変更を可能します(必要ないかも)
+	GetCharacterMovement()->MaxWalkSpeedCrouched = m_MaxWalkSpeed_Crouch;		// しゃがむ時の移動速度
+	GetCharacterMovement()->MaxAcceleration = 500.f;							// プレイヤー移動の加速度
 
 	// Epic Comment :D // Setup Player Height for various Platforms (PS4, Vive, Oculus)
 	FName DeviceName = UHeadMountedDisplayFunctionLibrary::GetHMDDeviceName();
@@ -171,14 +175,16 @@ void APlayerCharacter::BeginPlay()
 				if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 				{
 					// VR用配置
-					vr_Phone->SetActorRelativeRotation(FRotator( 0.f, -180.f, -90.f));		//   display <- ||
-					vr_Phone->SetActorRelativeLocation(FVector(370, 0, 10));
-
 					// スマホ他の方向、先に確認しました (仮(メッシュの初期方向対応め)Y X Z)
-					// vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, -90.f));		//   || -> display
+					vr_Phone->SetActorRelativeRotation(FRotator(270.f, 0.f, 0.f));			//  ↑
 
-					// vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, 0.f));			//   ↑display
-																								//   ||
+					// vr_Phone->SetActorRelativeRotation(FRotator( 0.f, -180.f, -90.f));		//   display <- ||
+
+					//  vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, -90.f));		//   || -> display
+
+					//  vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, 0.f));			//   ↑display
+																									//   ||
+					vr_Phone->SetActorRelativeLocation(FVector(200, 0, 10));
 
 					// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetActorRotation().ToString()));
 				} // end if
@@ -295,33 +301,24 @@ void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 	// 現在のプレイヤーの回転情報を取得
 	FRotator newRotationPlayer = GetActorRotation();
 	
-
 	// VR's turning by_Rin
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 	{
-	
-		if (UHeadMountedDisplayFunctionLibrary::HasValidTrackingPosition())
-		{
-			FRotator HMDRotation;
-			FVector HMDLocation;
-			UHeadMountedDisplayFunctionLibrary::GetOrientationAndPosition(HMDRotation, HMDLocation);
-
-			// need to test these two
-			// newRotationPlayer.Yaw = HMDRotation.Yaw;
-			newRotationPlayer.Yaw = ( HMDRotation.Yaw - newRotationPlayer.Yaw) *_deltaTime ;
-		} // end if()
-		else
-		{ 
-			GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Red, TEXT("Can't Track the HMD In [UpdateCamera__Yaw]"));
-
-		} // end else
+		// 何もしない
+			
+		/*
+		// Rotation確認用
+		FRotator HMDRotation;
+		FVector HMDLocation;
+		UHeadMountedDisplayFunctionLibrary::GetOrientationAndPosition(HMDRotation, HMDLocation);
+		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, FString::SanitizeFloat(HMDRotation.Quaternion().Z));
+		*/
 
 	} // end if()
 	else
 	{
 		// Yaw(プレイヤーを回転させる)		masui
 		newRotationPlayer.Yaw += m_cameraRotateInput.X * m_cameraRotateSpeed * _deltaTime;
-
 	}
 
 	// プレイヤーに回転情報を設定
@@ -334,91 +331,76 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
 
-	float abcc = -1.1f;
-	abcc = GetCharacterMovement()->CrouchedHalfHeight;
-
-
-	GEngine->AddOnScreenDebugMessage(1, 5.0f, FColor::Yellow, FString::SanitizeFloat(abcc));
-	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("tall: %s"), *m_pCamera->GetComponentToWorld().GetLocation().ToString()));
-	
-	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("---- camera Height: %s"), *m_pSpringArm->GetComponentLocation().ToString()));
-
-
-
-	if (abcc != -1.1f)
-	{
-		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT(" crouching")));
-
-	}
-
-
-
-	// GEngine->AddOnScreenDebugMessage(30, 10.0f, FColor::Yellow, FString::SanitizeFloat(vectorLength));
-	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, FString::Printf(TEXT("vel: %s"), *GetCharacterMovement()->Velocity.ToString()));
-	GetCharacterMovement()->MaxAcceleration = 500.f;
 
 	// 移動量を決定
-	if (m_isStanding == true)
+	if (m_isStanding == true && (GetCharacterMovement()->IsCrouching() == false))
 	{
-		GetCharacterMovement()->UnCrouch();
+		/*
+		// unreal engine's bug, dont use it. Using BluePrint Now.
+			GetCharacterMovement()->UnCrouch(true);
+		*/
 
 		// 走る
 		if (vectorLength >= 0.5f)
 		{
 			GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Running"));
 			m_playerMoveSpeed = m_playerRunSpeed;
-			GetCharacterMovement()->MaxWalkSpeed = 500.f;
+			GetCharacterMovement()->MaxWalkSpeed = m_MaxWalkSpeed_Run;
 		}
 		// 歩く
 		else if (vectorLength > 0.0f && vectorLength < 0.5f)
 		{
 			GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Walking"));
 			m_playerMoveSpeed = m_playerWalkSpeed;
-			GetCharacterMovement()->MaxWalkSpeed = 250.f;
-
+			GetCharacterMovement()->MaxWalkSpeed = m_MaxWalkSpeed_Walk;
 		}
 		// 止まる
 		else
 		{
 			GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Stop"));
 			m_playerMoveSpeed = 0.0f;
-			GetCharacterMovement()->MaxWalkSpeed = 250.f;
+			GetCharacterMovement()->MaxWalkSpeed = m_MaxWalkSpeed_Walk;
 		}
 	} // end if()
 	// しゃがんでいた場合移動速度を1/2に
 	else
 	{
 		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Squat"));
-		GetCharacterMovement()->MaxWalkSpeed = 150.f;
+		GetCharacterMovement()->MaxWalkSpeed = m_MaxWalkSpeed_Crouch;
 		m_playerMoveSpeed = m_playerWalkSpeed / 2.0f;
-		GetCharacterMovement()->Crouch();
 
+		/*
+		// unreal engine's bug, dont use it. Using BluePrint Now.
+		if (GetCharacterMovement()->IsCrouching() == false)
+		{
+			GetCharacterMovement()->Crouch(true);
+		} // end if
+		*/
 	} // end else 
-
 
 	// ベクトルの正規化
 	NormalizedVector2D(vectorLength, &m_playerMoveInput);
 
-	//m_playerMoveSpeed *= _deltaTime;
-
-	// player's speed
+	// プレイヤーの移動速度確認用
 	GEngine->AddOnScreenDebugMessage(30, 10.0f, FColor::Purple, FString::SanitizeFloat(GetCharacterMovement()->Velocity.Size()));
-
-
 
 	// 地面との距離を測りプレイヤーの高さを設定
 	SetEyeLevel(_deltaTime, (m_playerMoveSpeed * _deltaTime));
 
-
+	
+	// VR時の移動 by_Rin
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 	{
-		AddMovementInput(GetActorForwardVector(), (m_playerMoveSpeed * m_playerMoveInput.X));
-		AddMovementInput(GetActorRightVector(), (m_playerMoveSpeed * m_playerMoveInput.Y));
+		// VR's HMD rotation.z maybe is Radian, its between -1~1
+		// so use VR camera's Rotation
+
+		AddMovementInput(m_pCamera->GetForwardVector(), (m_playerMoveSpeed * m_playerMoveInput.X));
+		AddMovementInput(m_pCamera->GetRightVector(), (m_playerMoveSpeed * m_playerMoveInput.Y));
 
 	} // end if()
 	else
 	{
-		// masui
+		// PC時の移動
 		AddMovementInput(GetActorForwardVector(), (m_playerMoveSpeed * m_playerMoveInput.X));
 		AddMovementInput(GetActorRightVector(), (m_playerMoveSpeed * m_playerMoveInput.Y));
 	} // end else
@@ -426,11 +408,14 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 
 
 void APlayerCharacter::PlayerStand() {
-	m_isStanding = true;
+	// C++のしゃがむが使えないため, コメントアウトしました（BluePrintに設定している）  by_Rin
+	// m_isStanding = true;
 }
+
 // プレイヤーアクション：しゃがむ
 void APlayerCharacter::PlayerSquat() {
-	m_isStanding = false;
+	// C++のしゃがむが使えないため, コメントアウトしました（BluePrintに設定している）	by_Rin
+	// m_isStanding = false;
 }
 
 // 地面との距離を測りプレイヤーの高さを設定
@@ -439,14 +424,18 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 	// プレイヤーの歩行による視線の縦揺れ
 	eyelevel_for_camera_shaking = ReturnCameraVerticalShaking(_deltaTime, _player_move_speed);
 
-	// 立っていればそのまましゃがんでいればアイレベルを1/2にして座標セット
-	if (m_isStanding)
+	// 立っていればそのまましゃがんでいればアイレベルを1/4にして座標セット
+	if (m_isStanding && (GetCharacterMovement()->IsCrouching() == false))
 	{
-		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, (m_eyeLevelWhenStanding + eyelevel_for_camera_shaking)));
+		//	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, FString::Printf(TEXT("Stand eye Loc: %s"), *m_pCamera->GetRelativeLocation().ToString()));
+
+		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ( m_eyeLevelWhenStanding + eyelevel_for_camera_shaking)));
 	}
 	else
 	{
-		 m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ((m_eyeLevelWhenStanding * 0.5f) + eyelevel_for_camera_shaking)));
+		//	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, FString::Printf(TEXT("Crouch eye Loc: %s"), *m_pCamera->GetRelativeLocation().ToString()));
+
+		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ((m_eyeLevelWhenStanding / 4) + eyelevel_for_camera_shaking)));
 	}
 }
 
@@ -603,11 +592,14 @@ void APlayerCharacter::CameraRotateYaw(float _axisValue)
 // プレイヤー移動：移動X軸方向(縦)
 void APlayerCharacter::PlayerMoveX(float _axisValue)
 {
+	GEngine->AddOnScreenDebugMessage(10, 5.0f, FColor::Purple, TEXT("  X  "));
+
 	m_playerMoveInput.X = _axisValue;
 }
 // プレイヤー移動：移動Y軸方向(横)
 void APlayerCharacter::PlayerMoveY(float _axisValue)
 {
+	GEngine->AddOnScreenDebugMessage(10, 5.0f, FColor::Purple, TEXT("  Y  "));
 	m_playerMoveInput.Y = _axisValue;
 }
 // プレイヤーアクション：拾う、調べる、作動させる
@@ -724,3 +716,39 @@ void APlayerCharacter::Respawn()
 	// 位置の初期化
 	this->SetActorLocation(FVector(-4850.f, -3300.f, 300.f));
 }
+
+// C++のしゃがむが使えないため
+// CheckStandingVRも仮放棄
+// by_Rin
+/*
+void APlayerCharacter::CheckStandingVR()
+{
+	FRotator checkHMDRotation;
+	FVector checkHMDLocation;
+
+	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
+	{
+		if (m_HeightisChecked == false)
+		{
+
+			UHeadMountedDisplayFunctionLibrary::GetOrientationAndPosition(checkHMDRotation, checkHMDLocation);
+
+			m_VRPlayersHeight = checkHMDLocation.Z;
+
+			m_HeightisChecked = true;
+		} // end if()
+
+		if (m_HeightisChecked == true)
+		{
+			UHeadMountedDisplayFunctionLibrary::GetOrientationAndPosition(checkHMDRotation, checkHMDLocation);
+
+			if (checkHMDLocation.Z < (m_VRPlayersHeight * 0.7f))
+			{
+			} // end if()
+			else
+			{
+			} // end else
+		} // end if()
+	} // end if()
+} // CheckStandingVR()
+*/

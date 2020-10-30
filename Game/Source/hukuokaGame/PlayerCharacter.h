@@ -90,6 +90,7 @@ private:
 
 	// =====  VR Motion コントローラー ポインターの関数  by_Rin =====
 	void UpdateVRLaser();
+	void CheckStandingVR() ;
 
 private:
 	// 入力バインド
@@ -185,7 +186,7 @@ private:
 		class UCameraComponent* m_pCamera;		// カメラ
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (by_林)  test
+		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (by_Rin) 
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
@@ -205,10 +206,8 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Check")
 		float m_CheckToActorRayRange;
 
-	bool isStanding;							// 立っているかどうかのフラグ
 	bool isVRCamera;							// VRカメラかどうか
 
-	bool m_isStanding;							// 立っているかどうかのフラグ
 
 	USoundBase* sound_player_footstep_;
 
@@ -252,8 +251,31 @@ private:
 		AActor* vr_Phone;
 
 public: 
+	// ===== 移動としゃがむ　プロパティ  by_Rin =====
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+		bool m_isStanding;							// 立っているかどうかのフラグ
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+		float m_MaxWalkSpeed_Walk ;					// 歩いての移動速度
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+		float m_MaxWalkSpeed_Run;					// 走るの移動速度
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+		float m_MaxWalkSpeed_Crouch;				// しゃがむの移動速度
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+		float m_VRPlayersHeight;					// VRモードの時現実プレイヤーの立っているの高さ
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+		bool m_HeightisChecked;						
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone")
-		bool vr_InCameraMode;
+		bool vr_isVRmode;							// VRモードかどうかのフラグ
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone")
+		bool vr_InCameraMode;						// VRのカメラモードかどうかのフラグ
+
 
 	bool isFound;		// 敵の攻撃範囲内に入ったか(作成者：尾崎)
 
