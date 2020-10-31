@@ -162,6 +162,7 @@ void APlayerCharacter::BeginPlay()
 			LeftController->FinishSpawning(SpawnTransform); // UGameplayStatics::FinishSpawningActor(LeftController, SpawnTransform);
 			LeftController->AttachToComponent(m_pCameraBase, AttachRules);
 
+			/*
 			bp_VRphone = TSoftClassPtr<AActor>(FSoftObjectPath(*path)).LoadSynchronous();	// pathにあるクラスを取得
 			if (bp_VRphone != nullptr)
 			{
@@ -197,6 +198,7 @@ void APlayerCharacter::BeginPlay()
 				// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetName()));
 
 			} // end if()
+			*/
 		} // end if()
 
 		RightController = GetWorld()->SpawnActorDeferred<AThrillerVR_MotionController>(AThrillerVR_MotionController::StaticClass(), SpawnTransform, this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
@@ -211,6 +213,51 @@ void APlayerCharacter::BeginPlay()
 	{
 		UE_LOG(LogTemp, Log, TEXT("Is Not VR Mode"));
 	} // end else
+
+	// 仮用PCスマホ
+	// Epic Comment :D // Spawn and attach both motion controllers
+	const FTransform SpawnTransform = FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f), FVector(1.0f, 1.0f, 1.0f)); // = FTransform::Identity;
+	FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
+
+	bp_VRphone = TSoftClassPtr<AActor>(FSoftObjectPath(*path)).LoadSynchronous();	// pathにあるクラスを取得
+	if (bp_VRphone != nullptr)
+	{
+		vr_Phone = GetWorld()->SpawnActor<AActor>(bp_VRphone);						// VRのスマートフォンをActorとして生成する
+
+
+		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
+		{
+			vr_Phone->AttachToComponent(LeftController->GetRootComponent()->GetChildComponent(0), AttachRules);
+			vr_Phone->SetActorEnableCollision(false);
+
+			// VR用配置
+			// スマホ他の方向、先に確認しました (仮(メッシュの初期方向対応め)Y X Z)
+			vr_Phone->SetActorRelativeRotation(FRotator(270.f, 0.f, 0.f));			//  ↑
+
+			// vr_Phone->SetActorRelativeRotation(FRotator( 0.f, -180.f, -90.f));		//   display <- ||
+
+			//  vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, -90.f));		//   || -> display
+
+			//  vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, 0.f));			//   ↑display
+																							//   ||
+			vr_Phone->SetActorRelativeLocation(FVector(200, 0, 10));
+
+			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetActorRotation().ToString()));
+		} // end if
+		else
+		{
+			vr_Phone->AttachToComponent(m_pCamera, AttachRules);
+			vr_Phone->SetActorEnableCollision(false);
+
+			// PC確認用配置
+			vr_Phone->SetActorRelativeRotation(FRotator(-90.f, -180.f, 180.f));
+			vr_Phone->SetActorRelativeLocation(FVector(300, -200, -50));
+		} // end else
+
+		// 確認用
+		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetName()));
+
+	} // end if()
 
 }
 
@@ -404,7 +451,7 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// VR時の移動 by_Rin
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 	{
-		// VR's HMD rotation.z maybe is Radian, its between -1~1
+		// VR's HMD rotation.z maybe is Radian, its between -1 ~ 1
 		// so use VR camera's Rotation
 
 		AddMovementInput(m_pCamera->GetForwardVector(), (m_playerMoveSpeed * m_playerMoveInput.X));
@@ -413,6 +460,8 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	} // end if()
 	else
 	{
+		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("=== %s"), *GetActorForwardVector().ToString()));
+
 		// PC時の移動
 		AddMovementInput(GetActorForwardVector(), (m_playerMoveSpeed * m_playerMoveInput.X));
 		AddMovementInput(GetActorRightVector(), (m_playerMoveSpeed * m_playerMoveInput.Y));
@@ -443,12 +492,22 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 		//	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, FString::Printf(TEXT("Stand eye Loc: %s"), *m_pCamera->GetRelativeLocation().ToString()));
 
 		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ( m_eyeLevelWhenStanding + eyelevel_for_camera_shaking)));
+
+		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+		{
+			vr_Phone->SetActorRelativeLocation(FVector(300, -200, -50));	// PC用のスマホ配置
+		} // end if()
 	}
 	else
 	{
 		//	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, FString::Printf(TEXT("Crouch eye Loc: %s"), *m_pCamera->GetRelativeLocation().ToString()));
 
 		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ((m_eyeLevelWhenStanding / 4) + eyelevel_for_camera_shaking)));
+		
+		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+		{
+			vr_Phone->SetActorRelativeLocation(FVector(300, -200, 30));		// PC用のスマホ配置
+		} // end if()
 	}
 }
 
