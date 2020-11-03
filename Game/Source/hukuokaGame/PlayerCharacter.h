@@ -280,6 +280,12 @@ public:
 		bool vr_InCameraMode;						// VRのカメラモードかどうかのフラグ
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
+		int vr_SmartPhone_Mission_Num;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
+		FString vr_SmartPhone_Mission_Contents;
+
 	bool isFound;		// 敵の攻撃範囲内に入ったか(作成者：尾崎)
 
 	UFUNCTION(BlueprintCallable, Category = "PlayerDamage")
