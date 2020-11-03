@@ -61,6 +61,7 @@ APlayerCharacter::APlayerCharacter()
 	, m_pPrevCheckItem(NULL)
 	, vr_HitResult(NULL)
 	, vr_InCameraMode(false)
+	, vr_SmartPhone_Mission_Num(1)
 	, isFound(false)
 {
  	// ティックを呼び出すかのフラグ

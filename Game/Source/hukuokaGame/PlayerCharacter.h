@@ -246,6 +246,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone")
 		bool vr_InCameraMode;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
+		int vr_SmartPhone_Mission_Num;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
+		FString vr_SmartPhone_Mission_Contents;
+
 	bool isFound;		// “G‚ÌUŒ‚”ÍˆÍ“à‚É“ü‚Á‚½‚©(ì¬ÒF”öè)
 
 	UFUNCTION(BlueprintCallable, Category = "PlayerDamage")
