@@ -10,6 +10,7 @@
 // 概要			：VRカメラの作成
 // 作成者		：19CU0217 朱適
 // 作成日		：2020/08/18
+// 更新日		：2020/11/04		心拍数アプリのアクションマッピングを追加
 //-------------------------------------------------------------------
 
 //-------------------------------------------------------------------
@@ -25,7 +26,9 @@
 #include "GameFramework/Character.h"
 #include "Smartphone.h"
 #include "Components/ChildActorComponent.h"
+#include "HeartBeatAppWidgetComponent.h"	// 心拍数アプリ用（作成者：朱適）
 #include "PlayerCharacter.generated.h"
+
 
 // 前方宣言
 class AItemBase;
@@ -133,6 +136,14 @@ private:
 		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Push Smartphone_Shutter");
 	};
 
+	// 心拍数アプリの切り替え(作成者：朱適)
+	void HeartBeatStatusSwitch()
+	{
+		isHeartBeatOn = !isHeartBeatOn;
+		UHeartBeatAppWidgetComponent::GetInstance()->SetAppStat(isHeartBeatOn);
+		UE_LOG(LogTemp, Log, TEXT("HeartBeat App Status Switched"));
+	}
+
 public:
 	// Smartphoneから呼び出す関数(isHaveSmartphoneFlagをSmartphoneに送る)(作成者：尾崎)
 	bool GetisHaveSmartphoneFlag();
@@ -210,6 +221,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Check")
 		float m_CheckToActorRayRange;
+
+	UPROPERTY(EditAnywhere, Category = "Smart Phone App")
+		bool isHeartBeatOn;			// 心拍数アプリの切り替え(作成者：朱適)
 
 	bool isVRCamera;							// VRカメラかどうか
 

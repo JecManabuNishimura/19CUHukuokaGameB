@@ -10,7 +10,8 @@
 // 作成者		：19CU0217 朱適
 // 更新日		：2020/08/18		VRカメラの作成
 // 更新日		：2020/10/09		ゲームオーバーに遷移の機能を追加
-// 更新日		：2020/10/14		白枠の制御の追加
+//				：2020/10/14		白枠の制御の追加
+//				：2020/11/04		心拍数アプリのアクションマッピングを追加
 //-------------------------------------------------------------------
 
 //-------------------------------------------------------------------
@@ -72,6 +73,7 @@ APlayerCharacter::APlayerCharacter()
 	, vr_InCameraMode(false)
 	, vr_SmartPhone_Mission_Num(1)
 	, isFound(false)
+	, isHeartBeatOn(false)
 	, m_MaxWalkSpeed_Walk(250.0f)
 	, m_MaxWalkSpeed_Run(500.0f)
 	, m_MaxWalkSpeed_Crouch(150.0f)
@@ -338,6 +340,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	InputComponent->BindAction("HaveSmartphone", IE_Pressed, this, &APlayerCharacter::ChangeHaveSmartphoneFlag);
 	InputComponent->BindAction("Smartphone_Light", IE_Pressed, this, &APlayerCharacter::ChangeLightFlag);
 	InputComponent->BindAction("Smartphone_Shutter", IE_Pressed, this, &APlayerCharacter::ChangeShutterFlag);
+
+	// 心拍数アプリの切り替え
+	InputComponent->BindAction("HeartBeatStatusSwitch", IE_Pressed, this, &APlayerCharacter::HeartBeatStatusSwitch);
 }
 
 // カメラ(Pitch)の更新
