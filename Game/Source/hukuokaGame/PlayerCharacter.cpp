@@ -77,6 +77,7 @@ APlayerCharacter::APlayerCharacter()
 	, m_MaxWalkSpeed_Crouch(150.0f)
 	, m_VRPlayersHeight(175.0f)
 	, m_HeightisChecked(false)
+	, isHaveSmartphoneFlag(false)
 {
  	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
@@ -252,7 +253,7 @@ void APlayerCharacter::BeginPlay()
 
 			// PC確認用配置
 			vr_Phone->SetActorRelativeRotation(FRotator(-90.f, -180.f, 180.f));
-			vr_Phone->SetActorRelativeLocation(FVector(300, -200, -50));
+			vr_Phone->SetActorRelativeLocation(FVector(300.f, -200.f, -50.f));
 		} // end else
 
 		// 確認用
@@ -687,6 +688,27 @@ void APlayerCharacter::CheckToActor()
 		m_pCheckingItem->CheckedByPlayer();
 	}
 }
+
+// PC版、スマホを手前に持っているか  by_Rin
+void APlayerCharacter::ChangeHaveSmartphoneFlag()
+{
+
+	if (isHaveSmartphoneFlag == true)
+	{
+		isHaveSmartphoneFlag = false;
+		vr_Phone->SetActorRelativeLocation(FVector(300.f, -200.f, -50.f));
+		vr_Phone->SetActorHiddenInGame(true);
+	} // end if()
+	else
+	{
+		isHaveSmartphoneFlag = true;
+		vr_Phone->SetActorRelativeLocation(FVector(50.f, 0.f, 0.f));
+		vr_Phone->SetActorHiddenInGame(false);
+	} // end else
+
+	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Push HaveSmartphone");
+
+} // ChangeHaveSmartphoneFlag()
 
 AItemBase* APlayerCharacter::ReturnCheckingItem() const
 {

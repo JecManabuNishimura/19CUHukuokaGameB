@@ -114,11 +114,8 @@ private:
 
 	// スマホ関係
 	// 構えるかどうかのフラグ(作成者：尾崎)
-	void ChangeHaveSmartphoneFlag()
-	{
-		isHaveSmartphoneFlag = !isHaveSmartphoneFlag;
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Push HaveSmartphone");
-	};
+	void ChangeHaveSmartphoneFlag();
+
 	// ライトをつけるかどうか(作成者：尾崎)
 	void ChangeLightFlag()
 	{
@@ -250,7 +247,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "VR_Phone")
 		TSubclassOf<class AActor> bp_VRphone;
 
-	UPROPERTY(EditAnywhere, Category = "VR_Phone")
+	UPROPERTY(EditAnywhere, Category = "VR_Phone", meta = (AllowPrivateAccess = "true"))
 		AActor* vr_Phone;
 
 public: 
