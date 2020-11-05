@@ -212,10 +212,13 @@ private:
 
 	bool m_isStanding;							// 立っているかどうかのフラグ
 
-	float count_for_footstep_;
+	float count_for_footstep_;					// 足音のためのカウント
+
 	float eyelevel_for_camera_shaking;
 
-	bool can_make_footstep;
+	bool can_make_footstep;						// 足音発生許可フラグ
+
+	bool can_player_control;					// プレイヤーの操作が出来るか
 
 	float m_playerMoveSpeed;					// プレイヤーの移動速度
 
@@ -259,6 +262,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "PlayerDamage")
 		void SetIsFound(const bool _flag) { isFound = _flag; }	// 見つかった場合にisFoundを変える関数(作成者：尾崎)
+
+	FVector ReturnCameraLocation();
+
+	FVector ReturnCameraForwardVector();
+
+	void SetPlayerControlFlag(bool _flag) { can_player_control = _flag; }
 
 	void Respawn();	// リスポーンする関数(作成者：尾崎)
 
