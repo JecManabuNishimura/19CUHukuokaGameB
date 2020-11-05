@@ -38,11 +38,12 @@ public:
 	// プレイヤーによる被チェック状態を返す
 	UFUNCTION(BlueprintCallable, Category = "Return State")
 		bool ReturnCheckedState() { return m_isChecked; }
+
 public:
 	bool m_isChecked;			// プレイヤーにチェックされているか
 
 	UPROPERTY(EditAnywhere)
-	FString m_commandName;		// コマンドの名前(種類)
+		FString m_commandName;		// コマンドの名前(種類)
 
 	void SetOutline(bool _isCustomDepthOn);
 };

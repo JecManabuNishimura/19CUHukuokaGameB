@@ -11,7 +11,6 @@
 #include "GameFramework/Actor.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "Components/MeshComponent.h"
 #include "PlayerCharacter.h"
 #include "CardkeyDoorBody.generated.h"
 

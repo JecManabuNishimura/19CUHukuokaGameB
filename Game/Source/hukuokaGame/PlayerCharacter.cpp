@@ -64,6 +64,7 @@ APlayerCharacter::APlayerCharacter()
 	, count_for_footstep_(0.0f)
 	, eyelevel_for_camera_shaking(0.0f)
 	, can_make_footstep(true)
+	, can_player_control(true)
 	, m_playerMoveSpeed(0.0f)
 	, m_playerMoveInput(FVector2D::ZeroVector)
 	, m_cameraRotateInput(FVector2D::ZeroVector)
@@ -282,21 +283,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 	// アイテムのチェック
 	CheckItem();
 
-	FString flag = "";
-	for (int i = 0; i < 8; ++i)
-	{
-		if (((1 << i) & player_state) != 0)
-		{
-			flag += "T";
-		}
-		else
-		{
-			flag += "F";
-		}
-	}
-
-	GEngine->AddOnScreenDebugMessage(22, DeltaTime, FColor::Green, FString::Printf(TEXT("%s"), *flag));
-
 	// ===========  VR Motion Controller's Laser Update by_Rin ===========
 	// 今はVRモード?
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
@@ -349,6 +335,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 // カメラ(Pitch)の更新
 void APlayerCharacter::UpdateCameraPitch(const float _deltaTime)
 {
+	// 操作不可ならreturn
+	if (!can_player_control)	return;
+
 	if (m_pCamera != NULL)
 	{
 		// 現在のカメラの回転情報を取得
@@ -365,6 +354,9 @@ void APlayerCharacter::UpdateCameraPitch(const float _deltaTime)
 // カメラ(Yaw)の更新
 void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 {
+	// 操作不可ならreturn
+	if (!can_player_control)	return;
+
 	// 現在のプレイヤーの回転情報を取得
 	FRotator newRotationPlayer = GetActorRotation();
 	
@@ -395,6 +387,9 @@ void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 // プレイヤーの移動処理
 void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 {
+	// 操作不可ならreturn
+	if (!can_player_control)	return;
+
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
 
@@ -579,6 +574,15 @@ void APlayerCharacter::MakeFootstep(const float _deltaTime, const float _player_
 
 void APlayerCharacter::CheckItem()
 {
+	// 操作不可なら表示されているコマンドアイコンを非表示にし、return
+	if (!can_player_control)
+	{
+		// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
+		OnItemCheckEndEventDispatcher.Broadcast();
+
+		return;
+	}
+
 	// トレースに必要な変数を宣言
 	FHitResult outHit;
 
@@ -723,6 +727,24 @@ AItemBase* APlayerCharacter::ReturnCheckingItem() const
 FString APlayerCharacter::ReturnCheckingItemCommandName() const
 {
 	return m_pCheckingItem->m_commandName;
+}
+
+FVector APlayerCharacter::ReturnCameraForwardVector()
+{ 
+	FVector forward_vector = FVector::ZeroVector;
+
+	if (m_pCamera != NULL)	forward_vector = m_pCamera->GetForwardVector();
+
+	return forward_vector;
+}
+
+FVector APlayerCharacter::ReturnCameraLocation()
+{
+	FVector camera_location = FVector::ZeroVector;
+
+	if (m_pCamera != NULL)	camera_location = m_pCamera->GetComponentLocation();
+
+	return camera_location;
 }
 
 // プレイヤーアクション：スマホのシャッターフラグを変更(作成者：尾崎)
