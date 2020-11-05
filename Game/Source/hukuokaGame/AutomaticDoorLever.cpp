@@ -74,4 +74,3 @@ void AAutomaticDoorLever::CheckedByPlayer()
 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("The corresponding door is not installed on the level !"));
 	}
 }
-
