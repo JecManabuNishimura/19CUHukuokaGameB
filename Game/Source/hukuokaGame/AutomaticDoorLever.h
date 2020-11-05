@@ -44,6 +44,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Get State")
 		bool GetLeverState()const { return m_isLeverOn; }
 
+	// レバーのON/OFF状態を変更(作成者　尾崎)
+	UFUNCTION(BlueprintCallable, Category = "Set State")
+		void SetLeverState(const bool flag) { m_isLeverOn = flag; }
+
 	// レバーのフィルター番号を返す
 	int GetLeverFilter()const { return m_leverFilter; }
 };

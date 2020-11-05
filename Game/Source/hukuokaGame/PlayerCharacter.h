@@ -11,6 +11,7 @@
 // 作成者		：19CU0217 朱適
 // 作成日		：2020/08/18
 // 更新日		：2020/11/04		心拍数アプリのアクションマッピングを追加
+// 更新日		：2020/11/05		インスタンスがあるかどうかの確認を追加
 //-------------------------------------------------------------------
 
 //-------------------------------------------------------------------
@@ -93,7 +94,7 @@ private:
 
 	// =====  VR Motion コントローラー ポインターの関数  by_Rin =====
 	void UpdateVRLaser();
-	void CheckStandingVR() ;
+	void CheckStandingVR();
 
 private:
 	// 入力バインド
@@ -137,7 +138,11 @@ private:
 	void HeartBeatStatusSwitch()
 	{
 		isHeartBeatOn = !isHeartBeatOn;
-		UHeartBeatAppWidgetComponent::GetInstance()->SetAppStat(isHeartBeatOn);
+		// インスタンスがあるかどうかの確認(作成者：朱適)
+		if (UHeartBeatAppWidgetComponent::GetInstance())
+		{
+			UHeartBeatAppWidgetComponent::GetInstance()->SetAppStat(isHeartBeatOn);
+		}
 		UE_LOG(LogTemp, Log, TEXT("HeartBeat App Status Switched"));
 	}
 
