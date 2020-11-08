@@ -80,7 +80,7 @@ APlayerCharacter::APlayerCharacter()
 	, m_MaxWalkSpeed_Crouch(150.0f)
 	, m_VRPlayersHeight(175.0f)
 	, m_HeightisChecked(false)
-	, isHaveSmartphoneFlag(false)
+	, holdingSmartphoneState(0)
 {
  	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
@@ -247,6 +247,9 @@ void APlayerCharacter::BeginPlay()
 																							//   ||
 			vr_Phone->SetActorRelativeLocation(FVector(200, 0, 10));
 
+			// VRスマホのサイズ
+			vr_Phone->SetActorScale3D(FVector(0.4f, 0.4f, 0.4f));
+
 			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetActorRotation().ToString()));
 		} // end if
 		else
@@ -256,7 +259,13 @@ void APlayerCharacter::BeginPlay()
 
 			// PC確認用配置
 			vr_Phone->SetActorRelativeRotation(FRotator(-90.f, -180.f, 180.f));
-			vr_Phone->SetActorRelativeLocation(FVector(300.f, -200.f, -50.f));
+			vr_Phone->SetActorRelativeLocation(FVector(200.f, -150.f, -50.f));
+
+			// PCスマホのサイズ
+			vr_Phone->SetActorScale3D(FVector(0.4f, 0.4f, 0.4f));
+
+			vr_Phone->SetActorHiddenInGame(true);
+
 		} // end else
 
 		// 確認用
@@ -323,7 +332,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	// プレイヤーアクション：拾う、調べる、作動させる
 	InputComponent->BindAction("PickUpandCheck", IE_Released, this, &APlayerCharacter::CheckToActor);
 
-	// スマホを構える・構えを解除(作成者：尾崎)
+	// スマホを構える・構えを解除(作成者：尾崎)　今は使いている by_Rin
 	InputComponent->BindAction("HaveSmartphone", IE_Pressed, this, &APlayerCharacter::ChangeHaveSmartphoneFlag);
 	InputComponent->BindAction("Smartphone_Light", IE_Pressed, this, &APlayerCharacter::ChangeLightFlag);
 	InputComponent->BindAction("Smartphone_Shutter", IE_Pressed, this, &APlayerCharacter::ChangeShutterFlag);
@@ -360,7 +369,7 @@ void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 	// 現在のプレイヤーの回転情報を取得
 	FRotator newRotationPlayer = GetActorRotation();
 	
-	// VR's turning by_Rin
+	// VR's 回転 by_Rin
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 	{
 		// 何もしない
@@ -393,8 +402,7 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
 
-
-	// 移動量を決定
+	// 移動量を決定		修正by_Rin
 	if (m_isStanding == true && (GetCharacterMovement()->IsCrouching() == false))
 	{
 		/*
@@ -460,6 +468,7 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 		AddMovementInput(m_pCamera->GetRightVector(), (m_playerMoveSpeed * m_playerMoveInput.Y));
 
 	} // end if()
+	// PC時の移動
 	else
 	{
 		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("=== %s"), *GetActorForwardVector().ToString()));
@@ -489,16 +498,20 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 	eyelevel_for_camera_shaking = ReturnCameraVerticalShaking(_deltaTime, _player_move_speed);
 
 	// 立っていればそのまましゃがんでいればアイレベルを1/4にして座標セット
+	// しゃがむと合わせての条件を入れった	by_Rin
 	if (m_isStanding && (GetCharacterMovement()->IsCrouching() == false))
 	{
 		//	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, FString::Printf(TEXT("Stand eye Loc: %s"), *m_pCamera->GetRelativeLocation().ToString()));
 
 		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ( m_eyeLevelWhenStanding + eyelevel_for_camera_shaking)));
 
+		/*
+		// PC しゃがむの時　スマホ位置の調整
 		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
 		{
 			vr_Phone->SetActorRelativeLocation(FVector(300, -200, -50));	// PC用のスマホ配置
 		} // end if()
+		*/
 	}
 	else
 	{
@@ -506,10 +519,13 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 
 		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ((m_eyeLevelWhenStanding / 4) + eyelevel_for_camera_shaking)));
 		
+		/*
+		// PC しゃがむの時　スマホ位置の調整
 		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
 		{
 			vr_Phone->SetActorRelativeLocation(FVector(300, -200, 30));		// PC用のスマホ配置
 		} // end if()
+		*/
 	}
 }
 
@@ -701,22 +717,36 @@ void APlayerCharacter::CheckToActor()
 // PC版、スマホを手前に持っているか  by_Rin
 void APlayerCharacter::ChangeHaveSmartphoneFlag()
 {
-
-	if (isHaveSmartphoneFlag == true)
+	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
 	{
-		isHaveSmartphoneFlag = false;
-		vr_Phone->SetActorRelativeLocation(FVector(300.f, -200.f, -50.f));
-		vr_Phone->SetActorHiddenInGame(true);
+		// スマホをポケットにしまう
+		if (holdingSmartphoneState == 2)
+		{
+			holdingSmartphoneState = 0;
+			vr_Phone->SetActorHiddenInGame(true);
+
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Is Not Holding Smartphone");
+		} // end if()
+		// スマホを目前に持つ
+		else if (holdingSmartphoneState == 1)
+		{
+			holdingSmartphoneState = 2;
+			vr_Phone->SetActorRelativeLocation(FVector(70.f, 0.f, 0.f));
+			vr_Phone->SetActorHiddenInGame(false);
+
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Looking at Smartphone");
+		} // end else
+		// スマホを手前に持つ
+		else
+		{
+			holdingSmartphoneState = 1;
+			vr_Phone->SetActorRelativeLocation(FVector(200.f, -150.f, -50.f));
+			vr_Phone->SetActorHiddenInGame(false);
+
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Is Holding Smartphone");
+		} // end else
+
 	} // end if()
-	else
-	{
-		isHaveSmartphoneFlag = true;
-		vr_Phone->SetActorRelativeLocation(FVector(50.f, 0.f, 0.f));
-		vr_Phone->SetActorHiddenInGame(false);
-	} // end else
-
-	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Push HaveSmartphone");
-
 } // ChangeHaveSmartphoneFlag()
 
 AItemBase* APlayerCharacter::ReturnCheckingItem() const
