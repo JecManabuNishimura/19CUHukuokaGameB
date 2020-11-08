@@ -274,36 +274,39 @@ private:
 
 public: 
 	// ===== 移動としゃがむ　プロパティ  by_Rin =====
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NewMove")
 		bool m_isStanding;							// 立っているかどうかのフラグ
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NewMove")
 		float m_MaxWalkSpeed_Walk ;					// 歩いての移動速度
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NewMove")
 		float m_MaxWalkSpeed_Run;					// 走るの移動速度
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NewMove")
 		float m_MaxWalkSpeed_Crouch;				// しゃがむの移動速度
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR")
 		float m_VRPlayersHeight;					// VRモードの時現実プレイヤーの立っているの高さ
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move1")
-		bool m_HeightisChecked;						
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR")
+		bool m_HeightisChecked;						// VRのプレイヤー身長確認しましたか
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR")
 		bool vr_isVRmode;							// VRモードかどうかのフラグ
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone")
 		bool vr_InCameraMode;						// VRのカメラモードかどうかのフラグ
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone")
+		int holdingSmartphoneState;					// スマホをを手前に持っているか?
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
-		int vr_SmartPhone_Mission_Num;
+		int vr_SmartPhone_Mission_Num;				// 今表示するミッションナンバー
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
-		FString vr_SmartPhone_Mission_Contents;
+		FString vr_SmartPhone_Mission_Contents;		// 今表示するミッション　（今は必要ない）
+
 
 	bool isFound;		// 敵の攻撃範囲内に入ったか(作成者：尾崎)
 
