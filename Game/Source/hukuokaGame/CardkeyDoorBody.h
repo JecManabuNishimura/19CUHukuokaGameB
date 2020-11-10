@@ -46,17 +46,26 @@ public:
 
 private:
 	UFUNCTION()
-		void OnOverlapBegin(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComponent, int32 _otherBodyIndex, bool _bFromSweep, const FHitResult& _sweepResult);
+		void OnCardReaderOverlapBegin(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComponent, int32 _otherBodyIndex, bool _bFromSweep, const FHitResult& _sweepResult);
 
 	UFUNCTION()
-		void OnOverlapEnd(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComp, int32 _otherBodyIndex);
+		void OnCardReaderOverlapEnd(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComp, int32 _otherBodyIndex);
+
+	UFUNCTION()
+		void OnDoorBodyOverlapBegin(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComponent, int32 _otherBodyIndex, bool _bFromSweep, const FHitResult& _sweepResult);
+
+	UFUNCTION()
+		void OnDoorBodyOverlapEnd(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComp, int32 _otherBodyIndex);
 
 private:
 	UPROPERTY(EditAnywhere)
-		UBoxComponent* m_pEventTriggerBox_1_;	// プレイヤー、敵検知用トリガーボックスその1
+		UBoxComponent* cardreader_triggerbox_1_;	// カードキー検知用トリガーボックスその1
 
 	UPROPERTY(EditAnywhere)
-		UBoxComponent* m_pEventTriggerBox_2_;	// プレイヤー、敵検知用トリガーボックスその2
+		UBoxComponent* cardreader_triggerbox_2_;	// カードキー検知用トリガーボックスその2
+
+	UPROPERTY(EditAnywhere)
+		UBoxComponent* door_body_eventtriggerbox_;	// プレイヤー、敵挟み防止用トリガーボックス
 
 	UPROPERTY(EditAnywhere)
 		UStaticMeshComponent* cardreader_mesh_1_;	// カード読み込み口のメッシュコンポーネントその1
@@ -126,7 +135,14 @@ private:
 
 	DOOR_STATE m_doorState;						// ドアの状態
 
-	bool m_isOverlap;							// プレイヤーもしくは敵が検知内に入っているかのフラグ
+	UPROPERTY(EditAnywhere)
+		bool is_cardreader_eventbox_overlap;	// プレイヤーもしくは敵が検知内に入っているかのフラグ
+
+	UPROPERTY(EditAnywhere)
+		bool is_doorbody_eventbox_overlap;		// ドア本体のイベントボックスにプレイヤー、敵がオーバーラップしているか
+
+	UPROPERTY(EditAnywhere)
+		int door_eventbox_overlap_sum;			// ドア本体のイベントボックス内に入っているプレイヤー、敵の総和(0でis_door_eventbox_overlap = false)
 
 	float m_openTimeCount;						// 開いている時間のカウント
 
