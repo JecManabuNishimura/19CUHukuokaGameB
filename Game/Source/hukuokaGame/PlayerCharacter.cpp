@@ -506,13 +506,15 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 
 		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ( m_eyeLevelWhenStanding + eyelevel_for_camera_shaking)));
 
-		/*
 		// PC しゃがむの時　スマホ位置の調整
-		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+		if (holdingSmartphoneState == 1)
 		{
-			vr_Phone->SetActorRelativeLocation(FVector(300, -200, -50));	// PC用のスマホ配置
+			if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+			{
+				vr_Phone->SetActorRelativeLocation(FVector(200.f, -150.f, -50.f));			// PC用のスマホ配置
+			} // end if()
 		} // end if()
-		*/
+		
 	}
 	else
 	{
@@ -520,13 +522,16 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 
 		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ((m_eyeLevelWhenStanding / 4) + eyelevel_for_camera_shaking)));
 		
-		/*
+
 		// PC しゃがむの時　スマホ位置の調整
-		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+		if (holdingSmartphoneState == 1)
 		{
-			vr_Phone->SetActorRelativeLocation(FVector(300, -200, 30));		// PC用のスマホ配置
+			if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+			{
+				vr_Phone->SetActorRelativeLocation(FVector(200.f, -150.f, 0.f));			// PC用のスマホ配置
+			} // end if()
 		} // end if()
-		*/
+		
 	}
 }
 
