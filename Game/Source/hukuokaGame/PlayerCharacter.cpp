@@ -249,7 +249,7 @@ void APlayerCharacter::BeginPlay()
 			vr_Phone->SetActorRelativeLocation(FVector(200, 0, 10));
 
 			// VRスマホのサイズ
-			vr_Phone->SetActorScale3D(FVector(0.4f, 0.4f, 0.4f));
+			vr_Phone->SetActorScale3D(FVector(0.5f, 0.5f, 0.5f));
 
 			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetActorRotation().ToString()));
 		} // end if
@@ -511,7 +511,8 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 		{
 			if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
 			{
-				vr_Phone->SetActorRelativeLocation(FVector(200.f, -150.f, -50.f));			// PC用のスマホ配置
+				vr_Phone->SetActorRelativeLocation(FVector(10.f, -6.f, -2.f));			// PC用のスマホ配置
+			
 			} // end if()
 		} // end if()
 		
@@ -528,7 +529,7 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 		{
 			if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
 			{
-				vr_Phone->SetActorRelativeLocation(FVector(200.f, -150.f, 0.f));			// PC用のスマホ配置
+				vr_Phone->SetActorRelativeLocation(FVector(10.f, -6.f, 0.f));			// PC用のスマホ配置
 			} // end if()
 		} // end if()
 		
@@ -737,8 +738,9 @@ void APlayerCharacter::ChangeHaveSmartphoneFlag()
 		else if (holdingSmartphoneState == 1)
 		{
 			holdingSmartphoneState = 2;
-			vr_Phone->SetActorRelativeLocation(FVector(70.f, 0.f, 0.f));
+			vr_Phone->SetActorRelativeLocation(FVector(10.f, 0.f, 0.f));
 			vr_Phone->SetActorHiddenInGame(false);
+			vr_Phone->SetActorScale3D(FVector(0.06f, 0.06f, 0.06f));						// PCスマホのサイズ
 
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Looking at Smartphone");
 		} // end else
@@ -746,8 +748,9 @@ void APlayerCharacter::ChangeHaveSmartphoneFlag()
 		else
 		{
 			holdingSmartphoneState = 1;
-			vr_Phone->SetActorRelativeLocation(FVector(200.f, -150.f, -50.f));
+			vr_Phone->SetActorRelativeLocation(FVector(10.f, -6.f, -2.f));
 			vr_Phone->SetActorHiddenInGame(false);
+			vr_Phone->SetActorScale3D(FVector(0.02f, 0.02f, 0.02f));						// PCスマホのサイズ
 
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Is Holding Smartphone");
 		} // end else
