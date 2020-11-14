@@ -6,6 +6,7 @@
 //-------------------------------------------------------------------
 
 #include "CanExamineItem.h"
+#include <string>
 
 ACanExamineItem::ACanExamineItem()
 	: player_character_(NULL)
@@ -14,7 +15,7 @@ ACanExamineItem::ACanExamineItem()
 	, transform_on_map_(FTransform::Identity)
 	, text_linear_color_(FLinearColor::Transparent)
 	, file_kind_(0)
-	, page_num_(1)
+	, page_num_(0)
 	, left_page_open_now_num_(-1)
 	, time_open_close_(1.f)
 	, time_display_text_(2.f)
@@ -48,25 +49,40 @@ void ACanExamineItem::BeginPlay()
 	// プレイヤーが取得できなければメッセージ表示
 	if (player_character_ == NULL) GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, TEXT("PlayerCharacter Not be Found !"));
 
-	// データテーブルがセットされていればデータテーブルの全テキストを取得
+	// データテーブルがセットされていればファイルに対応したテキストを移す
 	if (datatable_ != NULL)
 	{
-		TArray<TArray<FString>> datatable_all_text = datatable_->GetTableData();
+		TArray<FFileTextStruct*> datatable_struct_;
 
-		// 指定したファイルの最大列まで行くか、何も入力されていないセルに当たるまでテキストを取得、格納
-		for (int i = 1, datatable_row_length = datatable_all_text[file_kind_].Num(); i < datatable_row_length && datatable_all_text[file_kind_][i] != ""; ++i)
-		{
-			text_in_file_kind_.Add(datatable_all_text[file_kind_][i]);
-		}
+		// rowのデータ(struct)*行の(テーブル全部の)データを取得
+		datatable_->GetAllRows<FFileTextStruct>(FString(), datatable_struct_);
 
-		// 有効なページがあれば総ページ数を設定
-		if (text_in_file_kind_[0] != "@")
-		{
-			page_num_ = text_in_file_kind_.Num();
-		}
-		// 無ければ削除
-		else	this->Destroy();
-	
+		// 要素数0のデータには挿入できないので1を設定
+		text_in_file_kind_.SetNum(1);
+
+		FString row_name = "File";
+		row_name += FString::FromInt(file_kind_);
+
+		// 空データでも構わずに挿入し要素数 11 (= 10 + 1)個のデータを作る
+		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page10, 0);
+		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page9, 0);
+		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page8, 0);
+		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page7, 0);
+		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page6, 0);
+		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page5, 0);
+		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page4, 0);
+		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page3, 0);
+		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page2, 0);
+		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page1, 0);
+
+		// 空データの有無でページ数を設定
+		for (page_num_ = 0; text_in_file_kind_[page_num_] != ""; ++page_num_);
+
+		// ページ数0(=不正なファイル)なら削除
+		if (page_num_ == 0)	this->Destroy();
+
+		// 最初に不正なアクセスを回避するために設定した 11 番目のデータを削除
+		text_in_file_kind_.SetNum(page_num_);
 	}
 	else	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, TEXT("DataTable Not be Found !"));
 

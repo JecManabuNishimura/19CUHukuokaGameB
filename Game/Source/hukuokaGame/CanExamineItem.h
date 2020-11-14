@@ -15,10 +15,52 @@
 #include "PlayerCharacter.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Engine/DataTable.h"
+#include "UObject/ConstructorHelpers.h"
 #include "CanExamineItem.generated.h"
 
 // イベントディスパッチャー宣言
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFileTrunPageEventDispatcher);		// プレイヤーの視線がCanCheckアイテムに当たった時
+
+// ファイルの構造体(string型10個)
+USTRUCT(BlueprintType)
+struct FFileTextStruct: public FTableRowBase
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+	FFileTextStruct() {}
+
+public:
+	UPROPERTY(EditAnywhere)
+		FString page1;
+
+	UPROPERTY(EditAnywhere)
+		FString page2;
+
+	UPROPERTY(EditAnywhere)
+		FString page3;
+
+	UPROPERTY(EditAnywhere)
+		FString page4;
+
+	UPROPERTY(EditAnywhere)
+		FString page5;
+
+	UPROPERTY(EditAnywhere)
+		FString page6;
+
+	UPROPERTY(EditAnywhere)
+		FString page7;
+
+	UPROPERTY(EditAnywhere)
+		FString page8;
+
+	UPROPERTY(EditAnywhere)
+		FString page9;
+
+	UPROPERTY(EditAnywhere)
+		FString page10;
+};
 
 UCLASS()
 class HUKUOKAGAME_API ACanExamineItem : public AItemBase
@@ -52,7 +94,7 @@ private:
 
 	FString right_text_;				// 右ページに表示する文字
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 1))
 		int file_kind_;					// ファイルの識別番号
 
 	int page_num_;						// 総ページ数
