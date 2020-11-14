@@ -82,6 +82,10 @@ ACardkeyDoorBody::ACardkeyDoorBody()
 	if (cardreader_triggerbox_1_ != NULL)
 	{
 		cardreader_triggerbox_1_->SetupAttachment(RootComponent);
+		
+		// 関数バインド
+		cardreader_triggerbox_1_->OnComponentBeginOverlap.AddDynamic(this, &ACardkeyDoorBody::OnCardReaderOverlapBegin);
+		cardreader_triggerbox_1_->OnComponentEndOverlap.AddDynamic(this, &ACardkeyDoorBody::OnCardReaderOverlapEnd);
 
 		if (cardreader_mesh_1_ != NULL)	cardreader_mesh_1_->SetupAttachment(cardreader_triggerbox_1_);
 	}
@@ -89,22 +93,25 @@ ACardkeyDoorBody::ACardkeyDoorBody()
 	if (cardreader_triggerbox_2_ != NULL)
 	{
 		cardreader_triggerbox_2_->SetupAttachment(RootComponent);
+		
+		// 関数バインド
+		cardreader_triggerbox_2_->OnComponentBeginOverlap.AddDynamic(this, &ACardkeyDoorBody::OnCardReaderOverlapBegin);
+		cardreader_triggerbox_2_->OnComponentEndOverlap.AddDynamic(this, &ACardkeyDoorBody::OnCardReaderOverlapEnd);
 
 		if (cardreader_mesh_2_ != NULL)	cardreader_mesh_2_->SetupAttachment(cardreader_triggerbox_2_);
+	}
+
+	if (door_body_eventtriggerbox_ != NULL)
+	{
+		door_body_eventtriggerbox_->SetupAttachment(RootComponent);
+
+		door_body_eventtriggerbox_->OnComponentBeginOverlap.AddDynamic(this, &ACardkeyDoorBody::OnDoorBodyOverlapBegin);
+		door_body_eventtriggerbox_->OnComponentEndOverlap.AddDynamic(this, &ACardkeyDoorBody::OnDoorBodyOverlapEnd);
 	}
 
 	if (door_state_mesh_1_ != NULL)		door_state_mesh_1_->SetupAttachment(cardreader_mesh_1_);
 
 	if (door_state_mesh_2_ != NULL)		door_state_mesh_2_->SetupAttachment(cardreader_mesh_2_);
-
-	// 関数バインド
-	cardreader_triggerbox_1_->OnCardReaderOverlapBegin.AddDynamic(this, &ACardkeyDoorBody::OnCardReaderOverlapBegin);
-	cardreader_triggerbox_1_->OnCardReaderOverlapEnd.AddDynamic(this, &ACardkeyDoorBody::OnOverlapEnd);
-	cardreader_triggerbox_2_->OnCardReaderOverlapBegin.AddDynamic(this, &ACardkeyDoorBody::OnOverlapBegin);
-	cardreader_triggerbox_2_->OnCardReaderOverlapEnd.AddDynamic(this, &ACardkeyDoorBody::OnOverlapEnd);
-	door_body_eventtriggerbox_->OnCardReaderOverlapBegin.AddDynamic(this, &ACardkeyDoorBody::OnOverlapBegin);
-	door_body_eventtriggerbox_->OnCardReaderOverlapEnd.AddDynamic(this, &ACardkeyDoorBody::OnOverlapEnd);
-
 }
 ACardkeyDoorBody::~ACardkeyDoorBody()
 {
@@ -165,6 +172,7 @@ void ACardkeyDoorBody::UpdateDoorState(float _deltatime)
 			if ((player_character_->player_state & (1 << m_doorFilter)) != 0 && is_cardreader_eventbox_overlap)
 			{
 				if (material_instance_dynamic_ != NULL)	material_instance_dynamic_->SetVectorParameterValue(TEXT("door_state_color"), success_state_color);
+
 				if (sound_loading_success != NULL)
 				{
 					UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_loading_success, GetActorLocation(), 1.0f, 1.0f, 0.0f);
@@ -174,6 +182,7 @@ void ACardkeyDoorBody::UpdateDoorState(float _deltatime)
 			else
 			{
 				if (material_instance_dynamic_ != NULL)	material_instance_dynamic_->SetVectorParameterValue(TEXT("door_state_color"), error_state_color);
+
 				if (sound_loading_error != NULL)
 				{
 					UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_loading_error, GetActorLocation(), 1.0f, 1.0f, 0.0f);
@@ -214,6 +223,11 @@ void ACardkeyDoorBody::UpdateDoorState(float _deltatime)
 		break;
 
 	case DOOR_STATE_CLOSING:
+		if (is_doorbody_eventbox_overlap)
+		{
+			m_doorState = DOOR_STATE_OPENING;
+		}
+
 		if (m_requiredTime <= 0.0f)
 		{
 			m_doorState = DOOR_STATE_CLOSED;
@@ -276,7 +290,7 @@ void ACardkeyDoorBody::CheckDetectSpan(float _deltatime)
 	if (m_openTimeCount > m_detectSpan)
 	{
 		// 検知できなければ状態をCLOSINGへ
-		if (is_cardreader_eventbox_overlap)
+		if (is_cardreader_eventbox_overlap || is_doorbody_eventbox_overlap)
 		{
 			// 開く処理継続のための数値代入
 			m_openTimeCount = 0.0f;
@@ -289,7 +303,7 @@ void ACardkeyDoorBody::CheckDetectSpan(float _deltatime)
 	}
 }
 
-void ACardkeyDoorBody::OnOverlapBegin(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComponent, int32 _otherBodyIndex, bool _bFromSweep, const FHitResult& _sweepResult)
+void ACardkeyDoorBody::OnCardReaderOverlapBegin(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComponent, int32 _otherBodyIndex, bool _bFromSweep, const FHitResult& _sweepResult)
 {
 	if (_otherActor->ActorHasTag("Player"))
 	{
@@ -307,7 +321,31 @@ void ACardkeyDoorBody::OnOverlapBegin(UPrimitiveComponent* _overlappedComponent,
 	}
 }
 
-void ACardkeyDoorBody::OnOverlapEnd(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComp, int32 _otherBodyIndex)
+void ACardkeyDoorBody::OnCardReaderOverlapEnd(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComp, int32 _otherBodyIndex)
 {
 	if (_otherActor->ActorHasTag("Player"))		is_cardreader_eventbox_overlap = false;
+}
+
+void ACardkeyDoorBody::OnDoorBodyOverlapBegin(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComponent, int32 _otherBodyIndex, bool _bFromSweep, const FHitResult& _sweepResult)
+{
+	if (_otherActor->ActorHasTag("Player") || _otherActor->ActorHasTag("Enemy"))
+	{
+		// 検知内のアクター数をインクリメント
+		++door_eventbox_overlap_sum;
+
+		// 挟み防止用フラグを立てる
+		is_doorbody_eventbox_overlap = true;
+	}
+}
+
+void ACardkeyDoorBody::OnDoorBodyOverlapEnd(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComp, int32 _otherBodyIndex)
+{
+	if (_otherActor->ActorHasTag("Player") || _otherActor->ActorHasTag("Enemy"))
+	{
+		// 検知内のアクター数をデクリメント
+		--door_eventbox_overlap_sum;
+
+		// 検知内のアクターが0以下なら挟み防止用フラグを下す
+		if (door_eventbox_overlap_sum <= 0)		is_doorbody_eventbox_overlap = false;
+	}
 }
