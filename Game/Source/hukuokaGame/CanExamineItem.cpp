@@ -6,7 +6,6 @@
 //-------------------------------------------------------------------
 
 #include "CanExamineItem.h"
-#include <string>
 
 ACanExamineItem::ACanExamineItem()
 	: player_character_(NULL)
@@ -59,9 +58,6 @@ void ACanExamineItem::BeginPlay()
 
 		// 要素数0のデータには挿入できないので1を設定
 		text_in_file_kind_.SetNum(1);
-
-		FString row_name = "File";
-		row_name += FString::FromInt(file_kind_);
 
 		// 空データでも構わずに挿入し要素数 11 (= 10 + 1)個のデータを作る
 		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page10, 0);
