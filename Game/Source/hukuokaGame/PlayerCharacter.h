@@ -305,7 +305,15 @@ public:
 		int vr_SmartPhone_Mission_Num;				// 今表示するミッションナンバー
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
-		FString vr_SmartPhone_Mission_Contents;		// 今表示するミッション　（今は必要ない）
+		FString vr_SmartPhone_Mission_Contents;		// 今表示するミッション　（今は使えていない）
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VR_Phone|Mission")
+		int finished_MsiionID;						// テスト用　　　完成したミッションID　（表示したくないIDを入れる）
+
+	UFUNCTION(BlueprintCallable, Category = "VR_Phone|Mission")
+		void SetTheMissionToFinish( int _missionID);	// _missionIDというミッションのフラグと表示を処理する
+
+
 
 
 	bool isFound;		// 敵の攻撃範囲内に入ったか(作成者：尾崎)

@@ -74,6 +74,7 @@ APlayerCharacter::APlayerCharacter()
 	, vr_HitResult(NULL)
 	, vr_InCameraMode(false)
 	, vr_SmartPhone_Mission_Num(1)
+	, finished_MsiionID(0)
 	, isFound(false)
 	, isHeartBeatOn(false)
 	, m_MaxWalkSpeed_Walk(250.0f)
@@ -252,6 +253,8 @@ void APlayerCharacter::BeginPlay()
 			vr_Phone->SetActorScale3D(FVector(0.5f, 0.5f, 0.5f));
 
 			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetActorRotation().ToString()));
+			
+			holdingSmartphoneState = 1;
 		} // end if
 		else
 		{
@@ -756,6 +759,7 @@ void APlayerCharacter::ChangeHaveSmartphoneFlag()
 		} // end else
 
 	} // end if()
+
 } // ChangeHaveSmartphoneFlag()
 
 AItemBase* APlayerCharacter::ReturnCheckingItem() const
@@ -776,6 +780,27 @@ FVector APlayerCharacter::ReturnCameraForwardVector()
 
 	return forward_vector;
 }
+
+// _missionIDというミッションのフラグと表示を処理する
+// utilityやセーブデータのミッションフラグも処理する予定です。
+// 11/14今の段階では削除だけ。
+// _missionIDのミッションを画面から削除する。
+void APlayerCharacter::SetTheMissionToFinish(int _missionID)
+{
+	// CurrentMissionUpdate(1, 1);
+
+	FString FuncName_and_Solution = FString::Printf(TEXT("CurrentMissionUpdate 1 "));
+	FOutputDeviceNull ar;
+
+	// int abcc = 2;
+	// FuncName_and_Solution += FString::FromInt(abcc);
+
+	FuncName_and_Solution += FString::FromInt(_missionID);
+	vr_Phone->CallFunctionByNameWithArguments(*FuncName_and_Solution, ar, NULL, true);
+
+	// vr_Phone->CallFunctionByNameWithArguments(TEXT("CurrentMissionUpdate 1 1"), ar, NULL, true);
+
+} // void SetTheMissionToFinish()
 
 FVector APlayerCharacter::ReturnCameraLocation()
 {
