@@ -27,6 +27,7 @@
 #include "GameFramework/Character.h"
 #include "Smartphone.h"
 #include "Components/ChildActorComponent.h"
+#include "Camera/CameraComponent.h"
 #include "HeartBeatAppWidgetComponent.h"	// 心拍数アプリ用（作成者：朱適）
 #include "PlayerCharacter.generated.h"
 
@@ -116,6 +117,9 @@ private:
 	// プレイヤーアクション：拾う、調べる、作動させる
 	void CheckToActor();
 
+	// プレイヤーアクション（仮）：ダメージを受ける
+	void AttackFromEnemy();
+
 	// スマホ関係
 	// 構えるかどうかのフラグ(作成者：尾崎)
 	void ChangeHaveSmartphoneFlag();
@@ -198,13 +202,13 @@ private:
 		class USceneComponent* m_pCameraBase;	// カメラの原点
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-		class UCameraComponent* m_pCamera;		// カメラ
-
-	UPROPERTY(EditAnywhere)
-		USoundBase* sound_player_footstep_;
+		UCameraComponent* m_pCamera;		// カメラ
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (by_Rin) 
+
+	UPROPERTY(EditAnywhere)
+		USoundBase* sound_player_footstep_;
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
@@ -229,7 +233,6 @@ private:
 
 	bool isVRCamera;							// VRカメラかどうか
 
-
 	float count_for_footstep_;					// 足音のためのカウント
 
 	float eyelevel_for_camera_shaking;
@@ -239,6 +242,8 @@ private:
 	bool can_player_control;					// プレイヤーの操作が出来るか
 
 	float m_playerMoveSpeed;					// プレイヤーの移動速度
+
+	int damage_count_;							// 敵から攻撃を受けた回数(1回…聴覚デバフ、2回…触覚デバフ、3回…視覚デバフ、4回…死)
 
 	FVector2D m_playerMoveInput;				// プレイヤーの移動入力量
 	FVector2D m_cameraRotateInput;				// カメラの回転入力量

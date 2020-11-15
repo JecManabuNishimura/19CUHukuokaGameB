@@ -67,6 +67,7 @@ APlayerCharacter::APlayerCharacter()
 	, can_make_footstep(true)
 	, can_player_control(true)
 	, m_playerMoveSpeed(0.0f)
+	, damage_count_(0)
 	, m_playerMoveInput(FVector2D::ZeroVector)
 	, m_cameraRotateInput(FVector2D::ZeroVector)
 	, m_pCheckingItem(NULL)
@@ -343,6 +344,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	// 心拍数アプリの切り替え
 	InputComponent->BindAction("HeartBeatStatusSwitch", IE_Pressed, this, &APlayerCharacter::HeartBeatStatusSwitch);
+
+	// 視覚デバフのON/OFF
+	InputComponent->BindAction("DamageToPlayer", IE_Pressed, this, &APlayerCharacter::AttackFromEnemy);
 }
 
 // カメラ(Pitch)の更新
@@ -721,6 +725,30 @@ void APlayerCharacter::CheckToActor()
 	if (m_pCheckingItem != NULL)
 	{
 		m_pCheckingItem->CheckedByPlayer();
+	}
+}
+
+void APlayerCharacter::AttackFromEnemy()
+{
+	++damage_count_;
+
+	switch (damage_count_)
+	{
+	case 1:
+		break;
+	case 2:
+		break;
+	case 3:
+		// ダメージを3回受けたときのポストプロセスの値設定
+		m_pCamera->PostProcessSettings.ColorSaturation = FVector4(1.f, 1.f, 1.f, 0.f);
+		m_pCamera->PostProcessSettings.ColorContrast = FVector4(1.f, 1.f, 1.f, 1.4f);
+		m_pCamera->PostProcessSettings.VignetteIntensity = 1.f;
+		m_pCamera->PostProcessSettings.GrainIntensity = 0.5f;
+		break;
+	case 4:
+		break;
+	default:
+		break;
 	}
 }
 
