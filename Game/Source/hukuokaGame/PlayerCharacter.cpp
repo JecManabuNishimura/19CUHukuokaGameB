@@ -10,8 +10,9 @@
 // 作成者		：19CU0217 朱適
 // 更新日		：2020/08/18		VRカメラの作成
 // 更新日		：2020/10/09		ゲームオーバーに遷移の機能を追加
-//				：2020/10/14		白枠の制御の追加
-//				：2020/11/04		心拍数アプリのアクションマッピングを追加
+// 更新日		：2020/10/14		白枠の制御の追加
+// 更新日		：2020/11/04		心拍数アプリのアクションマッピングを追加
+// 更新日		：2020/11/16		ダメージ状態２を追加
 //-------------------------------------------------------------------
 
 //-------------------------------------------------------------------
@@ -751,6 +752,8 @@ void APlayerCharacter::AttackFromEnemy()
 		else								GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, "SE_VolumeCanChange is not set.");
 		break;
 	case 2:
+		// ダメージ状態２になる
+		SetSmartPhoneDamaged(true);
 		break;
 	case 3:
 		// 被ダメージ3回目(視覚デバフ/ポストプロセスの値設定)
@@ -845,6 +848,11 @@ void APlayerCharacter::SetTheMissionToFinish(int _missionID)
 	// vr_Phone->CallFunctionByNameWithArguments(TEXT("CurrentMissionUpdate 1 1"), ar, NULL, true);
 
 } // void SetTheMissionToFinish()
+
+void APlayerCharacter::SetSmartPhoneDamaged_Implementation(bool _value)
+{
+}
+
 
 FVector APlayerCharacter::ReturnCameraLocation()
 {

@@ -12,6 +12,7 @@
 // 作成日		：2020/08/18
 // 更新日		：2020/11/04		心拍数アプリのアクションマッピングを追加
 // 更新日		：2020/11/05		インスタンスがあるかどうかの確認を追加
+// 更新日		：2020/11/16		ダメージ状態２を追加
 //-------------------------------------------------------------------
 
 //-------------------------------------------------------------------
@@ -161,6 +162,10 @@ public:
 	// Smartphoneから呼び出す関数(shutterFlagをSmartphoneに送る)(作成者：尾崎)
 	bool GetShatterFlag();
 
+	// Phoneアクターを取得する関数（作成者：朱適）
+	UFUNCTION(BlueprintGetter)
+		AActor* GetPhoneActor() { return vr_Phone; };
+
 public:
 	UFUNCTION(BlueprintCallable, Category = "Return State")
 		AItemBase* ReturnCheckingItem() const;
@@ -306,8 +311,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "VR_Phone")
 		TSubclassOf<class AActor> bp_VRphone;
 
-	UPROPERTY(EditAnywhere, Category = "VR_Phone", meta = (AllowPrivateAccess = "true"))
+
+
+	UPROPERTY(EditAnywhere, BlueprintGetter = GetPhoneActor, Category = "VR_Phone", meta = (AllowPrivateAccess = "true"))
 		AActor* vr_Phone;
+
 
 public: 
 	// ===== 移動としゃがむ　プロパティ  by_Rin =====
@@ -355,6 +363,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PlayerDamage")
 		void SetIsFound(const bool _flag) { isFound = _flag; }	// 見つかった場合にisFoundを変える関数(作成者：尾崎)
 
+	// ダメージ状態２になった時呼び出す関数。Blueprintにオーバーライドする（作成者：朱適）
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlayerDamage")
+	void SetSmartPhoneDamaged(bool _value);
+	
 	FVector ReturnCameraLocation();
 
 	FVector ReturnCameraForwardVector();
