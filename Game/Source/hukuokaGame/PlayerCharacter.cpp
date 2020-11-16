@@ -54,6 +54,7 @@ APlayerCharacter::APlayerCharacter()
 	, m_cameraPitchLimitMin(-89.0f)
 	, m_cameraPitchLimitMax(89.0f)
 	, m_pCamera(NULL)
+	, se_volume_can_change_(NULL)
 	, sound_player_footstep_(NULL)
 	, m_eyeLevelWhenStanding(170.0f)
 	, camera_shaking_value(10.0f)
@@ -72,6 +73,7 @@ APlayerCharacter::APlayerCharacter()
 	, m_cameraRotateInput(FVector2D::ZeroVector)
 	, m_pCheckingItem(NULL)
 	, m_pPrevCheckItem(NULL)
+	, se_volume_for_debuff_(1.f)
 	, saturation_for_debuff_(1.f, 1.f, 1.f, 0.f)
 	, contrast_for_debuff_(1.f, 1.f, 1.f, 2.f)
 	, vignette_intensity_for_debuff_(1.f)
@@ -137,6 +139,9 @@ APlayerCharacter::~APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// 効果音の音量を初期化(=1に)
+	se_volume_can_change_->Properties.Volume = 1.f;
 
 	// ===========  プレイヤー移動、しゃがむ用のプロパティ設定  by_Rin ===========
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;					// しゃがむを可能します
@@ -741,11 +746,14 @@ void APlayerCharacter::AttackFromEnemy()
 	switch (damage_count_)
 	{
 	case 1:
+		// 被ダメージ1回目(聴覚デバフ/効果音のサウンドクラスを通して音量の設定)
+		if (se_volume_can_change_ != NULL)	se_volume_can_change_->Properties.Volume = se_volume_for_debuff_;
+		else								GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, "SE_VolumeCanChange is not set.");
 		break;
 	case 2:
 		break;
 	case 3:
-		// ダメージを3回受けたときのポストプロセスの値設定
+		// 被ダメージ3回目(視覚デバフ/ポストプロセスの値設定)
 		m_pCamera->PostProcessSettings.ColorSaturation = saturation_for_debuff_;
 		m_pCamera->PostProcessSettings.ColorContrast = contrast_for_debuff_;
 		m_pCamera->PostProcessSettings.VignetteIntensity = vignette_intensity_for_debuff_;
