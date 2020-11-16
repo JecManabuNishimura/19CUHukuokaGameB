@@ -251,6 +251,28 @@ private:
 	AItemBase* m_pCheckingItem;					// チェック中のアイテム
 	AItemBase* m_pPrevCheckItem;				// 1フレーム前にチェックしていたアイテム
 
+	//-----------------------------------------------------------------------------------------------------------------
+	// 視覚デバフのためのポストプロセスプロパティ(作成者 増井悠斗)
+	//-----------------------------------------------------------------------------------------------------------------
+	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "2.0", DisplayName = "Saturation"))
+		FVector4 saturation_for_debuff_;			// 彩度(グレースケールにするためにはWを0に)
+
+	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "2.0", DisplayName = "Contrast"))
+		FVector4 contrast_for_debuff_;				// コントラスト
+
+	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "1.0", DisplayName = "Vignette Intensity"))
+		float vignette_intensity_for_debuff_;		// ビネット効果強度(画面周りが暗くなる)
+
+	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "1.0", DisplayName = "Grain Intensity"))
+		float grain_intensity_for_debuff_;			// グレイン強度(ノイズ)
+
+	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "1.0", DisplayName = "Slope"))
+		float film_slope_for_debuff_;
+
+	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "1.0", DisplayName = "Toe"))
+		float film_toe_for_debuff_;
+	//-----------------------------------------------------------------------------------------------------------------
+
 	// スマホオブジェクト(作成者：尾崎)
 	UChildActorComponent* smartphone;
 
@@ -317,9 +339,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "VR_Phone|Mission")
 		void SetTheMissionToFinish( int _missionID);	// _missionIDというミッションのフラグと表示を処理する
-
-
-
 
 	bool isFound;		// 敵の攻撃範囲内に入ったか(作成者：尾崎)
 

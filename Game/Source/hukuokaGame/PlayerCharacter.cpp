@@ -72,6 +72,12 @@ APlayerCharacter::APlayerCharacter()
 	, m_cameraRotateInput(FVector2D::ZeroVector)
 	, m_pCheckingItem(NULL)
 	, m_pPrevCheckItem(NULL)
+	, saturation_for_debuff_(1.f, 1.f, 1.f, 0.f)
+	, contrast_for_debuff_(1.f, 1.f, 1.f, 2.f)
+	, vignette_intensity_for_debuff_(1.f)
+	, grain_intensity_for_debuff_(0.5f)
+	, film_slope_for_debuff_(1.f)
+	, film_toe_for_debuff_(0.8f)
 	, vr_HitResult(NULL)
 	, vr_InCameraMode(false)
 	, vr_SmartPhone_Mission_Num(1)
@@ -740,10 +746,12 @@ void APlayerCharacter::AttackFromEnemy()
 		break;
 	case 3:
 		// ダメージを3回受けたときのポストプロセスの値設定
-		m_pCamera->PostProcessSettings.ColorSaturation = FVector4(1.f, 1.f, 1.f, 0.f);
-		m_pCamera->PostProcessSettings.ColorContrast = FVector4(1.f, 1.f, 1.f, 1.4f);
-		m_pCamera->PostProcessSettings.VignetteIntensity = 1.f;
-		m_pCamera->PostProcessSettings.GrainIntensity = 0.5f;
+		m_pCamera->PostProcessSettings.ColorSaturation = saturation_for_debuff_;
+		m_pCamera->PostProcessSettings.ColorContrast = contrast_for_debuff_;
+		m_pCamera->PostProcessSettings.VignetteIntensity = vignette_intensity_for_debuff_;
+		m_pCamera->PostProcessSettings.GrainIntensity = grain_intensity_for_debuff_;
+		m_pCamera->PostProcessSettings.FilmSlope = film_slope_for_debuff_;
+		m_pCamera->PostProcessSettings.FilmToe = film_toe_for_debuff_;
 		break;
 	case 4:
 		break;
