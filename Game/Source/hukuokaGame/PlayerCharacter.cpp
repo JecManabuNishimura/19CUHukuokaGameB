@@ -13,6 +13,7 @@
 // 更新日		：2020/10/14		白枠の制御の追加
 // 更新日		：2020/11/04		心拍数アプリのアクションマッピングを追加
 // 更新日		：2020/11/16		ダメージ状態２を追加
+// 更新日		：2020/11/17		ダメージ状態１、２の処理を追加
 //-------------------------------------------------------------------
 
 //-------------------------------------------------------------------
@@ -142,7 +143,10 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	// 効果音の音量を初期化(=1に)
-	se_volume_can_change_->Properties.Volume = 1.f;
+	if (se_volume_can_change_ != NULL)
+	{
+		se_volume_can_change_->Properties.Volume = 1.f;
+	}
 
 	// ===========  プレイヤー移動、しゃがむ用のプロパティ設定  by_Rin ===========
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;					// しゃがむを可能します
@@ -747,15 +751,21 @@ void APlayerCharacter::AttackFromEnemy()
 	switch (damage_count_)
 	{
 	case 1:
+		// ダメージ状態２になる（作成者：朱適）
+		EarDamaged();
+
 		// 被ダメージ1回目(聴覚デバフ/効果音のサウンドクラスを通して音量の設定)
 		if (se_volume_can_change_ != NULL)	se_volume_can_change_->Properties.Volume = se_volume_for_debuff_;
 		else								GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, "SE_VolumeCanChange is not set.");
 		break;
 	case 2:
-		// ダメージ状態２になる
-		SetSmartPhoneDamaged(true);
+		// ダメージ状態２になる（作成者：朱適）
+		HandDamaged();
 		break;
 	case 3:
+		// ダメージ状態３になる（作成者：朱適）
+		EyeDamaged();
+
 		// 被ダメージ3回目(視覚デバフ/ポストプロセスの値設定)
 		m_pCamera->PostProcessSettings.ColorSaturation = saturation_for_debuff_;
 		m_pCamera->PostProcessSettings.ColorContrast = contrast_for_debuff_;
@@ -849,10 +859,16 @@ void APlayerCharacter::SetTheMissionToFinish(int _missionID)
 
 } // void SetTheMissionToFinish()
 
-void APlayerCharacter::SetSmartPhoneDamaged_Implementation(bool _value)
+// ダメージ状態の処理（C++側）（作成者：朱適）
+void APlayerCharacter::EarDamaged_Implementation()
 {
 }
-
+void APlayerCharacter::HandDamaged_Implementation()
+{
+}
+void APlayerCharacter::EyeDamaged_Implementation()
+{
+}
 
 FVector APlayerCharacter::ReturnCameraLocation()
 {

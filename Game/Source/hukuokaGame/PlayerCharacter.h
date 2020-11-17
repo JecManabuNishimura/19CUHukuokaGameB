@@ -13,6 +13,7 @@
 // 更新日		：2020/11/04		心拍数アプリのアクションマッピングを追加
 // 更新日		：2020/11/05		インスタンスがあるかどうかの確認を追加
 // 更新日		：2020/11/16		ダメージ状態２を追加
+// 更新日		：2020/11/17		ダメージ状態１、２の処理を追加
 //-------------------------------------------------------------------
 
 //-------------------------------------------------------------------
@@ -363,9 +364,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "PlayerDamage")
 		void SetIsFound(const bool _flag) { isFound = _flag; }	// 見つかった場合にisFoundを変える関数(作成者：尾崎)
 
+	// ダメージ状態１になった時呼び出す関数。Blueprintにオーバーライドする（作成者：朱適）
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlayerDamage")
+		void EarDamaged();
+
 	// ダメージ状態２になった時呼び出す関数。Blueprintにオーバーライドする（作成者：朱適）
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlayerDamage")
-	void SetSmartPhoneDamaged(bool _value);
+		void HandDamaged();
+
+	// ダメージ状態３になった時呼び出す関数。Blueprintにオーバーライドする（作成者：朱適）
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlayerDamage")
+		void EyeDamaged();
 	
 	FVector ReturnCameraLocation();
 
