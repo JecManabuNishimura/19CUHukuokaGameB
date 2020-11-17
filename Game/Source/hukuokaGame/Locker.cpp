@@ -61,7 +61,7 @@ ALocker::ALocker()
 
 	if (max_rotation == 0 || open_and_close_frame == 0 || player_change_rotation_frame == 0 || player_to_locker_frame == 0)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Propety is 0. Should be Another Value"));
+		// UE_LOG(LogTemp, Error, TEXT("Propety is 0. Should be Another Value"));
 	}
 }
 
