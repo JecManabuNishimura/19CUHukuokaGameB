@@ -320,18 +320,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 		// VR コントローラー ポインターの更新
 		UpdateVRLaser();
 	} // end if()
-
-	//// デバッグ確認用(見つかったかどうか)
-	//UE_LOG(LogTemp, Warning, TEXT("isFound = %d"), isFound);
-
-	// 敵に捕まったら
-	if (isFound)
-	{
-		// 敵のアニメーション終了までRespawn関数は呼ばない
-
-		// リスポーン関数を呼び出し
-		Respawn();
-	}
 }
 
 // 各入力関係メソッドとのバインド処理
@@ -369,7 +357,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 void APlayerCharacter::UpdateCameraPitch(const float _deltaTime)
 {
 	// 操作不可ならreturn
-	if (!can_player_control)	return;
+	if (!can_player_control || isFound)	return;
 
 	if (m_pCamera != NULL)
 	{
@@ -388,7 +376,7 @@ void APlayerCharacter::UpdateCameraPitch(const float _deltaTime)
 void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 {
 	// 操作不可ならreturn
-	if (!can_player_control)	return;
+	if (!can_player_control || isFound)	return;
 
 	// 現在のプレイヤーの回転情報を取得
 	FRotator newRotationPlayer = GetActorRotation();
@@ -421,7 +409,7 @@ void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 {
 	// 操作不可ならreturn
-	if (!can_player_control)	return;
+	if (!can_player_control || isFound)	return;
 
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
@@ -621,7 +609,7 @@ void APlayerCharacter::MakeFootstep(const float _deltaTime, const float _player_
 void APlayerCharacter::CheckItem()
 {
 	// 操作不可なら表示されているコマンドアイコンを非表示にし、return
-	if (!can_player_control)
+	if (!can_player_control || isFound)
 	{
 		// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 		OnItemCheckEndEventDispatcher.Broadcast();
@@ -775,10 +763,19 @@ void APlayerCharacter::AttackFromEnemy()
 		m_pCamera->PostProcessSettings.FilmToe = film_toe_for_debuff_;
 		break;
 	case 4:
+		// 被ダメージ4回目(リスポーン)
+		Respawn();
 		break;
 	default:
 		break;
 	}
+}
+
+// エネミーの攻撃範囲に入った際の処理 (追記者 増井)
+void APlayerCharacter::SetIsFound(const bool _flag, FVector _enemy_location)
+{
+	isFound = _flag;
+	if (isFound)	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), (_enemy_location + FVector(0.f, 0.f, 50.f))));
 }
 
 // PC版、スマホを手前に持っているか  by_Rin
@@ -960,19 +957,7 @@ void APlayerCharacter::UpdateVRLaser()
 void APlayerCharacter::Respawn()
 {
 	//--- ゲームオーバーに遷移の追加 by 朱適
-	if (GetWorld()->GetName() == "ProtoType")
-	{
-		LevelSwitchHelper::OpenGameOverLevelMap(this);
-	}
-
-	// フラグの初期化
-	isFound = false;
-
-	//// デバッグ確認用(死んだときのログ)
-	//UE_LOG(LogTemp, Warning, TEXT("Player Dead... Respawn."));
-
-	// 位置の初期化
-	this->SetActorLocation(FVector(-4850.f, -3300.f, 300.f));
+	LevelSwitchHelper::OpenGameOverLevelMap(this);
 }
 
 // C++のしゃがむが使えないため
