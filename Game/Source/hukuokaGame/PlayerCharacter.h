@@ -120,9 +120,6 @@ private:
 	// プレイヤーアクション：拾う、調べる、作動させる
 	void CheckToActor();
 
-	// プレイヤーアクション（仮）：ダメージを受ける
-	void AttackFromEnemy();
-
 	// スマホ関係
 	// 構えるかどうかのフラグ(作成者：尾崎)
 	void ChangeHaveSmartphoneFlag();
@@ -362,7 +359,11 @@ public:
 	bool isFound;		// 敵の攻撃範囲内に入ったか(作成者：尾崎)
 
 	UFUNCTION(BlueprintCallable, Category = "PlayerDamage")
-		void SetIsFound(const bool _flag) { isFound = _flag; }	// 見つかった場合にisFoundを変える関数(作成者：尾崎)
+		void SetIsFound(const bool _flag, FVector _enemy_location);			// 見つかった場合にisFoundを変える関数(作成者：尾崎)
+
+	// ダメージを受ける時にBPから呼ばれる関数
+	UFUNCTION(BlueprintCallable, Category = "PlayerDamage")
+		void AttackFromEnemy();
 
 	// ダメージ状態１になった時呼び出す関数。Blueprintにオーバーライドする（作成者：朱適）
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlayerDamage")
