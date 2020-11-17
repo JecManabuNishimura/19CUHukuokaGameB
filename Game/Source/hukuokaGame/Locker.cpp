@@ -1,5 +1,5 @@
 // max_rotationを0以上にするとおかしくなります
-
+// 181°~360°にするとおかしくなる
 //-------------------------------------------------------------------
 // ファイル		：Locker.cpp
 // 概要			：ロッカーの制御
@@ -30,7 +30,10 @@ ALocker::ALocker()
 	, player_location_save_(FVector::ZeroVector)
 	, player_move_vector_(FVector::ZeroVector)
 	, locker_body_rotation_(FRotator::ZeroRotator)
-
+	, location_lerp_alpha(0.f)
+	, location_add_lerp_value(0.f)
+	, rotation_lerp_alpha(0.f)
+	, rotation_add_lerp_value(0.f)
 {
 	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
@@ -69,10 +72,16 @@ void ALocker::BeginPlay()
 	// 1フレームごとにどれだけ回転させるかの設定(1フレームに与える回転量 = 回転させたい最大の角度 / かかるF数)
 	add_rotation_value_ = (float)(max_rotation / open_and_close_frame);
 
+	def_door_rotation = locker_body_rotation_.Yaw;
+
 	locker_body_location_ = body_mesh_->GetRelativeLocation();
 	locker_body_rotation_ = body_mesh_->GetRelativeRotation();
+	//max_rotation += locker_body_rotation_.Yaw;
+	//now_rotation_value_ = locker_body_rotation_.Yaw;
 	locker_body_rotation_.Yaw += 90.f;
-	add_player_rotation_value_ = locker_body_rotation_.Yaw / player_change_rotation_frame;
+	//add_player_rotation_value_ = locker_body_rotation_.Yaw / player_change_rotation_frame;
+
+	rotation_add_lerp_value = 1.f / (float)player_change_rotation_frame;
 
 	GetPlayer();
 }
@@ -124,11 +133,18 @@ void ALocker::CheckedByPlayer()
 	if (!is_in_player_)
 	{
 		player_location_save_ = player->GetActorLocation();
-		player_move_vector_ = (locker_body_location_ - player_location_save_) / player_to_locker_frame;
+
+		location_lerp_alpha = 0.f;
+		player_move_vector_ = FMath::Lerp(player_location_save_, locker_body_location_, location_lerp_alpha);
+		location_add_lerp_value = 1.f / (float)player_to_locker_frame;
+		locker_body_location_.Z = player_location_save_.Z;
+
+		rotation_lerp_alpha = 0.f;
 	}
 	else
 	{
-		player_move_vector_ = (player->GetActorLocation() - player_location_save_) / player_to_locker_frame;
+		location_lerp_alpha = 1.f;
+		//player_move_vector_ = (player->GetActorLocation() - player_location_save_) / player_to_locker_frame;
 	}
 
 	player->SetPlayerControlFlag(false);
@@ -140,7 +156,7 @@ void ALocker::SetDoorRotationValue()
 	if (is_check_)
 	{
 		// 開ききっていないかどうか
-		if (door_mesh_->GetRelativeRotation().Yaw >= max_rotation)
+		if (now_rotation_value_ >= max_rotation)
 		{
 			now_rotation_value_ += add_rotation_value_;
 
@@ -155,7 +171,7 @@ void ALocker::SetDoorRotationValue()
 	else
 	{
 		// 閉まり切っていないかどうか
-		if (door_mesh_->GetRelativeRotation().Yaw < 0)
+		if (now_rotation_value_ < 0)
 		{
 			now_rotation_value_ -= add_rotation_value_;
 
@@ -172,7 +188,7 @@ void ALocker::SetDoorRotationValue()
 
 void ALocker::UpdateDoorRotation()
 {
-	door_mesh_->SetWorldRotation(FRotator(0.f, now_rotation_value_, 0.f));
+	door_mesh_->SetRelativeRotation(FRotator(0.f, now_rotation_value_, 0.f));
 }
 
 void ALocker::InToLocker()
@@ -186,30 +202,11 @@ void ALocker::InToLocker()
 	// Playerの移動中の移動中な為trueに
 	is_move_in_locker_ = true;
 
-	// プレイヤーの次にいるべき現在地 = プレイヤーの現在地 + 1フレーム辺りに移動させるベクター
-	FVector playerNowLocation = player->GetActorLocation() + player_move_vector_;
-	player->SetActorLocation(playerNowLocation);
-
-	// Z軸0
-	player->SetActorLocation(FVector(playerNowLocation.X, playerNowLocation.Y, player_location_save_.Z));
-
-	// 絶対値でやりたかった。
-	// float absPlayerLocation_X = fabs(playerNowLocation.X);
-	// float absPlayerLocation_Y = fabs(playerNowLocation.Y);
-	float abslockerBodyLocation_X = locker_body_location_.X;
-	float abslockerBodyLocation_Y = locker_body_location_.Y;
-
-	if (locker_body_location_.X < 0)
-	{
-		abslockerBodyLocation_X = locker_body_location_.X * -1;
-	}
-	if (locker_body_location_.Y < 0)
-	{
-		abslockerBodyLocation_Y = locker_body_location_.Y * -1;
-	}
-
-
-	if (playerNowLocation.Y + abslockerBodyLocation_Y < 0 && playerNowLocation.X + abslockerBodyLocation_Y < 0)
+	location_lerp_alpha += location_add_lerp_value; 
+	player_move_vector_ = FMath::Lerp(player_location_save_, locker_body_location_, location_lerp_alpha);
+	player->SetActorLocation(player_move_vector_);
+	
+	if (location_lerp_alpha >= 0.99f)
 	{
 		player_rotation_start_flag_ = true;
 		is_move_in_locker_ = false;
@@ -218,7 +215,6 @@ void ALocker::InToLocker()
 		player->SetPlayerControlFlag(true);
 		can_input_ = true;
 	}
-	//player->SetActorRotation(locker_body_rotation_);
 }
 
 void ALocker::OutToLocker()
@@ -232,40 +228,28 @@ void ALocker::OutToLocker()
 	// Playerの移動中の移動中な為trueに
 	is_move_in_locker_ = true;
 
-	// プレイヤーの次にいるべき現在地 = プレイヤーの現在地 + 1フレーム辺りに移動させるベクター
-	FVector nowPlayerLocation = player->GetActorLocation() - player_move_vector_;
-	player->SetActorLocation(nowPlayerLocation);
+	location_lerp_alpha -= location_add_lerp_value;
+	player_move_vector_ = FMath::Lerp(player_location_save_, locker_body_location_, location_lerp_alpha);
+	player->SetActorLocation(player_move_vector_);
 
-	// Z軸補正
-	player->SetActorLocation(FVector(nowPlayerLocation.X, nowPlayerLocation.Y, player_location_save_.Z));
-
-	// 元の位置に付いたら
-	float a = nowPlayerLocation.X - player_location_save_.X;
-	float b = nowPlayerLocation.Y - player_location_save_.Y;
-
-	//UE_LOG(LogTemp, Warning, TEXT("x : %f - %f = %f"), nowPlayerLocation.X, player_location_save_.X, a);
-	//UE_LOG(LogTemp, Warning, TEXT("f : %f - %f = %f"), nowPlayerLocation.Y, player_location_save_.Y, b);
-	//UE_LOG(LogTemp, Warning, TEXT("-----------------------------------------------------"));
-
-	if(a > -5 && b > -5)
+	if(location_lerp_alpha <= 0)
 	{
-		player_rotation_start_flag_ = true;
+		player_rotation_start_flag_ = false;
 		is_move_in_locker_ = false;
 		is_check_ = false;
 		is_in_player_ = false;
 		player->SetPlayerControlFlag(true);
 		can_input_ = true;
 	}
-	//player->SetActorRotation(locker_body_rotation_);
 }
 
 void ALocker::PlayerRotation()
 {
-	FRotator playerNowRotation = player->GetActorRotation();
-	playerNowRotation.Yaw += add_player_rotation_value_;
-	player->SetActorRotation(playerNowRotation);
+		
+	rotation_lerp_alpha += rotation_add_lerp_value;
+	player->SetActorRotation(FMath::Lerp(player->GetActorRotation(), locker_body_rotation_, rotation_lerp_alpha));
 
-	if (playerNowRotation.Yaw >= locker_body_rotation_.Yaw)
+	if (rotation_lerp_alpha >= 0.99f)
 	{
 		player_rotation_start_flag_ = false;
 	}

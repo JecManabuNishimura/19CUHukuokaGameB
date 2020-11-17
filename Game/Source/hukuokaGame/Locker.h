@@ -73,6 +73,11 @@ private:
 	FVector player_location_save_;	// ロッカーに入ろうとしたときのPlayerの座標格納用(ロッカーから出る時に必要)
 	FVector player_move_vector_;		// 1フレームごとにプレイヤーがどれだけ進むかを格納
 	FRotator locker_body_rotation_;	// ロッカー本体の回転
+	float location_lerp_alpha;
+	float location_add_lerp_value;
+	float rotation_lerp_alpha;
+	float rotation_add_lerp_value;
+	float def_door_rotation;
 
 	void SetDoorRotationValue();
 	void UpdateDoorRotation();
