@@ -29,6 +29,7 @@
 #include "Smartphone.h"
 #include "Components/ChildActorComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Sound/SoundClass.h"
 #include "HeartBeatAppWidgetComponent.h"	// 心拍数アプリ用（作成者：朱適）
 #include "PlayerCharacter.generated.h"
 
@@ -213,7 +214,10 @@ private:
 		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (by_Rin) 
 
 	UPROPERTY(EditAnywhere)
-		USoundBase* sound_player_footstep_;
+		USoundClass* se_volume_can_change_;		// 各効果音に設定しているサウンドクラス
+
+	UPROPERTY(EditAnywhere)
+		USoundBase* sound_player_footstep_;		// プレイヤーの足音SE
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
@@ -240,7 +244,7 @@ private:
 
 	float count_for_footstep_;					// 足音のためのカウント
 
-	float eyelevel_for_camera_shaking;
+	float eyelevel_for_camera_shaking;			// カメラの縦揺れの度合い
 
 	bool can_make_footstep;						// 足音発生許可フラグ
 
@@ -257,12 +261,18 @@ private:
 	AItemBase* m_pPrevCheckItem;				// 1フレーム前にチェックしていたアイテム
 
 	//-----------------------------------------------------------------------------------------------------------------
+	// 聴覚デバフのためのプロパティ各効果音の音量に適用して疑似的に聴覚が弱まったようにみせる(作成者 増井悠斗)
+	//-----------------------------------------------------------------------------------------------------------------
+	UPROPERTY(EditAnywhere, Category = "Hearing Debuff", meta = (UIMin = "0.0", UIMax = "1.0", DisplayName = "Sound Volume"))
+		float se_volume_for_debuff_;
+
+	//-----------------------------------------------------------------------------------------------------------------
 	// 視覚デバフのためのポストプロセスプロパティ(作成者 増井悠斗)
 	//-----------------------------------------------------------------------------------------------------------------
-	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "2.0", DisplayName = "Saturation"))
+	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "2.0", DisplayName = "Color Saturation"))
 		FVector4 saturation_for_debuff_;			// 彩度(グレースケールにするためにはWを0に)
 
-	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "2.0", DisplayName = "Contrast"))
+	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "2.0", DisplayName = "Color Contrast"))
 		FVector4 contrast_for_debuff_;				// コントラスト
 
 	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "1.0", DisplayName = "Vignette Intensity"))
@@ -271,10 +281,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "1.0", DisplayName = "Grain Intensity"))
 		float grain_intensity_for_debuff_;			// グレイン強度(ノイズ)
 
-	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "1.0", DisplayName = "Slope"))
+	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "1.0", DisplayName = "Film Slope"))
 		float film_slope_for_debuff_;
 
-	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "1.0", DisplayName = "Toe"))
+	UPROPERTY(EditAnywhere, Category = "Visual Debuff", meta = (UIMin = "0.0", UIMax = "1.0", DisplayName = "FilmToe"))
 		float film_toe_for_debuff_;
 	//-----------------------------------------------------------------------------------------------------------------
 
