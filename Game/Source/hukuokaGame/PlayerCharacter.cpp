@@ -610,10 +610,11 @@ void APlayerCharacter::MakeFootstep(const float _deltaTime, const float _player_
 void APlayerCharacter::CheckItem()
 {
 	// 操作不可なら表示されているコマンドアイコンを非表示にし、return
-	if (!can_player_control || isFound)
+	if (!can_player_control || isFound || in_the_locker_)
 	{
 		// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 		OnItemCheckEndEventDispatcher.Broadcast();
+		m_pPrevCheckItem->SetOutline(false);
 
 		return;
 	}
@@ -784,44 +785,33 @@ void APlayerCharacter::ChangeHaveSmartphoneFlag()
 {
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
 	{
-		if (in_the_locker_ == false )
-		{
-			// スマホをポケットにしまう
-			if (holdingSmartphoneState == 2)
-			{
-				holdingSmartphoneState = 0;
-				vr_Phone->SetActorHiddenInGame(true);
-
-				GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Is Not Holding Smartphone");
-			} // end if()
-			// スマホを目前に持つ
-			else if (holdingSmartphoneState == 1)
-			{
-				holdingSmartphoneState = 2;
-				vr_Phone->SetActorRelativeLocation(FVector(10.f, 0.f, 0.f));
-				vr_Phone->SetActorHiddenInGame(false);
-				vr_Phone->SetActorScale3D(FVector(0.06f, 0.06f, 0.06f));						// PCスマホのサイズ
-
-				GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Looking at Smartphone");
-			} // end else
-			// スマホを手前に持つ
-			else
-			{
-				holdingSmartphoneState = 1;
-				vr_Phone->SetActorRelativeLocation(FVector(10.f, -6.f, -2.f));
-				vr_Phone->SetActorHiddenInGame(false);
-				vr_Phone->SetActorScale3D(FVector(0.02f, 0.02f, 0.02f));						// PCスマホのサイズ
-
-				GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Is Holding Smartphone");
-			} // end else
-
-		} // end if()
-		else
+		// スマホをポケットにしまう
+		if (holdingSmartphoneState == 2)
 		{
 			holdingSmartphoneState = 0;
 			vr_Phone->SetActorHiddenInGame(true);
 
 			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Is Not Holding Smartphone");
+		} // end if()
+		// スマホを目前に持つ
+		else if (holdingSmartphoneState == 1)
+		{
+			holdingSmartphoneState = 2;
+			vr_Phone->SetActorRelativeLocation(FVector(10.f, 0.f, 0.f));
+			vr_Phone->SetActorHiddenInGame(false);
+			vr_Phone->SetActorScale3D(FVector(0.06f, 0.06f, 0.06f));						// PCスマホのサイズ
+
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Looking at Smartphone");
+		} // end else
+		// スマホを手前に持つ
+		else
+		{
+			holdingSmartphoneState = 1;
+			vr_Phone->SetActorRelativeLocation(FVector(10.f, -6.f, -2.f));
+			vr_Phone->SetActorHiddenInGame(false);
+			vr_Phone->SetActorScale3D(FVector(0.02f, 0.02f, 0.02f));						// PCスマホのサイズ
+
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Is Holding Smartphone");
 		} // end else
 
 	} // end if()
@@ -892,15 +882,6 @@ FVector APlayerCharacter::ReturnCameraLocation()
 bool APlayerCharacter::GetShatterFlag()
 {
 	return shatterFlag;
-}
-
-void APlayerCharacter::SetInTheLocker(const bool flag)
-{
-	in_the_locker_ = flag;
-	if (in_the_locker_ == true && holdingSmartphoneState != 0)
-	{
-		ChangeHaveSmartphoneFlag();
-	} // end if()
 }
 
 // プレイヤーアクション：スマホのライトのフラグを変更(作成者：尾崎)

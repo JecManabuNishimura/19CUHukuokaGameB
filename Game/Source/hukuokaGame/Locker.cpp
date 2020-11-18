@@ -12,6 +12,7 @@
 ALocker::ALocker()
 	: body_mesh_(NULL)
 	, door_mesh_(NULL)
+	, body_front_(NULL)
 	, max_rotation(0)
 	, open_and_close_frame(0)
 	, player_change_rotation_frame(0)
@@ -29,6 +30,7 @@ ALocker::ALocker()
 	, locker_body_location_(FVector::ZeroVector)
 	, player_location_save_(FVector::ZeroVector)
 	, player_move_vector_(FVector::ZeroVector)
+	, body_front_location_(FVector::ZeroVector)
 	, locker_body_rotation_(FRotator::ZeroRotator)
 	, location_lerp_alpha(0.f)
 	, location_add_lerp_value(0.f)
@@ -59,6 +61,16 @@ ALocker::ALocker()
 		UE_LOG(LogTemp, Warning, TEXT("Locker.cpp door_mesh_ is NULL"));
 	}
 
+	body_front_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("body_front_"));
+	if(body_front_ != NULL)
+	{
+		body_front_->SetupAttachment(RootComponent);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Locker.cpp body_front_actor_ is NULL"));
+	}
+
 	if (max_rotation == 0 || open_and_close_frame == 0 || player_change_rotation_frame == 0 || player_to_locker_frame == 0)
 	{
 		// UE_LOG(LogTemp, Error, TEXT("Propety is 0. Should be Another Value"));
@@ -77,6 +89,7 @@ void ALocker::BeginPlay()
 	locker_body_location_ = body_mesh_->GetRelativeLocation();
 	locker_body_rotation_ = body_mesh_->GetRelativeRotation();
 	locker_body_rotation_.Yaw += 90.f;
+	body_front_location_ = body_front_->GetRelativeLocation();
 
 	rotation_add_lerp_value = 1.f / (float)player_change_rotation_frame;
 

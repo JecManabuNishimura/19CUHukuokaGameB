@@ -40,6 +40,8 @@ public:
 		UStaticMeshComponent* body_mesh_;		// 本体のメッシュ
 	UPROPERTY(EditAnywhere)
 		UStaticMeshComponent* door_mesh_;		// 扉のメッシュ
+	UPROPERTY(EditAnywhere)
+		UStaticMeshComponent* body_front_;		// 本体の前に配置
 
 	// 値
 	UPROPERTY(EditAnywhere)
@@ -72,6 +74,7 @@ private:
 	FVector locker_body_location_;	// ロッカーの本体の位置
 	FVector player_location_save_;	// ロッカーに入ろうとしたときのPlayerの座標格納用(ロッカーから出る時に必要)
 	FVector player_move_vector_;		// 1フレームごとにプレイヤーがどれだけ進むかを格納
+	FVector body_front_location_;
 	FRotator locker_body_rotation_;	// ロッカー本体の回転
 	float location_lerp_alpha;
 	float location_add_lerp_value;
