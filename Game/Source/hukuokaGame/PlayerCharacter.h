@@ -160,6 +160,9 @@ public:
 	// Smartphoneから呼び出す関数(shutterFlagをSmartphoneに送る)(作成者：尾崎)
 	bool GetShatterFlag();
 
+	// ロッカーにいるかどうかのフラグセット関数(厳密にいうと入ろうとするところから完全に出るまで)(作成者：尾崎)
+	void SetInTheLocker(const bool flag){ in_the_locker_ = flag; }
+
 	// Phoneアクターを取得する関数（作成者：朱適）
 	UFUNCTION(BlueprintGetter)
 		AActor* GetPhoneActor() { return vr_Phone; };
@@ -257,6 +260,8 @@ private:
 
 	AItemBase* m_pCheckingItem;					// チェック中のアイテム
 	AItemBase* m_pPrevCheckItem;				// 1フレーム前にチェックしていたアイテム
+
+	bool in_the_locker_;	// ロッカーに入ろうとする～完全に出るまでのフラグ(作成者：尾崎)
 
 	//-----------------------------------------------------------------------------------------------------------------
 	// 聴覚デバフのためのプロパティ各効果音の音量に適用して疑似的に聴覚が弱まったようにみせる(作成者 増井悠斗)

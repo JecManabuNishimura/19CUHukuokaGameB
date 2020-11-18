@@ -76,10 +76,7 @@ void ALocker::BeginPlay()
 
 	locker_body_location_ = body_mesh_->GetRelativeLocation();
 	locker_body_rotation_ = body_mesh_->GetRelativeRotation();
-	//max_rotation += locker_body_rotation_.Yaw;
-	//now_rotation_value_ = locker_body_rotation_.Yaw;
 	locker_body_rotation_.Yaw += 90.f;
-	//add_player_rotation_value_ = locker_body_rotation_.Yaw / player_change_rotation_frame;
 
 	rotation_add_lerp_value = 1.f / (float)player_change_rotation_frame;
 
@@ -140,11 +137,11 @@ void ALocker::CheckedByPlayer()
 		locker_body_location_.Z = player_location_save_.Z;
 
 		rotation_lerp_alpha = 0.f;
+		player->SetInTheLocker(true);
 	}
 	else
 	{
 		location_lerp_alpha = 1.f;
-		//player_move_vector_ = (player->GetActorLocation() - player_location_save_) / player_to_locker_frame;
 	}
 
 	player->SetPlayerControlFlag(false);
@@ -240,6 +237,7 @@ void ALocker::OutToLocker()
 		is_in_player_ = false;
 		player->SetPlayerControlFlag(true);
 		can_input_ = true;
+		player->SetInTheLocker(false);
 	}
 }
 

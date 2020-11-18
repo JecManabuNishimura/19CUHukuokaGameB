@@ -94,6 +94,7 @@ APlayerCharacter::APlayerCharacter()
 	, m_VRPlayersHeight(175.0f)
 	, m_HeightisChecked(false)
 	, holdingSmartphoneState(0)
+	, in_the_locker_(false)
 {
  	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
@@ -409,7 +410,7 @@ void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 {
 	// 操作不可ならreturn
-	if (!can_player_control || isFound)	return;
+	if (!can_player_control || isFound || in_the_locker_)	return;
 
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
