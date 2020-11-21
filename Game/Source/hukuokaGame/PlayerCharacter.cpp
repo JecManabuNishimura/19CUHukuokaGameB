@@ -88,6 +88,9 @@ APlayerCharacter::APlayerCharacter()
 	, finished_MsiionID(0)
 	, isFound(false)
 	, isHeartBeatOn(false)
+	, draw_debug_trace_(false)
+	, box_half_size_(FVector(50.f, 50.f, 50.f))
+	, draw_debug_trace_type_(EDrawDebugTrace::None)
 	, m_MaxWalkSpeed_Walk(250.0f)
 	, m_MaxWalkSpeed_Run(500.0f)
 	, m_MaxWalkSpeed_Crouch(150.0f)
@@ -144,10 +147,10 @@ void APlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	// 効果音の音量を初期化(=1に)
-	if (se_volume_can_change_ != NULL)
-	{
-		se_volume_can_change_->Properties.Volume = 1.f;
-	}
+	if (se_volume_can_change_ != NULL)	se_volume_can_change_->Properties.Volume = 1.f;
+
+	// ボックストレースの描画設定
+	if (draw_debug_trace_)	draw_debug_trace_type_ = EDrawDebugTrace::ForOneFrame;
 
 	// ===========  プレイヤー移動、しゃがむ用のプロパティ設定  by_Rin ===========
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;					// しゃがむを可能します
@@ -200,7 +203,7 @@ void APlayerCharacter::BeginPlay()
 				{
 					// VR用配置
 					// スマホ他の方向、先に確認しました (仮(メッシュの初期方向対応め)Y X Z)
-					vr_Phone->SetActorRelativeRotation(FRotator(270.f, 0.f, 0.f));			//  ↑
+					vr_Phone->SetActorRelativeRotation(FRotator(270.f, 0.f, 0.f));			//  ↑1
 
 					// vr_Phone->SetActorRelativeRotation(FRotator( 0.f, -180.f, -90.f));		//   display <- ||
 
@@ -349,9 +352,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 	// 心拍数アプリの切り替え
 	InputComponent->BindAction("HeartBeatStatusSwitch", IE_Pressed, this, &APlayerCharacter::HeartBeatStatusSwitch);
-
-	// 視覚デバフのON/OFF
-	InputComponent->BindAction("DamageToPlayer", IE_Pressed, this, &APlayerCharacter::AttackFromEnemy);
 }
 
 // カメラ(Pitch)の更新
@@ -629,6 +629,11 @@ void APlayerCharacter::CheckItem()
 	// 1フレーム前のアイテムの情報を移す
 	m_pPrevCheckItem = m_pCheckingItem;
 
+	TArray<AActor*> actors_to_ignore;
+	actors_to_ignore.Add(this);
+
+	// ライントレースからボックストレースに変更(11/20 増井)
+	//if(UKismetSystemLibrary::BoxTraceSingle(this, start, end, box_half_size_, GetActorRotation(), TraceTypeQuery3, true, actors_to_ignore, draw_debug_trace_type_, outHit, true, FLinearColor::Red, FLinearColor::Green, 1.0f))
 	if (GetWorld()->LineTraceSingleByChannel(outHit, start, end, ECC_GameTraceChannel3))
 	{
 		// アイテム基本クラスにキャスト
@@ -765,7 +770,7 @@ void APlayerCharacter::AttackFromEnemy()
 		m_pCamera->PostProcessSettings.FilmToe = film_toe_for_debuff_;
 		break;
 	case 4:
-		// 被ダメージ4回目(リスポーン)
+		// 被ダメージ4回目(死:リスポーン)
 		Respawn();
 		break;
 	default:

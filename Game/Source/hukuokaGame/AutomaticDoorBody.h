@@ -59,6 +59,18 @@ private:
 		UStaticMeshComponent* m_pRightDoorComp;	// 右ドアのメッシュコンポーネント
 
 	UPROPERTY(EditAnywhere)
+		UStaticMeshComponent* lamp_for_decide_pos_;	// 生成するランプの位置を決めるためのランプメッシュ
+
+	UPROPERTY(EditAnywhere)
+		UStaticMesh* lever_state_lamp_;			// レバーの状態を表すランプメッシュ
+
+	UPROPERTY(EditAnywhere)
+		UMaterial* lever_on_state_material_;
+
+	UPROPERTY(EditAnywhere)
+		UMaterial* lever_off_state_material_;
+
+	UPROPERTY(EditAnywhere)
 		float m_detectSpan;						// 敵、プレイヤーの検知スパン
 
 	UPROPERTY(EditAnywhere)
@@ -73,6 +85,8 @@ private:
 
 	UPROPERTY(EditAnywhere)
 		int m_doorFilter;						// レバーとドアを対応させるための数字
+
+	FVector lamp_generate_pos_;					// ランプを生成する場所
 
 	bool m_isSwitchOn;							// 自動ドアを作動させるためのフラグ
 
@@ -90,7 +104,11 @@ private:
 
 	DOOR_STATE m_doorState;						// ドアの状態
 
-	TArray<AAutomaticDoorLever*> m_filterMatchLevers;	// (対応するレバー)m_doorFilterを保存する配列
+	TArray<AAutomaticDoorLever*> filter_match_levers_;	// 対応するレバーを保存する配列
+
+	int filter_match_levers_num_;				// 対応するレバーの数
+
+	TArray<UStaticMeshComponent*> match_lever_state_lamps_;	// 対応するレバーの状態を表すランプメッシュ
 
 	void UpdateDoorState();						// ドアの状態更新
 
@@ -100,7 +118,7 @@ private:
 
 public:
 	// ドア本体のスイッチの更新
-	void UpdateSwitchState(const bool _isLeverOn = true);
+	void UpdateSwitchState(const AAutomaticDoorLever* const operated_lever = nullptr);
 
 	// ドアのフィルター番号を返す
 	int GetDoorFilter()const { return m_doorFilter; }

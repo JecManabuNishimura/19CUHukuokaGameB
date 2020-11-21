@@ -26,6 +26,9 @@ ACanExamineItem::ACanExamineItem()
 	, can_show_detial_(true)
 	, widget_comp_(NULL)
 {
+	// “®“I”z—ñ‚Ì‰Šú‰»
+	text_in_file_kind_.Reset();
+
 	PrimaryActorTick.bCanEverTick = true;
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComp"));

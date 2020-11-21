@@ -11,7 +11,6 @@
 #include "ItemBase.h"
 #include "AutomaticDoorLever.generated.h"
 
-// ‘O•ûéŒ¾
 class AAutomaticDoorBody;
 
 UCLASS()

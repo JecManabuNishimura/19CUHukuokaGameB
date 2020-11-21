@@ -241,6 +241,14 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Smart Phone App")
 		bool isHeartBeatOn;			// 心拍数アプリの切り替え(作成者：朱適)
 
+	UPROPERTY(Editanywhere, Category = "Trace")
+		bool draw_debug_trace_;
+
+	UPROPERTY(Editanywhere, Category = "Trace")
+		FVector box_half_size_;
+
+	EDrawDebugTrace::Type draw_debug_trace_type_;
+
 	bool isVRCamera;							// VRカメラかどうか
 
 	float count_for_footstep_;					// 足音のためのカウント
