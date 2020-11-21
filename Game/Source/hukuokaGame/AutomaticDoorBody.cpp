@@ -12,12 +12,17 @@ AAutomaticDoorBody::AAutomaticDoorBody()
 	: m_pEventTriggerBox(NULL)
 	, m_pLeftDoorComp(NULL)
 	, m_pRightDoorComp(NULL)
+	, lamp_for_decide_pos_(NULL)
+	, lever_state_lamp_(NULL)
+	, lever_on_state_material_(NULL)
+	, lever_off_state_material_(NULL)
 	, m_detectSpan(3.0f)
 	, m_openAndCloseTime(1.0f)
 	, m_leftDoorStartPosY(0.0f)
 	, m_leftDoorEndPosY(0.0f)
 	, m_rightDoorStartPosY(0.0f)
 	, m_doorFilter(0)
+	, lamp_generate_pos_(FVector::ZeroVector)
 	, m_isSwitchOn(false)
 	, m_isOverlap(false)
 	, m_openTimeCount(0.0f)
@@ -30,7 +35,8 @@ AAutomaticDoorBody::AAutomaticDoorBody()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// 動的配列の初期化
-	m_filterMatchLevers.Reset();
+	filter_match_levers_.Reset();
+	match_lever_state_lamps_.Reset();
 
 	// 検知用イベントボックス生成
 	m_pEventTriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("m_pEventTriggerBox"));
@@ -56,13 +62,19 @@ AAutomaticDoorBody::AAutomaticDoorBody()
 	}
 	else	UE_LOG(LogTemp, Error, TEXT("m_pRightDoorComp has not been created."));
 
+	lamp_for_decide_pos_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("lamp_for_decide_pos_"));
+	if (lamp_for_decide_pos_ != NULL)
+	{
+		lamp_for_decide_pos_->SetupAttachment(RootComponent);
+	}
+	else	UE_LOG(LogTemp, Error, TEXT("lamp_for_decide_pos_ has not been created."));
+
 	// 関数バインド
 	m_pEventTriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AAutomaticDoorBody::OnOverlapBegin);
 	m_pEventTriggerBox->OnComponentEndOverlap.AddDynamic(this, &AAutomaticDoorBody::OnOverlapEnd);
 }
 AAutomaticDoorBody::~AAutomaticDoorBody()
 {
-
 }
 
 void AAutomaticDoorBody::BeginPlay()
@@ -83,11 +95,33 @@ void AAutomaticDoorBody::BeginPlay()
 			// レバーのフィルター番号がドア自身のフィルター番号と一致していれば配列に追加する
 			if (pLever->GetLeverFilter() == m_doorFilter)
 			{
-				m_filterMatchLevers.Add(pLever);
+				filter_match_levers_.Add(pLever);
 			}
 		}
-		// ドアに対応するレバーがレベルに配置されていないためエラー
-		if (m_filterMatchLevers.Num() == 0)
+
+		filter_match_levers_num_ = filter_match_levers_.Num();
+
+		// ドアに対応するレバーがレベルに配置されていればその数ランプを生成
+		if (filter_match_levers_num_ != 0)
+		{
+			lamp_generate_pos_ = lamp_for_decide_pos_->GetRelativeLocation();
+
+			FString lamp_name = "lever_state_lamp";
+
+			if (lever_state_lamp_ != NULL)
+			{
+				for (int i = 0; i < filter_match_levers_num_; ++i)
+				{
+					match_lever_state_lamps_.Add(NewObject<UStaticMeshComponent>(this));
+					match_lever_state_lamps_[i]->RegisterComponent();
+					match_lever_state_lamps_[i]->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+					match_lever_state_lamps_[i]->SetStaticMesh(lever_state_lamp_);
+					match_lever_state_lamps_[i]->SetRelativeLocation(FVector(lamp_generate_pos_.X, ((30.f * (i + 1)) + (-15.f * (float)filter_match_levers_num_) - 15.f), lamp_generate_pos_.Z));
+				}
+			}
+		}
+		// ドアに対応するレバーがレベルに配置されていない旨をログ出力
+		else		
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("The corresponding lever is not installed on the level !"));
 		}
@@ -97,6 +131,8 @@ void AAutomaticDoorBody::BeginPlay()
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("There is no lever installed on the level !"));
 	}
+
+	lamp_for_decide_pos_->DestroyComponent();
 
 	// ドアの初期位置を取得
 	m_leftDoorStartPosY = m_pLeftDoorComp->GetRelativeLocation().Y;
@@ -201,8 +237,6 @@ void AAutomaticDoorBody::CheckDetectSpan(float _deltaTime)
 {
 	m_openTimeCount += _deltaTime;
 
-	UE_LOG(LogTemp, Error, TEXT("m_openTimeCount : %f"), m_openTimeCount);
-
 	// 決めた時間を超えたらチェック
 	if (m_openTimeCount > m_detectSpan)
 	{
@@ -252,29 +286,43 @@ void AAutomaticDoorBody::OnOverlapEnd(UPrimitiveComponent* _overlappedComponent,
 }
 
 // ドア本体のスイッチの更新
-void AAutomaticDoorBody::UpdateSwitchState(const bool _isLeverOn)
+void AAutomaticDoorBody::UpdateSwitchState(const AAutomaticDoorLever* const operated_lever)
 {
-	// レバー側から呼び出されてfalseが渡されたら作動フラグを下げる
-	if (!_isLeverOn)
-	{ 
-		m_isSwitchOn = false;
-		return; 
+	// レバー側から呼び出されなおかつその状態がOFFだった場合
+	if (operated_lever != nullptr)
+	{
+		for (int i = 0; i < filter_match_levers_num_; ++i)
+		{
+			if (filter_match_levers_[i] == operated_lever)
+			{
+				if (filter_match_levers_[i]->GetLeverState() == false)
+				{
+					match_lever_state_lamps_[i]->SetMaterial(0, lever_off_state_material_);
+					m_isSwitchOn = false;
+					return;
+				}
+				break;
+			}
+		}
 	}
 
-	// 対応するレバーの状態を確認
-	for (int idx = 0; idx < m_filterMatchLevers.Num(); ++idx)
+	bool switch_state = true;
+
+	// ドア本体から呼び出された場合および操作されたレバーがONだった場合
+	for (int i = 0; i < filter_match_levers_num_; ++i)
 	{
-		if (m_filterMatchLevers[idx] == NULL)
+		if (filter_match_levers_[i]->GetLeverState() == true)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("The corresponding lever is not installed on the level !"));
-			return;
+			match_lever_state_lamps_[i]->SetMaterial(0, lever_on_state_material_);
+			switch_state = switch_state && true;
 		}
-			// 一つでもレバーの状態がOFF(=false)ならreturn
-		if (m_filterMatchLevers[idx]->GetLeverState() == false)
+		else
 		{
-			return;
+			match_lever_state_lamps_[i]->SetMaterial(0, lever_off_state_material_);
+			switch_state = switch_state && false;
 		}
 	}
+
 	// 対応するレバー全ての状態がON(=true)なら検知フラグを立てる
-	m_isSwitchOn = true;
+	m_isSwitchOn = switch_state;
 }

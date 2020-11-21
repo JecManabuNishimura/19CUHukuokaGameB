@@ -67,7 +67,7 @@ void AAutomaticDoorLever::CheckedByPlayer()
 	// ドア本体の作動フラグを更新
 	if (m_pDoorBody != NULL)
 	{
-		m_pDoorBody->UpdateSwitchState(m_isLeverOn);
+		m_pDoorBody->UpdateSwitchState(this);
 	}
 	else
 	{
