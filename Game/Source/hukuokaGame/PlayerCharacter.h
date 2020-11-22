@@ -366,8 +366,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VR_Phone|Mission")
 		int finished_MsiionID;						// テスト用　　　完成したミッションID　（表示したくないIDを入れる）
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerStatus")
+		TArray<int> missionStatus ;					// ミッションの完了状態を管理するarray
+
 	UFUNCTION(BlueprintCallable, Category = "VR_Phone|Mission")
-		void SetTheMissionToFinish( int _missionID);	// _missionIDというミッションのフラグと表示を処理する
+		void UpdateTheMission(bool _isDelete, int _missionID);	// _missionIDというミッションのフラグと表示を処理する
+
+	UFUNCTION(BlueprintCallable, Category = "VR_Phone|Mission")
+		int GetTheWideStringsByteLength(FString _inString, FText _inText);		// 
 
 	bool isFound;		// 敵の攻撃範囲内に入ったか(作成者：尾崎)
 

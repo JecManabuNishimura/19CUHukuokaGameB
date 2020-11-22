@@ -42,6 +42,7 @@
 // 以上の6点はVR用インクルード by_Rin
 #include "LevelSwitchHelper.h"	// マップ遷移用クラス
 #include "GameFramework/Actor.h" // makeNoise用
+#include "Containers/StringConv.h"	// 文字数をカウント用
 
 
 #define LASERLENGTH 300.0f		// VR用 LASERの長さ(手の長さを代表すること) by_Rin
@@ -858,26 +859,50 @@ FVector APlayerCharacter::ReturnCameraForwardVector()
 	return forward_vector;
 }
 
-// _missionIDというミッションのフラグと表示を処理する
-// utilityやセーブデータのミッションフラグも処理する予定です。
-// 11/14今の段階では削除だけ。
-// _missionIDのミッションを画面から削除する。
-void APlayerCharacter::SetTheMissionToFinish(int _missionID)
+// _missionIDというミッションのフラグと表示を処理する	by_Rin
+// utilityやセーブデータのミッションフラグも処理するを入れで方がいいです。
+// _isDeleteはtrueの時ミッションを画面から削除する。
+// falseの時ミッションを追加する
+void APlayerCharacter::UpdateTheMission(bool _isDelete, int _missionID)
 {
 	// CurrentMissionUpdate(1, 1);
-
-	FString FuncName_and_Solution = FString::Printf(TEXT("CurrentMissionUpdate 1 "));
+	FString FuncName_and_Solution = FString::Printf(TEXT("CurrentMissionUpdate "));
 	FOutputDeviceNull ar;
 
-	// int abcc = 2;
-	// FuncName_and_Solution += FString::FromInt(abcc);
+	if (_isDelete == true)
+	{
+		FuncName_and_Solution += FString::Printf(TEXT("1 "));
+	} // end if()
+	else
+	{
+		FuncName_and_Solution += FString::Printf(TEXT("0 "));
+	} // end else
 
 	FuncName_and_Solution += FString::FromInt(_missionID);
 	vr_Phone->CallFunctionByNameWithArguments(*FuncName_and_Solution, ar, NULL, true);
 
 	// vr_Phone->CallFunctionByNameWithArguments(TEXT("CurrentMissionUpdate 1 1"), ar, NULL, true);
 
-} // void SetTheMissionToFinish()
+} // void UpdateTheMission()
+
+// 文字をワイドBYTEに変換	by_Rin
+int APlayerCharacter::GetTheWideStringsByteLength(FString _inString, FText _inText)
+{
+	int length_byByte = 0;
+
+	// _inString = _inText.ToString();
+	FTCHARToUTF8 ConvertedString(*_inString);
+	//(uint8*)Converted.Get(), Converted.Length()
+
+	length_byByte = ConvertedString.Length();
+	// length_byByte = _inString.CountBytes() ;
+
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::FromInt(length_byByte));
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("=== %s"), *GetActorForwardVector().ToString()));
+
+	return length_byByte;
+}  // GetTheWideStringsByteLength()
+
 
 // ダメージ状態の処理（C++側）（作成者：朱適）
 void APlayerCharacter::EarDamaged_Implementation()
