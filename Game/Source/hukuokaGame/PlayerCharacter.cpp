@@ -63,7 +63,6 @@ APlayerCharacter::APlayerCharacter()
 	, m_reverseInputPitch(false)
 	, m_reverseInputYaw(false)
 	, m_cameraRotateSpeed(100.0f)
-	, m_CheckToActorRayRange(1300.0f)
 	, m_isStanding(true)
 	, count_for_footstep_(0.0f)
 	, eyelevel_for_camera_shaking(0.0f)
@@ -88,6 +87,7 @@ APlayerCharacter::APlayerCharacter()
 	, finished_MsiionID(0)
 	, isFound(false)
 	, isHeartBeatOn(false)
+	, check_to_actor_trace_length_(1300.0f)
 	, draw_debug_trace_(false)
 	, box_half_size_(FVector(50.f, 50.f, 50.f))
 	, draw_debug_trace_type_(EDrawDebugTrace::None)
@@ -612,10 +612,12 @@ void APlayerCharacter::CheckItem()
 	// 操作不可なら表示されているコマンドアイコンを非表示にし、return
 	if (!can_player_control || isFound || in_the_locker_)
 	{
-		// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
-		OnItemCheckEndEventDispatcher.Broadcast();
-		m_pPrevCheckItem->SetOutline(false);
-
+		if (m_pPrevCheckItem != NULL)
+		{
+			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
+			OnItemCheckEndEventDispatcher.Broadcast();
+			m_pPrevCheckItem->SetOutline(false);
+		}
 		return;
 	}
 
@@ -623,8 +625,8 @@ void APlayerCharacter::CheckItem()
 	FHitResult outHit;
 
 	// 現在位置を取得
-	FVector start = m_pCamera->GetComponentLocation();
-	FVector end = start + (m_pCamera->GetForwardVector() * m_CheckToActorRayRange);
+	FVector start = m_pCamera->GetComponentLocation() + (m_pCamera->GetForwardVector() * 40.f);
+	FVector end = start + (m_pCamera->GetForwardVector() * check_to_actor_trace_length_);
 
 	// 1フレーム前のアイテムの情報を移す
 	m_pPrevCheckItem = m_pCheckingItem;
@@ -633,8 +635,8 @@ void APlayerCharacter::CheckItem()
 	actors_to_ignore.Add(this);
 
 	// ライントレースからボックストレースに変更(11/20 増井)
-	//if(UKismetSystemLibrary::BoxTraceSingle(this, start, end, box_half_size_, GetActorRotation(), TraceTypeQuery3, true, actors_to_ignore, draw_debug_trace_type_, outHit, true, FLinearColor::Red, FLinearColor::Green, 1.0f))
-	if (GetWorld()->LineTraceSingleByChannel(outHit, start, end, ECC_GameTraceChannel3))
+	//if (GetWorld()->LineTraceSingleByChannel(outHit, start, end, ECC_GameTraceChannel3))
+	if(UKismetSystemLibrary::BoxTraceSingle(this, start, end, box_half_size_, GetActorRotation(), TraceTypeQuery3, false, actors_to_ignore, draw_debug_trace_type_, outHit, true, FLinearColor::Red, FLinearColor::Green, 1.0f))
 	{
 		// アイテム基本クラスにキャスト
 		m_pCheckingItem = Cast<AItemBase>(outHit.GetActor());
@@ -664,6 +666,20 @@ void APlayerCharacter::CheckItem()
 
 				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートに追加)
 				OnItemCheckBeginEventDispatcher.Broadcast();
+			}
+		}
+		else
+		{
+			if (m_pPrevCheckItem != NULL)
+			{
+				// 前フレームでチェックしていたオブジェクトの被チェックを無効に
+				m_pPrevCheckItem->m_isChecked = false;
+
+				// 白枠を非表示にする	by	朱適
+				m_pPrevCheckItem->SetOutline(false);
+
+				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
+				OnItemCheckEndEventDispatcher.Broadcast();
 			}
 		}
 	}
@@ -779,7 +795,7 @@ void APlayerCharacter::AttackFromEnemy()
 }
 
 // エネミーの攻撃範囲に入った際の処理 (追記者 増井)
-void APlayerCharacter::SetIsFound(const bool _flag, FVector _enemy_location)
+void APlayerCharacter::SetIsFound(const bool _flag, const FVector _enemy_location)
 {
 	isFound = _flag;
 	if (isFound)	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), (_enemy_location + FVector(0.f, 0.f, 50.f))));

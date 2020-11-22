@@ -235,11 +235,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_cameraRotateSpeed;				// カメラの回転スピード
 
-	UPROPERTY(EditAnywhere, Category = "Check")
-		float m_CheckToActorRayRange;
-
 	UPROPERTY(EditAnywhere, Category = "Smart Phone App")
 		bool isHeartBeatOn;			// 心拍数アプリの切り替え(作成者：朱適)
+
+	UPROPERTY(EditAnywhere, Category = "Trace")
+		float check_to_actor_trace_length_;
 
 	UPROPERTY(Editanywhere, Category = "Trace")
 		bool draw_debug_trace_;
