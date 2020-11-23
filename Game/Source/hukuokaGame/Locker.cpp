@@ -1,5 +1,5 @@
-// max_rotationを0以上にするとおかしくなります
-// 181°~360°にするとおかしくなる
+// max_rotation_ > 0にしない
+// 配置の際はBP_Lockerを置くこと
 //-------------------------------------------------------------------
 // ファイル		：Locker.cpp
 // 概要			：ロッカーの制御
@@ -12,11 +12,11 @@
 ALocker::ALocker()
 	: body_mesh_(NULL)
 	, door_mesh_(NULL)
-	, body_front_(NULL)
-	, max_rotation(0)
-	, open_and_close_frame(0)
-	, player_change_rotation_frame(0)
-	, player_to_locker_frame(0)
+	, max_rotation_(0)
+	, open_and_close_second_(0.f)
+	, player_change_rotation_second_(0.f)
+	, player_to_locker_second_(0.f)
+	, flont_distance_(0)
 	, player(NULL)
 	, is_end_rotation_(false)
 	, can_input_(true)
@@ -32,10 +32,11 @@ ALocker::ALocker()
 	, player_move_vector_(FVector::ZeroVector)
 	, body_front_location_(FVector::ZeroVector)
 	, locker_body_rotation_(FRotator::ZeroRotator)
-	, location_lerp_alpha(0.f)
-	, location_add_lerp_value(0.f)
-	, rotation_lerp_alpha(0.f)
-	, rotation_add_lerp_value(0.f)
+	, location_lerp_alpha1_(0.f)
+	, location_lerp_alpha2_(0.f)
+	, location_add_lerp_value_(0.f)
+	, rotation_lerp_alpha_(0.f)
+	, rotation_add_lerp_value_(0.f)
 {
 	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
@@ -60,38 +61,32 @@ ALocker::ALocker()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Locker.cpp door_mesh_ is NULL"));
 	}
-
-	body_front_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("body_front_"));
-	if(body_front_ != NULL)
-	{
-		body_front_->SetupAttachment(RootComponent);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Locker.cpp body_front_actor_ is NULL"));
-	}
-
-	if (max_rotation == 0 || open_and_close_frame == 0 || player_change_rotation_frame == 0 || player_to_locker_frame == 0)
-	{
-		// UE_LOG(LogTemp, Error, TEXT("Propety is 0. Should be Another Value"));
-	}
 }
 
 void ALocker::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 1フレームごとにどれだけ回転させるかの設定(1フレームに与える回転量 = 回転させたい最大の角度 / かかるF数)
-	add_rotation_value_ = (float)(max_rotation / open_and_close_frame);
+	// 1秒ごとにどれだけ回転させるかの設定(1秒に与える回転量 = 回転させたい最大の角度 / かかる秒数)
+	add_rotation_value_ = (float)(max_rotation_) / open_and_close_second_;
 
-	def_door_rotation = locker_body_rotation_.Yaw;
+	// 起動時のロッカー本体のZ軸を格納
+	def_door_rotation_ = locker_body_rotation_.Yaw;
 
+	// player_location_save_->door_front_location と body_front_location_->locker_body_location_で移動させる為、2で割る
+	location_add_lerp_value_ = 2.f / (float)player_to_locker_second_;
+
+	// ロッカー本体の座標・角度を格納し、角度にはZ軸のみ+90する(でないとロッカーにPlayerが入った際に意図しない方向を向くため)
 	locker_body_location_ = body_mesh_->GetRelativeLocation();
 	locker_body_rotation_ = body_mesh_->GetRelativeRotation();
 	locker_body_rotation_.Yaw += 90.f;
-	body_front_location_ = body_front_->GetRelativeLocation();
 
-	rotation_add_lerp_value = 1.f / (float)player_change_rotation_frame;
+	// ロッカーの正面の座標を格納(flont_distance_で調整可)
+	body_front_location_ = GetActorRightVector() * flont_distance_ + GetActorLocation();
+
+	// 1F辺りに加算する値 = 1 / プレイヤーがロッカーの中で回転する総秒数
+	// 1 = (lerpの最大値)
+	rotation_add_lerp_value_ = 1.f / player_change_rotation_second_;
 
 	GetPlayer();
 }
@@ -100,26 +95,31 @@ void ALocker::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// 扉の回転終了フラグの初期化
 	is_end_rotation_ = false;
+
 	// 扉の開く・閉じるときの角度の値の設定
-	SetDoorRotationValue();
+	SetDoorRotationValue(DeltaTime);
 
 	// 角度の反映
-	UpdateDoorRotation();
+	UpdateDoorRotation(DeltaTime);
 
 	// プレイヤーがロッカーの中に入る・出る処理
 	if (!is_in_player_)
 	{
-		InToLocker();
+		// 中に入る
+		InToLocker(DeltaTime);
 	}
 	else
 	{
-		OutToLocker();
+		// 出る
+		OutToLocker(DeltaTime);
 	}
 
+	// プレイヤーがロッカーの中に入ってフラグが立てられたら
 	if (player_rotation_start_flag_)
 	{
-		PlayerRotation();
+		PlayerRotation(DeltaTime);
 	}
 }
 
@@ -136,44 +136,52 @@ void ALocker::CheckedByPlayer()
 		return;
 	}
 
+	// 入力可能な為チェック状態の反転とロッカーに対する入力受け付けを無効に
 	is_check_ = !is_check_;
 	can_input_ = false;
-	// プレイヤーがロッカーに移動する際の1F辺りの移動量 = (ロッカーの座標 - Playerの現在地) / 総フレーム数
 
+	// ボタンが押された際にプレイヤーがロッカーの中にいるかどうか
 	if (!is_in_player_)
 	{
+		// 現在位置の保存
 		player_location_save_ = player->GetActorLocation();
 
-		location_lerp_alpha = 0.f;
-		player_move_vector_ = FMath::Lerp(player_location_save_, locker_body_location_, location_lerp_alpha);
-		location_add_lerp_value = 1.f / (float)player_to_locker_frame;
-		locker_body_location_.Z = player_location_save_.Z;
+		// lerpに使う値の初期化
+		location_lerp_alpha1_ = 0.f;		// player_location_save_ -> body_front_location_に使う leap
+		location_lerp_alpha2_ = 0.f;		// body_front_location_  -> locker_body_location_に使うlerp
+		rotation_lerp_alpha_ = 0.f;		// ロッカーに入った際の回転に使ってるlerp
 
-		rotation_lerp_alpha = 0.f;
+		//ロッカー本体とロッカーの前にある座標のZ軸はplayerのZ軸に固定(Beginでもいいのかもしれない)
+		locker_body_location_.Z = player_location_save_.Z;
+		body_front_location_.Z = player_location_save_.Z;
+
+		// 中に入るフラグを立てる
+		// ここでPlayerの制御に制限かけてる
 		player->SetInTheLocker(true);
+		player->SetPlayerControlFlag(false);
 	}
 	else
 	{
-		location_lerp_alpha = 1.f;
+		// lerpに使う値を最大値で初期化
+		location_lerp_alpha1_ = 1.f;
+		location_lerp_alpha2_ = 1.f;
 	}
-
-	player->SetPlayerControlFlag(false);
 }
 
-void ALocker::SetDoorRotationValue()
+void ALocker::SetDoorRotationValue(float DeltaTime)
 {
 	// ロッカーの扉を開けるフラグがたつ
 	if (is_check_)
 	{
-		// 開ききっていないかどうか
-		if (now_rotation_value_ >= max_rotation)
+		// 開ききっていないかどうか(不等号いらんかも)
+		if (now_rotation_value_ >= max_rotation_)
 		{
-			now_rotation_value_ += add_rotation_value_;
+			now_rotation_value_ += add_rotation_value_ * DeltaTime;
 
-			// max_rotationを超えているなら補正(多分要らないけど)
-			if (now_rotation_value_ <= max_rotation)
+			// max_rotation_を超えているなら補正・回転終了フラグを立てる
+			if (now_rotation_value_ <= max_rotation_)
 			{
-				now_rotation_value_ = max_rotation;
+				now_rotation_value_ = max_rotation_;
 				is_end_rotation_ = true;
 			}
 		}
@@ -183,25 +191,26 @@ void ALocker::SetDoorRotationValue()
 		// 閉まり切っていないかどうか
 		if (now_rotation_value_ < 0)
 		{
-			now_rotation_value_ -= add_rotation_value_;
+			now_rotation_value_ -= add_rotation_value_ * DeltaTime;
 
-			// 0未満なら補正(多分要らないけど)
+			// 0未満なら補正・回転終了フラグを立てる
 			if (now_rotation_value_ >= 0)
 			{
 				now_rotation_value_ = 0.f;
-				// 閉まるときは要らない
+				// 閉まるときは要らない(移動してしまう為)
 				//is_end_rotation_ = true;			
 			}
 		}
 	}
 }
 
-void ALocker::UpdateDoorRotation()
+void ALocker::UpdateDoorRotation(float DeltaTime)
 {
+	// SetDoorRotationValue()で設定した値を反映
 	door_mesh_->SetRelativeRotation(FRotator(0.f, now_rotation_value_, 0.f));
 }
 
-void ALocker::InToLocker()
+void ALocker::InToLocker(float DeltaTime)
 {
 	// 扉が回転し終えていない かつ 回転処理が終了しきっていないなら処理させない
 	if (!is_end_rotation_ && !is_move_in_locker_)
@@ -212,22 +221,41 @@ void ALocker::InToLocker()
 	// Playerの移動中の移動中な為trueに
 	is_move_in_locker_ = true;
 
-	location_lerp_alpha += location_add_lerp_value; 
-	player_move_vector_ = FMath::Lerp(player_location_save_, locker_body_location_, location_lerp_alpha);
-	player->SetActorLocation(player_move_vector_);
-	
-	if (location_lerp_alpha >= 0.99f)
+	// player_location_save_ -> body_front_location_ の移動が(ほぼ)終わったら
+	if (location_lerp_alpha1_ >= 0.99f)
 	{
-		player_rotation_start_flag_ = true;
-		is_move_in_locker_ = false;
-		is_check_ = false;
-		is_in_player_ = true;
-		player->SetPlayerControlFlag(true);
-		can_input_ = true;
+		// body_front_location_  -> locker_body_location_ の移動(lerpのalpha値の設定)
+		location_lerp_alpha2_ += location_add_lerp_value_ * DeltaTime;
+
+		// Playerの座標の更新
+		player_move_vector_ = FMath::Lerp(body_front_location_, locker_body_location_, location_lerp_alpha2_);
+		player->SetActorLocation(player_move_vector_);
+
+		// body_front_location_  -> locker_body_location_ の移動が(ほぼ)終わったら
+		if (location_lerp_alpha2_ >= 0.99f)
+		{
+			player_rotation_start_flag_ = true;		// Playerの回転処理のフラグを立てる
+			is_move_in_locker_ = false;				// ロッカーの移動が終了したのでfalse
+			is_check_ = false;						// 調べた状態の解除
+			is_in_player_ = true;					// ロッカーの中にいるのでtrue
+			//player->SetPlayerControlFlag(true);		// いらんかも
+			can_input_ = true;						// 入力受け付けを可能に
+		}
+	}
+	// player_location_save_ -> body_front_location_ の移動が終わってない
+	else
+	{
+		// player_location_save_->body_front_location_ の移動(lerpのalpha値の設定)
+		location_lerp_alpha1_ += location_add_lerp_value_ * DeltaTime;
+
+		// Playerの座標の更新
+		player_move_vector_ = FMath::Lerp(player_location_save_, body_front_location_, location_lerp_alpha1_);
+
+		player->SetActorLocation(player_move_vector_);
 	}
 }
 
-void ALocker::OutToLocker()
+void ALocker::OutToLocker(float DeltaTime)
 {
 	// 扉が回転し終えていない かつ 回転処理が終了しきっていないなら処理させない
 	if (!is_end_rotation_ && !is_move_in_locker_)
@@ -238,37 +266,38 @@ void ALocker::OutToLocker()
 	// Playerの移動中の移動中な為trueに
 	is_move_in_locker_ = true;
 
-	location_lerp_alpha -= location_add_lerp_value;
-	player_move_vector_ = FMath::Lerp(player_location_save_, locker_body_location_, location_lerp_alpha);
+	// body_front_location_  -> locker_body_location_ の移動(lerpのalpha値の設定)
+	location_lerp_alpha2_ -= location_add_lerp_value_ * DeltaTime;
+
+	// Playerの座標の更新
+	player_move_vector_ = FMath::Lerp(body_front_location_, locker_body_location_, location_lerp_alpha2_);
 	player->SetActorLocation(player_move_vector_);
 
-	if(location_lerp_alpha <= 0)
+	// body_front_location_  -> locker_body_location_ の移動が(ほぼ)終わったら
+	if(location_lerp_alpha2_ <= 0)
 	{
-		player_rotation_start_flag_ = false;
-		is_move_in_locker_ = false;
-		is_check_ = false;
-		is_in_player_ = false;
+		player_rotation_start_flag_ = false;	// Playerの回転処理はさせない為false
+		is_move_in_locker_ = false;				// ロッカーの移動が終了したのでfalse
+		is_check_ = false;						// 調べた状態の解除
+		is_in_player_ = false;					// ロッカーの中にいないのでfalse
+		can_input_ = true;						// 入力受け付けを可能に
+		player->SetInTheLocker(false);			// Playerをロッカーの中にいない状態に
 		player->SetPlayerControlFlag(true);
-		can_input_ = true;
-		player->SetInTheLocker(false);
 	}
 }
 
-void ALocker::PlayerRotation()
+void ALocker::PlayerRotation(float DeltaTime)
 {
-		
-	rotation_lerp_alpha += rotation_add_lerp_value;
-	player->SetActorRotation(FMath::Lerp(player->GetActorRotation(), locker_body_rotation_, rotation_lerp_alpha));
+	// Playerの現在の角度 -> locker_body_rotation_へ回転
+	rotation_lerp_alpha_ += rotation_add_lerp_value_* DeltaTime;
+	player->SetActorRotation(FMath::Lerp(player->GetActorRotation(), locker_body_rotation_, rotation_lerp_alpha_));
 
-	if (rotation_lerp_alpha >= 0.99f)
+	// 回転し終えたか
+	if (rotation_lerp_alpha_ >= 0.99f)
 	{
+		// 回転させないように
 		player_rotation_start_flag_ = false;
 	}
-}
-
-void ALocker::CloseDoor()
-{
-
 }
 
 void ALocker::GetPlayer()
