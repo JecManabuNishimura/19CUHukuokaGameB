@@ -106,6 +106,14 @@
 			"type": "boolean"
 		},
 		{
+			"name": "/actions/main/in/ChangeAppNext",
+			"type": "boolean"
+		},
+		{
+			"name": "/actions/main/in/UseSmartPhone",
+			"type": "boolean"
+		},
+		{
 			"name": "/actions/main/in/MoveForward,MoveForward X Y_axis2d",
 			"type": "vector2"
 		},
@@ -235,6 +243,8 @@
 			"/actions/main/in/PickUpandCheck": "PickUpandCheck",
 			"/actions/main/in/TriggerLeft": "TriggerLeft",
 			"/actions/main/in/ResetHeight": "ResetHeight",
+			"/actions/main/in/ChangeAppNext": "ChangeAppNext",
+			"/actions/main/in/UseSmartPhone": "UseSmartPhone",
 			"/actions/main/in/MoveForward,MoveForward X Y_axis2d": "MoveForward",
 			"/actions/main/in/MoveRight,MoveRight X Y_axis2d": "MoveRight",
 			"/actions/main": "Main Game Actions"

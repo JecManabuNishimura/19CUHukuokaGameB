@@ -192,6 +192,7 @@ void APlayerCharacter::BeginPlay()
 			LeftController->Hand = EControllerHand::Left;
 			LeftController->FinishSpawning(SpawnTransform); // UGameplayStatics::FinishSpawningActor(LeftController, SpawnTransform);
 			LeftController->AttachToComponent(m_pCameraBase, AttachRules);
+			LeftController->GetMotionController()->bDisableLowLatencyUpdate = true;
 
 			/*
 			bp_VRphone = TSoftClassPtr<AActor>(FSoftObjectPath(*path)).LoadSynchronous();	// pathにあるクラスを取得
@@ -238,6 +239,7 @@ void APlayerCharacter::BeginPlay()
 			RightController->Hand = EControllerHand::Right;
 			RightController->FinishSpawning(SpawnTransform);
 			RightController->AttachToComponent(m_pCameraBase, AttachRules);
+			RightController->GetMotionController()->bDisableLowLatencyUpdate = true;
 		} // end if()
 	} // end if()
 	else
@@ -271,7 +273,7 @@ void APlayerCharacter::BeginPlay()
 
 			//  vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, 0.f));			//   ↑display
 																							//   ||
-			vr_Phone->SetActorRelativeLocation(FVector(200, 0, 10));
+			vr_Phone->SetActorRelativeLocation(FVector(100, 0, 10));
 
 			// VRスマホのサイズ
 			vr_Phone->SetActorScale3D(FVector(0.5f, 0.5f, 0.5f));
@@ -960,8 +962,11 @@ void APlayerCharacter::UpdateVRLaser()
 	// VR's laser start point from right controller
 	if (RightController)
 	{
-		StartPoint = RightController->ActorToWorld().GetLocation();
+		// StartPoint = RightController->ActorToWorld().GetLocation();
+
+		StartPoint = RightController->GetMotionController()->K2_GetComponentLocation() ;
 		FowardActor = RightController->GetRootComponent()->GetChildComponent(0)->GetForwardVector();
+
 	} // end if()
 	else
 	{
