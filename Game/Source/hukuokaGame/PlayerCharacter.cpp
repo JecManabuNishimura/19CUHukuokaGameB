@@ -49,7 +49,9 @@
 
 // コンストラクタ
 APlayerCharacter::APlayerCharacter()
-	: player_state(0)
+	: isHeartBeatOn(false)
+	, in_the_locker_(false)
+	, player_state(0)
 	, m_playerThresholdToRun(1.0f)
 	, m_playerRunSpeed(10.0f)
 	, m_playerWalkSpeed(5.0f)
@@ -64,7 +66,10 @@ APlayerCharacter::APlayerCharacter()
 	, m_reverseInputPitch(false)
 	, m_reverseInputYaw(false)
 	, m_cameraRotateSpeed(100.0f)
-	, m_isStanding(true)
+	, check_to_actor_trace_length_(1300.0f)
+	, draw_debug_trace_(false)
+	, box_half_size_(FVector(50.f, 50.f, 50.f))
+	, draw_debug_trace_type_(EDrawDebugTrace::None)
 	, count_for_footstep_(0.0f)
 	, eyelevel_for_camera_shaking(0.0f)
 	, can_make_footstep(true)
@@ -83,22 +88,17 @@ APlayerCharacter::APlayerCharacter()
 	, film_slope_for_debuff_(1.f)
 	, film_toe_for_debuff_(0.8f)
 	, vr_HitResult(NULL)
-	, vr_InCameraMode(false)
-	, vr_SmartPhone_Mission_Num(1)
-	, finished_MsiionID(0)
-	, isFound(false)
-	, isHeartBeatOn(false)
-	, check_to_actor_trace_length_(1300.0f)
-	, draw_debug_trace_(false)
-	, box_half_size_(FVector(50.f, 50.f, 50.f))
-	, draw_debug_trace_type_(EDrawDebugTrace::None)
+	, m_isStanding(true)
 	, m_MaxWalkSpeed_Walk(250.0f)
 	, m_MaxWalkSpeed_Run(500.0f)
 	, m_MaxWalkSpeed_Crouch(150.0f)
 	, m_VRPlayersHeight(175.0f)
 	, m_HeightisChecked(false)
+	, vr_InCameraMode(false)
 	, holdingSmartphoneState(0)
-	, in_the_locker_(false)
+	, vr_SmartPhone_Mission_Num(1)
+	, finished_MsiionID(0)
+	, isFound(false)
 {
  	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
@@ -146,6 +146,8 @@ APlayerCharacter::~APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GEngine->FixedFrameRate = 60.f;
 
 	// 効果音の音量を初期化(=1に)
 	if (se_volume_can_change_ != NULL)	se_volume_can_change_->Properties.Volume = 1.f;
