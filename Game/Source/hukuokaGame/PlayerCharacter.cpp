@@ -803,8 +803,11 @@ void APlayerCharacter::AttackFromEnemy()
 // エネミーの攻撃範囲に入った際の処理 (追記者 増井)
 void APlayerCharacter::SetIsFound(const bool _flag, const FVector _enemy_location)
 {
-	isFound = _flag;
-	if (isFound)	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), (_enemy_location + FVector(0.f, 0.f, 50.f))));
+	if (_flag && damage_count_ == 3)
+	{
+		isFound = _flag;
+		SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), (_enemy_location + FVector(0.f, 0.f, 50.f))));
+	}
 }
 
 // PC版、スマホを手前に持っているか  by_Rin
