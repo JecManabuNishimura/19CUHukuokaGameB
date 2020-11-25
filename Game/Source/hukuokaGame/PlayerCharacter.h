@@ -140,18 +140,23 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere, Category = "Smart Phone App")
-		bool isHeartBeatOn;			// 心拍数アプリの切り替え(作成者：朱適)
+	bool isHeartBeatOn;			// 心拍数アプリの切り替え(作成者：朱適)
 	// 心拍数アプリの切り替え(作成者：朱適)
 	// Private->Publicに変更(UPROPETY変数宣言をprivateにしない方が良い)
 	void HeartBeatStatusSwitch()
 	{
-		isHeartBeatOn = !isHeartBeatOn;
-		// インスタンスがあるかどうかの確認(作成者：朱適)
-		if (UHeartBeatAppWidgetComponent::GetInstance())
+		// VRコントロールに対応するため追加判定(作成者:林雲暉)
+		if (smartPhone_Mode_Num == 3)
 		{
-			UHeartBeatAppWidgetComponent::GetInstance()->SetAppStat(isHeartBeatOn);
-		}
-		UE_LOG(LogTemp, Log, TEXT("HeartBeat App Status Switched"));
+			isHeartBeatOn = !isHeartBeatOn;
+			// インスタンスがあるかどうかの確認(作成者：朱適)
+			if (UHeartBeatAppWidgetComponent::GetInstance())
+			{
+				UHeartBeatAppWidgetComponent::GetInstance()->SetAppStat(isHeartBeatOn);
+			}
+			UE_LOG(LogTemp, Log, TEXT("HeartBeat App Status Switched"));
+		} // end if()
+
 	}
 	// Smartphoneから呼び出す関数(isHaveSmartphoneFlagをSmartphoneに送る)(作成者：尾崎)
 	bool GetisHaveSmartphoneFlag();
@@ -356,6 +361,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
 		int vr_SmartPhone_Mission_Num;				// 今表示するミッションナンバー
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone")
+		int smartPhone_Mode_Num;					// スマホアプリモード
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
 		FString vr_SmartPhone_Mission_Contents;		// 今表示するミッション　（今は使えていない）

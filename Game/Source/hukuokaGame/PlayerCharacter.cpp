@@ -356,7 +356,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	InputComponent->BindAction("Smartphone_Shutter", IE_Pressed, this, &APlayerCharacter::ChangeShutterFlag);
 
 	// 心拍数アプリの切り替え
-	InputComponent->BindAction("HeartBeatStatusSwitch", IE_Pressed, this, &APlayerCharacter::HeartBeatStatusSwitch);
+	// VRコントロールに対応するため統一になった(作成者:林雲暉)
+	InputComponent->BindAction("UseSmartPhone", IE_Pressed, this, &APlayerCharacter::HeartBeatStatusSwitch);
 }
 
 // カメラ(Pitch)の更新
