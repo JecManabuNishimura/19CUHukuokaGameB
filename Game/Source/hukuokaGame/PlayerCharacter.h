@@ -168,8 +168,8 @@ public:
 	bool GetShatterFlag();
 
 	bool in_the_locker_;	// ロッカーに入ろうとする～完全に出るまでのフラグ(作成者：尾崎
-	// ロッカーにいるかどうかのフラグセット関数(厳密にいうと入ろうとするところから完全に出るまで)(作成者：尾崎)
-	void SetInTheLocker(const bool flag){ in_the_locker_ = flag; }
+
+	void SetInTheLocker(const bool flag);				// 定義がcppに移りました　(作成者:林雲暉)
 
 	// Phoneアクターを取得する関数（作成者：朱適）
 	UFUNCTION(BlueprintGetter)
