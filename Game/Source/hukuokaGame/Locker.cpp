@@ -12,11 +12,11 @@
 ALocker::ALocker()
 	: body_mesh_(NULL)
 	, door_mesh_(NULL)
-	, max_rotation_(0)
-	, open_and_close_second_(0.f)
-	, player_change_rotation_second_(0.f)
-	, player_to_locker_second_(0.f)
-	, flont_distance_(0)
+	, max_rotation_(-120)
+	, open_and_close_second_(0.5f)
+	, player_change_rotation_second_(0.5f)
+	, player_to_locker_second_(1.f)
+	, flont_distance_(200)
 	, player(NULL)
 	, is_end_rotation_(false)
 	, can_input_(true)
@@ -94,7 +94,7 @@ void ALocker::BeginPlay()
 void ALocker::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
 	// 扉の回転終了フラグの初期化
 	is_end_rotation_ = false;
 
@@ -158,7 +158,6 @@ void ALocker::CheckedByPlayer()
 		// 中に入るフラグを立てる
 		// ここでPlayerの制御に制限かけてる
 		player->SetInTheLocker(true);
-		player->SetPlayerControlFlag(false);
 	}
 	else
 	{
@@ -166,6 +165,8 @@ void ALocker::CheckedByPlayer()
 		location_lerp_alpha1_ = 1.f;
 		location_lerp_alpha2_ = 1.f;
 	}
+	// SetInTheLockerのみだと常時カメラ移動が可能な為ControlFlagにてカメラ移動の制限をかける
+	player->SetPlayerControlFlag(false);
 }
 
 void ALocker::SetDoorRotationValue(float DeltaTime)
@@ -238,7 +239,6 @@ void ALocker::InToLocker(float DeltaTime)
 			is_move_in_locker_ = false;				// ロッカーの移動が終了したのでfalse
 			is_check_ = false;						// 調べた状態の解除
 			is_in_player_ = true;					// ロッカーの中にいるのでtrue
-			//player->SetPlayerControlFlag(true);		// いらんかも
 			can_input_ = true;						// 入力受け付けを可能に
 		}
 	}
@@ -297,6 +297,7 @@ void ALocker::PlayerRotation(float DeltaTime)
 	{
 		// 回転させないように
 		player_rotation_start_flag_ = false;
+		player->SetPlayerControlFlag(true);
 	}
 }
 

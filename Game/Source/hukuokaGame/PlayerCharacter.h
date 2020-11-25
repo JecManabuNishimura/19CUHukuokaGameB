@@ -138,7 +138,11 @@ private:
 		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, "Push Smartphone_Shutter");
 	};
 
+public:
+	UPROPERTY(EditAnywhere, Category = "Smart Phone App")
+		bool isHeartBeatOn;			// 心拍数アプリの切り替え(作成者：朱適)
 	// 心拍数アプリの切り替え(作成者：朱適)
+	// Private->Publicに変更(UPROPETY変数宣言をprivateにしない方が良い)
 	void HeartBeatStatusSwitch()
 	{
 		isHeartBeatOn = !isHeartBeatOn;
@@ -149,8 +153,6 @@ private:
 		}
 		UE_LOG(LogTemp, Log, TEXT("HeartBeat App Status Switched"));
 	}
-
-public:
 	// Smartphoneから呼び出す関数(isHaveSmartphoneFlagをSmartphoneに送る)(作成者：尾崎)
 	bool GetisHaveSmartphoneFlag();
 
@@ -160,6 +162,7 @@ public:
 	// Smartphoneから呼び出す関数(shutterFlagをSmartphoneに送る)(作成者：尾崎)
 	bool GetShatterFlag();
 
+	bool in_the_locker_;	// ロッカーに入ろうとする～完全に出るまでのフラグ(作成者：尾崎
 	// ロッカーにいるかどうかのフラグセット関数(厳密にいうと入ろうとするところから完全に出るまで)(作成者：尾崎)
 	void SetInTheLocker(const bool flag){ in_the_locker_ = flag; }
 
@@ -235,9 +238,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_cameraRotateSpeed;				// カメラの回転スピード
 
-	UPROPERTY(EditAnywhere, Category = "Smart Phone App")
-		bool isHeartBeatOn;			// 心拍数アプリの切り替え(作成者：朱適)
-
 	UPROPERTY(EditAnywhere, Category = "Trace")
 		float check_to_actor_trace_length_;
 
@@ -249,6 +249,7 @@ private:
 
 	EDrawDebugTrace::Type draw_debug_trace_type_;
 
+	// 使ってない
 	bool isVRCamera;							// VRカメラかどうか
 
 	float count_for_footstep_;					// 足音のためのカウント
@@ -267,9 +268,7 @@ private:
 	FVector2D m_cameraRotateInput;				// カメラの回転入力量
 
 	AItemBase* m_pCheckingItem;					// チェック中のアイテム
-	AItemBase* m_pPrevCheckItem;				// 1フレーム前にチェックしていたアイテム
-
-	bool in_the_locker_;	// ロッカーに入ろうとする～完全に出るまでのフラグ(作成者：尾崎)
+	AItemBase* m_pPrevCheckItem;				// 1フレーム前にチェックしていたアイテム)
 
 	//-----------------------------------------------------------------------------------------------------------------
 	// 聴覚デバフのためのプロパティ各効果音の音量に適用して疑似的に聴覚が弱まったようにみせる(作成者 増井悠斗)
@@ -299,9 +298,7 @@ private:
 		float film_toe_for_debuff_;
 	//-----------------------------------------------------------------------------------------------------------------
 
-	// スマホオブジェクト(作成者：尾崎)
-	UChildActorComponent* smartphone;
-
+	// コンストラクタ無し
 	bool isHaveSmartphoneFlag;		// スマホを構えるかどうか(作成者：尾崎)
 	bool shatterFlag;				// シャッターを切るか(作成者：尾崎)
 	bool lightFlag;					// ライトの切り替え(作成者：尾崎)
@@ -322,8 +319,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "VR_Phone")
 		TSubclassOf<class AActor> bp_VRphone;
 
-
-
+	// コンストラクタ無し
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetPhoneActor, Category = "VR_Phone", meta = (AllowPrivateAccess = "true"))
 		AActor* vr_Phone;
 
@@ -348,6 +344,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR")
 		bool m_HeightisChecked;						// VRのプレイヤー身長確認しましたか
 
+	// コンストラクタ無し
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR")
 		bool vr_isVRmode;							// VRモードかどうかのフラグ
 
