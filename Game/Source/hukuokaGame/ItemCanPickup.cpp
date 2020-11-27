@@ -33,6 +33,16 @@ void AItemCanPickup::CheckedByPlayer()
 	// 対応するフラグを立てる
 	player_character->player_state = player_character->player_state | (1 << cardkey_filter);
 
+	// ミッションに反映する場合、スマホのミッションをアップデート
+	if (this->isMissionComplete == false) {
+
+		if (this->items_Mission_Num != 0)
+		{
+			player_character->UpdateTheMission(2, this->items_Mission_Num, this->isMissionComplete);
+		} // end if()
+
+	} // end if()
+
 	// レベル上から自身を消す
 	this->Destroy();
 }
