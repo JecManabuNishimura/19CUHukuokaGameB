@@ -20,6 +20,8 @@
 AItemBase::AItemBase()
 	: m_isChecked(false)
 	, m_commandName("")
+	, items_Mission_Num(0)
+	, isMissionComplete(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
 }

@@ -39,13 +39,13 @@
 #include "Components/InputComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "MotionControllerComponent.h"
-// 以上の6点はVR用インクルード by_Rin
+// 以上の6点はVR用インクルード (作成者:林雲暉)
 #include "LevelSwitchHelper.h"	// マップ遷移用クラス
 #include "GameFramework/Actor.h" // makeNoise用
 #include "Containers/StringConv.h"	// 文字数をカウント用
 
 
-#define LASERLENGTH 300.0f		// VR用 LASERの長さ(手の長さを代表すること) by_Rin
+#define LASERLENGTH 300.0f		// VR用 LASERの長さ(手の長さを代表すること) (作成者:林雲暉)
 
 // コンストラクタ
 APlayerCharacter::APlayerCharacter()
@@ -98,6 +98,7 @@ APlayerCharacter::APlayerCharacter()
 	, holdingSmartphoneState(0)
 	, vr_SmartPhone_Mission_Num(1)
 	, finished_MsiionID(0)
+	, missionTableHasUpdated(false)
 	, isFound(false)
 {
  	// ティックを呼び出すかのフラグ
@@ -155,7 +156,7 @@ void APlayerCharacter::BeginPlay()
 	// ボックストレースの描画設定
 	if (draw_debug_trace_)	draw_debug_trace_type_ = EDrawDebugTrace::ForOneFrame;
 
-	// ===========  プレイヤー移動、しゃがむ用のプロパティ設定  by_Rin ===========
+	// ===========  プレイヤー移動、しゃがむ用のプロパティ設定  (作成者:林雲暉) ===========
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;					// しゃがむを可能します
 	GetCharacterMovement()->CrouchedHalfHeight = 40.f;							// しゃがむ時の高さ
 	GetCharacterMovement()->bShrinkProxyCapsule = true;							// しゃがむ時のcollisionの変更を可能します(必要ないかも)
@@ -175,7 +176,7 @@ void APlayerCharacter::BeginPlay()
 		UE_LOG(LogTemp, Log, TEXT("Can't find VR Divice"));
 	} // end else
 
-	// ===========  VR Motion Controller's Spawn and Attach  by_Rin ===========
+	// ===========  VR Motion Controller's Spawn and Attach  (作成者:林雲暉) ===========
 	// もしタイトル画面にモードを選択するなら、ifの条件を変えます
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 	{
@@ -322,7 +323,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	// アイテムのチェック
 	CheckItem();
 
-	// ===========  VR Motion Controller's Laser Update by_Rin ===========
+	// ===========  VR Motion Controller's Laser Update (作成者:林雲暉) ===========
 	// 今はVRモード?
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 	{
@@ -350,7 +351,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	// プレイヤーアクション：拾う、調べる、作動させる
 	InputComponent->BindAction("PickUpandCheck", IE_Released, this, &APlayerCharacter::CheckToActor);
 
-	// スマホを構える・構えを解除(作成者：尾崎)　今は使いている by_Rin
+	// スマホを構える・構えを解除(作成者：尾崎)　今は使いている (作成者:林雲暉)
 	InputComponent->BindAction("HaveSmartphone", IE_Pressed, this, &APlayerCharacter::ChangeHaveSmartphoneFlag);
 	InputComponent->BindAction("Smartphone_Light", IE_Pressed, this, &APlayerCharacter::ChangeLightFlag);
 	InputComponent->BindAction("Smartphone_Shutter", IE_Pressed, this, &APlayerCharacter::ChangeShutterFlag);
@@ -388,7 +389,7 @@ void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 	// 現在のプレイヤーの回転情報を取得
 	FRotator newRotationPlayer = GetActorRotation();
 	
-	// VR's 回転 by_Rin
+	// VR's 回転 (作成者:林雲暉)
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 	{
 		// 何もしない
@@ -421,7 +422,7 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
 
-	// 移動量を決定		修正by_Rin
+	// 移動量を決定		(修正者:林雲暉)
 	if (m_isStanding == true && (GetCharacterMovement()->IsCrouching() == false))
 	{
 		/*
@@ -477,7 +478,7 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	SetEyeLevel(_deltaTime, (m_playerMoveSpeed * _deltaTime));
 
 	
-	// VR時の移動 by_Rin
+	// VR時の移動 (作成者:林雲暉)
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 	{
 		// VR's HMD rotation.z maybe is Radian, its between -1 ~ 1
@@ -500,13 +501,13 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 
 
 void APlayerCharacter::PlayerStand() {
-	// C++のしゃがむが使えないため, コメントアウトしました（BluePrintに設定している）  by_Rin
+	// C++のしゃがむが使えないため, コメントアウトしました（BluePrintに設定している）  (作成者:林雲暉)
 	// m_isStanding = true;
 }
 
 // プレイヤーアクション：しゃがむ
 void APlayerCharacter::PlayerSquat() {
-	// C++のしゃがむが使えないため, コメントアウトしました（BluePrintに設定している）	by_Rin
+	// C++のしゃがむが使えないため, コメントアウトしました（BluePrintに設定している）	(作成者:林雲暉)
 	// m_isStanding = false;
 }
 
@@ -517,7 +518,7 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 	eyelevel_for_camera_shaking = ReturnCameraVerticalShaking(_deltaTime, _player_move_speed);
 
 	// 立っていればそのまましゃがんでいればアイレベルを1/4にして座標セット
-	// しゃがむと合わせての条件を入れった	by_Rin
+	// しゃがむと合わせての条件を入れった	(作成者:林雲暉)
 	if (m_isStanding && (GetCharacterMovement()->IsCrouching() == false))
 	{
 		//	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, FString::Printf(TEXT("Stand eye Loc: %s"), *m_pCamera->GetRelativeLocation().ToString()));
@@ -807,7 +808,7 @@ void APlayerCharacter::SetIsFound(const bool _flag, const FVector _enemy_locatio
 	if (isFound)	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), (_enemy_location + FVector(0.f, 0.f, 50.f))));
 }
 
-// PC版、スマホを手前に持っているか  by_Rin
+// PC版、スマホを手前に持っているか  (作成者:林雲暉)
 void APlayerCharacter::ChangeHaveSmartphoneFlag()
 {
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
@@ -874,33 +875,44 @@ FVector APlayerCharacter::ReturnCameraForwardVector()
 	return forward_vector;
 }
 
-// _missionIDというミッションのフラグと表示を処理する	by_Rin
+// _missionIDというミッションのフラグと表示を処理する	(作成者:林雲暉)
 // utilityやセーブデータのミッションフラグも処理するを入れで方がいいです。
 // _isDeleteはtrueの時ミッションを画面から削除する。
 // falseの時ミッションを追加する
-void APlayerCharacter::UpdateTheMission(bool _isDelete, int _missionID)
+void APlayerCharacter::UpdateTheMission(int _updateMode, int _missionID, bool& _hasUpdated)
 {
 	// CurrentMissionUpdate(1, 1);
 	FString FuncName_and_Solution = FString::Printf(TEXT("CurrentMissionUpdate "));
 	FOutputDeviceNull ar;
 
-	if (_isDelete == true)
+	if (_updateMode == 0)
+	{
+		FuncName_and_Solution += FString::Printf(TEXT("0 "));
+	} // end if()
+	if (_updateMode == 1)
 	{
 		FuncName_and_Solution += FString::Printf(TEXT("1 "));
 	} // end if()
+	else if (_updateMode == 2)
+	{
+		FuncName_and_Solution += FString::Printf(TEXT("2 "));
+	} // end if()
 	else
 	{
-		FuncName_and_Solution += FString::Printf(TEXT("0 "));
+		UE_LOG(LogClass, Log, TEXT("(PlayerCharacter.cpp)(UpdateTheMission) : The _updateMode number got error."));
 	} // end else
 
 	FuncName_and_Solution += FString::FromInt(_missionID);
 	vr_Phone->CallFunctionByNameWithArguments(*FuncName_and_Solution, ar, NULL, true);
+	
+
+	_hasUpdated = missionTableHasUpdated;
 
 	// vr_Phone->CallFunctionByNameWithArguments(TEXT("CurrentMissionUpdate 1 1"), ar, NULL, true);
 
 } // void UpdateTheMission()
 
-// 文字をワイドBYTEに変換	by_Rin
+// 文字をワイドBYTEに変換	(作成者:林雲暉)
 int APlayerCharacter::GetTheWideStringsByteLength(FString _inString, FText _inText)
 {
 	int length_byByte = 0;
@@ -970,13 +982,13 @@ bool APlayerCharacter::GetisHaveSmartphoneFlag()
 }
 
 
-// ===========  VR HMDのリセット  by_Rin ===========
+// ===========  VR HMDのリセット  (作成者:林雲暉) ===========
 void APlayerCharacter::OnResetVR()
 {
 	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
 } // void APlayerCharacter::OnResetVR()
 
-// =====  VR Motion コントローラー ポインターの関数  by_Rin =====
+// =====  VR Motion コントローラー ポインターの関数  (作成者:林雲暉) =====
 void APlayerCharacter::UpdateVRLaser()
 {
 	FVector StartPoint = FVector::ZeroVector;			// Laserの初期位置
@@ -1040,7 +1052,7 @@ void APlayerCharacter::Respawn()
 
 // C++のしゃがむが使えないため
 // CheckStandingVRも仮放棄
-// by_Rin
+// (作成者:林雲暉)
 /*
 void APlayerCharacter::CheckStandingVR()
 {

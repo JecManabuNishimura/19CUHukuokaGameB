@@ -64,7 +64,7 @@ public:
 	// 各入力関係メソッドとのバインド処理
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	// =====  VR Motion コントローラー 関数  by_Rin =====
+	// =====  VR Motion コントローラー 関数  (作成者:林雲暉) =====
 	// Resets HMD orientation and position in VR
 	void OnResetVR();
 
@@ -96,7 +96,7 @@ private:
 	// ベクトルを正規化する
 	void NormalizedVector2D(float _vectorLength, FVector2D* _pFvector2d);
 
-	// =====  VR Motion コントローラー ポインターの関数  by_Rin =====
+	// =====  VR Motion コントローラー ポインターの関数  (作成者:林雲暉) =====
 	void UpdateVRLaser();
 	void CheckStandingVR();
 
@@ -220,7 +220,7 @@ private:
 		UCameraComponent* m_pCamera;		// カメラ
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (by_Rin) 
+		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (作成者:林雲暉)
 
 	UPROPERTY(EditAnywhere)
 		USoundClass* se_volume_can_change_;		// 各効果音に設定しているサウンドクラス
@@ -330,7 +330,7 @@ private:
 
 
 public: 
-	// ===== 移動としゃがむ　プロパティ  by_Rin =====
+	// ===== 移動としゃがむ　プロパティ  (作成者:林雲暉) =====
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NewMove")
 		bool m_isStanding;							// 立っているかどうかのフラグ
 
@@ -374,11 +374,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerStatus")
 		TArray<int> missionStatus ;					// ミッションの完了状態を管理するarray
 
+	// 0:Insert, 1:Delete, 2:Update
 	UFUNCTION(BlueprintCallable, Category = "VR_Phone|Mission")
-		void UpdateTheMission(bool _isDelete, int _missionID);	// _missionIDというミッションのフラグと表示を処理する
+		void UpdateTheMission(int _updateMode, int _missionID, bool& _hasUpdated);	// _missionIDというミッションのフラグと表示を処理する
+
+	// using for return bool. The calling  blueprint function can't return variable, so using players's variable to store the bool.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
+		bool missionTableHasUpdated;											// スマホのミッションがアップデートされましたか(Blueprint用)
 
 	UFUNCTION(BlueprintCallable, Category = "VR_Phone|Mission")
-		int GetTheWideStringsByteLength(FString _inString, FText _inText);		// 
+		int GetTheWideStringsByteLength(FString _inString, FText _inText);		// 文字数のByteをカウントする
 
 	bool isFound;		// 敵の攻撃範囲内に入ったか(作成者：尾崎)
 

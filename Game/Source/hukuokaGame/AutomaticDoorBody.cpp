@@ -31,6 +31,9 @@ AAutomaticDoorBody::AAutomaticDoorBody()
 	, m_distanceStartToEnd(0.0f)
 	, m_detectNum(0)
 	, m_doorState(DOOR_STATE_CLOSED)
+	, items_Mission_Num(0)
+	, next_Items_Mission_Num(0)
+	, isMissionComplete(false)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -325,4 +328,30 @@ void AAutomaticDoorBody::UpdateSwitchState(const AAutomaticDoorLever* const oper
 
 	// 対応するレバー全ての状態がON(=true)なら検知フラグを立てる
 	m_isSwitchOn = switch_state;
+
+	// ミッションに反映する場合、スマホのミッションをアップデート (作成者:林雲暉)
+	if (this->isMissionComplete == false) {
+
+		if (this->items_Mission_Num != 0)
+		{
+			if (m_isSwitchOn == true)
+				GoToPlayerCharacterAndUpdateMission();
+
+		} // end if()
+	} // end if()
 }
+
+// プレイヤーのUpdateTheMissionを呼び出すためのメゾット (作成者:林雲暉)
+void AAutomaticDoorBody::GoToPlayerCharacterAndUpdateMission()
+{
+	APlayerCharacter* player1 = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+
+	player1->UpdateTheMission(2, this->items_Mission_Num, this->isMissionComplete);
+
+	if (this->next_Items_Mission_Num != 0)
+	{
+		bool tempbool = false;
+		player1->UpdateTheMission(0, this->next_Items_Mission_Num, tempbool);
+	} // end if()
+	
+} // GoToPlayerCharacterAndUpdateMission()
