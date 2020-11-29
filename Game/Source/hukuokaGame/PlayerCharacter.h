@@ -167,7 +167,8 @@ public:
 	// Smartphoneから呼び出す関数(shutterFlagをSmartphoneに送る)(作成者：尾崎)
 	bool GetShatterFlag();
 
-	bool in_the_locker_;	// ロッカーに入ろうとする～完全に出るまでのフラグ(作成者：尾崎
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Move")
+		bool in_the_locker_;	// ロッカーに入ろうとする～完全に出るまでのフラグ(作成者：尾崎
 
 	void SetInTheLocker(const bool flag);				// 定義がcppに移りました　(作成者:林雲暉)
 
