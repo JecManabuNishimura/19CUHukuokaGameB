@@ -39,6 +39,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Return State")
 		bool ReturnCheckedState() { return m_isChecked; }
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
+		int items_Mission_Num;					// 持っているミッションナンバー、ないなら0	(作成者:林雲暉)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
+		bool isMissionComplete;					// 対応したミッション完成しましたか			(作成者:林雲暉)
+
 public:
 	bool m_isChecked;			// プレイヤーにチェックされているか
 

@@ -64,7 +64,7 @@ public:
 	// 各入力関係メソッドとのバインド処理
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	// =====  VR Motion コントローラー 関数  by_Rin =====
+	// =====  VR Motion コントローラー 関数  (作成者:林雲暉) =====
 	// Resets HMD orientation and position in VR
 	void OnResetVR();
 
@@ -96,7 +96,7 @@ private:
 	// ベクトルを正規化する
 	void NormalizedVector2D(float _vectorLength, FVector2D* _pFvector2d);
 
-	// =====  VR Motion コントローラー ポインターの関数  by_Rin =====
+	// =====  VR Motion コントローラー ポインターの関数  (作成者:林雲暉) =====
 	void UpdateVRLaser();
 	void CheckStandingVR();
 
@@ -140,18 +140,23 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere, Category = "Smart Phone App")
-		bool isHeartBeatOn;			// 心拍数アプリの切り替え(作成者：朱適)
+	bool isHeartBeatOn;			// 心拍数アプリの切り替え(作成者：朱適)
 	// 心拍数アプリの切り替え(作成者：朱適)
 	// Private->Publicに変更(UPROPETY変数宣言をprivateにしない方が良い)
 	void HeartBeatStatusSwitch()
 	{
-		isHeartBeatOn = !isHeartBeatOn;
-		// インスタンスがあるかどうかの確認(作成者：朱適)
-		if (UHeartBeatAppWidgetComponent::GetInstance())
+		// VRコントロールに対応するため追加判定(作成者:林雲暉)
+		if (smartPhone_Mode_Num == 3)
 		{
-			UHeartBeatAppWidgetComponent::GetInstance()->SetAppStat(isHeartBeatOn);
-		}
-		UE_LOG(LogTemp, Log, TEXT("HeartBeat App Status Switched"));
+			isHeartBeatOn = !isHeartBeatOn;
+			// インスタンスがあるかどうかの確認(作成者：朱適)
+			if (UHeartBeatAppWidgetComponent::GetInstance())
+			{
+				UHeartBeatAppWidgetComponent::GetInstance()->SetAppStat(isHeartBeatOn);
+			}
+			UE_LOG(LogTemp, Log, TEXT("HeartBeat App Status Switched"));
+		} // end if()
+
 	}
 	// Smartphoneから呼び出す関数(isHaveSmartphoneFlagをSmartphoneに送る)(作成者：尾崎)
 	bool GetisHaveSmartphoneFlag();
@@ -162,9 +167,10 @@ public:
 	// Smartphoneから呼び出す関数(shutterFlagをSmartphoneに送る)(作成者：尾崎)
 	bool GetShatterFlag();
 
-	bool in_the_locker_;	// ロッカーに入ろうとする～完全に出るまでのフラグ(作成者：尾崎
-	// ロッカーにいるかどうかのフラグセット関数(厳密にいうと入ろうとするところから完全に出るまで)(作成者：尾崎)
-	void SetInTheLocker(const bool flag){ in_the_locker_ = flag; }
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Move")
+		bool in_the_locker_;	// ロッカーに入ろうとする～完全に出るまでのフラグ(作成者：尾崎
+
+	void SetInTheLocker(const bool flag);				// 定義がcppに移りました　(作成者:林雲暉)
 
 	// Phoneアクターを取得する関数（作成者：朱適）
 	UFUNCTION(BlueprintGetter)
@@ -215,7 +221,7 @@ private:
 		UCameraComponent* m_pCamera;		// カメラ
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (by_Rin) 
+		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (作成者:林雲暉)
 
 	UPROPERTY(EditAnywhere)
 		USoundClass* se_volume_can_change_;		// 各効果音に設定しているサウンドクラス
@@ -325,7 +331,7 @@ private:
 
 
 public: 
-	// ===== 移動としゃがむ　プロパティ  by_Rin =====
+	// ===== 移動としゃがむ　プロパティ  (作成者:林雲暉) =====
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NewMove")
 		bool m_isStanding;							// 立っているかどうかのフラグ
 
@@ -357,6 +363,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
 		int vr_SmartPhone_Mission_Num;				// 今表示するミッションナンバー
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone")
+		int smartPhone_Mode_Num;					// スマホアプリモード
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
 		FString vr_SmartPhone_Mission_Contents;		// 今表示するミッション　（今は使えていない）
 
@@ -366,11 +375,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PlayerStatus")
 		TArray<int> missionStatus ;					// ミッションの完了状態を管理するarray
 
+	// 0:Insert, 1:Delete, 2:Update
 	UFUNCTION(BlueprintCallable, Category = "VR_Phone|Mission")
-		void UpdateTheMission(bool _isDelete, int _missionID);	// _missionIDというミッションのフラグと表示を処理する
+		void UpdateTheMission(int _updateMode, int _missionID, bool& _hasUpdated);	// _missionIDというミッションのフラグと表示を処理する
+
+	// using for return bool. The calling  blueprint function can't return variable, so using players's variable to store the bool.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
+		bool missionTableHasUpdated;											// スマホのミッションがアップデートされましたか(Blueprint用)
 
 	UFUNCTION(BlueprintCallable, Category = "VR_Phone|Mission")
-		int GetTheWideStringsByteLength(FString _inString, FText _inText);		// 
+		int GetTheWideStringsByteLength(FString _inString, FText _inText);		// 文字数のByteをカウントする
 
 	bool isFound;		// 敵の攻撃範囲内に入ったか(作成者：尾崎)
 

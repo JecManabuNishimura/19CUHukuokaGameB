@@ -9,6 +9,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "PlayerCharacter.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "AutomaticDoorLever.h"
@@ -116,10 +117,22 @@ private:
 
 	void CheckDetectSpan(float _deltaTime);		// ドアが開ききった後の検知チェック
 
+	void GoToPlayerCharacterAndUpdateMission();	// プレイヤーのUpdateTheMissionを呼び出すためのメゾット (作成者:林雲暉)
+
 public:
 	// ドア本体のスイッチの更新
 	void UpdateSwitchState(const AAutomaticDoorLever* const operated_lever = nullptr);
 
 	// ドアのフィルター番号を返す
 	int GetDoorFilter()const { return m_doorFilter; }
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
+		int items_Mission_Num;					// 持っているミッションナンバー、ないなら0 (作成者:林雲暉)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
+		int next_Items_Mission_Num;				// 次のミッションナンバー、ないなら0		(作成者:林雲暉)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
+		bool isMissionComplete;					// 対応したミッション完成しましたか			(作成者:林雲暉)
+
 };
