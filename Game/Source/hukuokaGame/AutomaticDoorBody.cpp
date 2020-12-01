@@ -119,20 +119,11 @@ void AAutomaticDoorBody::BeginPlay()
 					match_lever_state_lamps_[i]->RegisterComponent();
 					match_lever_state_lamps_[i]->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 					match_lever_state_lamps_[i]->SetStaticMesh(lever_state_lamp_);
-					match_lever_state_lamps_[i]->SetRelativeLocation(FVector(lamp_generate_pos_.X, ((30.f * (i + 1)) + (-15.f * (float)filter_match_levers_num_) - 15.f), lamp_generate_pos_.Z));
+					match_lever_state_lamps_[i]->SetRelativeLocation(FVector(lamp_generate_pos_.X, ((30.f * (i + 1)) + (-15.f * (float)filter_match_levers_num_) - 15.f) * (lamp_for_decide_pos_->GetRelativeScale3D().X / 1.0f), lamp_generate_pos_.Z));
+					match_lever_state_lamps_[i]->SetWorldScale3D(lamp_for_decide_pos_->GetRelativeScale3D());
 				}
 			}
 		}
-		// ドアに対応するレバーがレベルに配置されていない旨をログ出力
-		else		
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("The corresponding lever is not installed on the level !"));
-		}
-	}
-	// そもそもレバーが一つもレベルに配置されていないためエラー
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("There is no lever installed on the level !"));
 	}
 
 	lamp_for_decide_pos_->DestroyComponent();

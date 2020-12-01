@@ -13,6 +13,7 @@
 AAutomaticDoorLever::AAutomaticDoorLever()
 	: m_leverFilter(-1)
 	, m_isLeverOn(false)
+	, can_control_(true)
 	, m_pDoorBody(NULL)
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -61,6 +62,9 @@ void AAutomaticDoorLever::Tick(float DeltaTime)
 // プレイヤーにチェックされたら呼ばれる(作動：状態反転)
 void AAutomaticDoorLever::CheckedByPlayer()
 {
+	// レバーの操作が不可ならreturn
+	if (!can_control_) return;
+
 	// レバーの状態を反転
 	m_isLeverOn = !m_isLeverOn;
 
