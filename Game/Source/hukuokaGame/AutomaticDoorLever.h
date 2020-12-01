@@ -36,12 +36,22 @@ private:
 
 	bool m_isLeverOn;					// レバーのON/OFF状態
 
+	bool can_control_;					// 操作可能か
+
 	AAutomaticDoorBody* m_pDoorBody;	// 対応するドア本体のポインタ
 
 public:
 	// レバーのON/OFF状態を返す
 	UFUNCTION(BlueprintCallable, Category = "Get State")
 		bool GetLeverState()const { return m_isLeverOn; }
+
+	// レバーの操作可・不可フラグを返す
+	UFUNCTION(BlueprintCallable, Category = "Get State")
+		bool GetCanControl()const { return can_control_; }
+
+	// レバーの操作可・不可フラグを設定する
+	UFUNCTION(BlueprintCallable, Category = "Set State")
+		void SetCanControl(const bool _flag){ can_control_ = _flag; }
 
 	// レバーのON/OFF状態を変更(作成者　尾崎)
 	UFUNCTION(BlueprintCallable, Category = "Set State")
