@@ -28,15 +28,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Smartphone.h"
+#include "ItemBase.h"
 #include "Components/ChildActorComponent.h"
+#include "Components/TimelineComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Sound/SoundClass.h"
 #include "HeartBeatAppWidgetComponent.h"	// 心拍数アプリ用（作成者：朱適）
 #include "PlayerCharacter.generated.h"
-
-
-// 前方宣言
-class AItemBase;
 
 // イベントディスパッチャー宣言
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemCheckBeginEventDispatcher);		// プレイヤーの視線がCanCheckアイテムに当たった時
@@ -89,6 +87,14 @@ private:
 
 	// アイテムチェック
 	void CheckItem();
+
+	// ダメージを受けた際の赤くなるエフェクト更新処理
+	UFUNCTION()
+		void TimelineUpdate(float value);
+
+	// ダメージを受けた際の赤くなるエフェクト終了処理
+	UFUNCTION()
+		void TimelineFinish();
 
 	// ベクトルの長さを返す
 	float ReturnVector2DLength(const FVector2D* _pFvector2d);
@@ -255,6 +261,8 @@ private:
 
 	EDrawDebugTrace::Type draw_debug_trace_type_;
 
+	FTimeline damage_effect_timeline_;
+
 	// 使ってない
 	bool isVRCamera;							// VRカメラかどうか
 
@@ -264,7 +272,11 @@ private:
 
 	bool can_make_footstep;						// 足音発生許可フラグ
 
-	bool can_player_control;					// プレイヤーの操作が出来るか
+	bool can_player_move_control_;				// プレイヤーの移動が出来るか
+
+	bool can_player_camera_control_;			// プレイヤーの視点操作が出来るか
+
+	bool is_damaged_;
 
 	float m_playerMoveSpeed;					// プレイヤーの移動速度
 
@@ -328,7 +340,6 @@ private:
 	// コンストラクタ無し
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetPhoneActor, Category = "VR_Phone", meta = (AllowPrivateAccess = "true"))
 		AActor* vr_Phone;
-
 
 public: 
 	// ===== 移動としゃがむ　プロパティ  (作成者:林雲暉) =====
@@ -411,7 +422,9 @@ public:
 
 	FVector ReturnCameraForwardVector();
 
-	void SetPlayerControlFlag(bool _flag) { can_player_control = _flag; }
+	void SetPlayerMoveControlFlag(bool _flag) { can_player_move_control_ = _flag; }
+
+	void SetPlayerCameraControlFlag(bool _flag) { can_player_camera_control_ = _flag; }
 
 	void Respawn();	// リスポーンする関数(作成者：尾崎)
 

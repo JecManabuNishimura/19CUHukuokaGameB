@@ -128,7 +128,8 @@ void ACanExamineItem::Tick(float DeltaTime)
 				if (abs(GetActorLocation().X - transform_on_map_.GetLocation().X) > 10.f)
 				{
 					// プレイヤーの操作を有効に
-					player_character_->SetPlayerControlFlag(true);
+					player_character_->SetPlayerMoveControlFlag(true);
+					player_character_->SetPlayerCameraControlFlag(true);
 
 					SetActorTransform(transform_on_map_);
 
@@ -148,7 +149,8 @@ void ACanExamineItem::CheckedByPlayer()
 		if (is_show_details_ == false)
 		{
 			// プレイヤーの操作を不可にする
-			player_character_->SetPlayerControlFlag(false);
+			player_character_->SetPlayerMoveControlFlag(false);
+			player_character_->SetPlayerCameraControlFlag(false);
 
 			// 調べているフラグを立てる
 			is_show_details_ = true;

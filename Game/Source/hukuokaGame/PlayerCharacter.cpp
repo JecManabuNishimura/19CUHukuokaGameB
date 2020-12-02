@@ -19,7 +19,7 @@
 //-------------------------------------------------------------------
 // ファイル		：PlayerCharacter.cpp
 // 概要			：VRモーションの対応
-// 作成者		：19CU0236 林雲暉
+// 作成者		：19CU0236 林雲暉 
 // 作成日		：2020/08/28		VRモーションコントローラーの対応
 // 更新日		：2020/09/06		VRのrayの作成
 //				：2020/09/19		VRのスマートフォン作成
@@ -31,7 +31,6 @@
 
 
 #include "PlayerCharacter.h"
-#include "ItemBase.h"
 #include "Engine.h"				// GEngineを呼び出すためのヘッダ
 #include "SteamVRChaperoneComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
@@ -73,7 +72,9 @@ APlayerCharacter::APlayerCharacter()
 	, count_for_footstep_(0.0f)
 	, eyelevel_for_camera_shaking(0.0f)
 	, can_make_footstep(true)
-	, can_player_control(true)
+	, can_player_move_control_(true)
+	, can_player_camera_control_(true)
+	, is_damaged_(false)
 	, m_playerMoveSpeed(0.0f)
 	, damage_count_(0)
 	, m_playerMoveInput(FVector2D::ZeroVector)
@@ -101,7 +102,7 @@ APlayerCharacter::APlayerCharacter()
 	, missionTableHasUpdated(false)
 	, isFound(false)
 {
- 	// ティックを呼び出すかのフラグ
+	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
 
 	// デフォルトプレイヤーとして設定
@@ -132,10 +133,26 @@ APlayerCharacter::APlayerCharacter()
 	m_pCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("m_pCamera"));
 
 	// カメラ原点にスプリングアームをアタッチ
-	m_pCameraBase->SetupAttachment(m_pSpringArm, USpringArmComponent::SocketName);	
+	m_pCameraBase->SetupAttachment(m_pSpringArm, USpringArmComponent::SocketName);
 
 	// カメラ原点にカメラをアタッチ
 	m_pCamera->SetupAttachment(m_pCameraBase);
+
+	// 浮動小数点カーブ取得
+	const ConstructorHelpers::FObjectFinder<UCurveFloat> curve_for_damage_effect(TEXT("CurveFloat'/Game/Curve/DamageEffect.DamageEffect'"));
+
+	damage_effect_timeline_ = FTimeline{};
+
+	// ダメージを受けた際の赤くなるエフェクト更新処理のバインド
+	FOnTimelineFloat timeline_update;
+	timeline_update.BindUFunction(this, "TimelineUpdate");
+	damage_effect_timeline_.AddInterpFloat(curve_for_damage_effect.Object, timeline_update);
+
+
+	// ダメージを受けた際の赤くなるエフェクト終了処理のバインド
+	FOnTimelineEvent timeline_finish;
+	timeline_finish.BindUFunction(this, "TimelineFinish");
+	damage_effect_timeline_.SetTimelineFinishedFunc(timeline_finish);
 }
 
 // デストラクタ
@@ -323,6 +340,9 @@ void APlayerCharacter::Tick(float DeltaTime)
 	// アイテムのチェック
 	CheckItem();
 
+	// ダメージ状態ならTimeLine更新
+	if (is_damaged_)	damage_effect_timeline_.TickTimeline(DeltaTime);
+
 	// ===========  VR Motion Controller's Laser Update (作成者:林雲暉) ===========
 	// 今はVRモード?
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
@@ -365,7 +385,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 void APlayerCharacter::UpdateCameraPitch(const float _deltaTime)
 {
 	// 操作不可ならreturn
-	if (!can_player_control || isFound)	return;
+	if (!can_player_camera_control_)	return;
 
 	if (m_pCamera != NULL)
 	{
@@ -384,7 +404,7 @@ void APlayerCharacter::UpdateCameraPitch(const float _deltaTime)
 void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 {
 	// 操作不可ならreturn
-	if (!can_player_control || isFound)	return;
+	if (!can_player_camera_control_)	return;
 
 	// 現在のプレイヤーの回転情報を取得
 	FRotator newRotationPlayer = GetActorRotation();
@@ -417,7 +437,7 @@ void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 {
 	// 操作不可ならreturn
-	if (!can_player_control || isFound || in_the_locker_)	return;
+	if (!can_player_move_control_ || in_the_locker_)	return;
 
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
@@ -542,7 +562,6 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 
 		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ((m_eyeLevelWhenStanding / 4) + eyelevel_for_camera_shaking)));
 		
-
 		// PC しゃがむの時　スマホ位置の調整
 		if (holdingSmartphoneState == 1)
 		{
@@ -575,7 +594,7 @@ float APlayerCharacter::ReturnCameraVerticalShaking(const float _deltaTime, cons
 	{
 		count_for_footstep_ += _player_move_speed;
 	}
-
+	
 	if (count_for_footstep_ >= player_footstep_span_ && can_make_footstep)
 	{
 		// 足音を立てる、許可フラグを下す
@@ -617,7 +636,7 @@ void APlayerCharacter::MakeFootstep(const float _deltaTime, const float _player_
 void APlayerCharacter::CheckItem()
 {
 	// 操作不可なら表示されているコマンドアイコンを非表示にし、return
-	if (!can_player_control || isFound || in_the_locker_)
+	if (!can_player_move_control_ || isFound || in_the_locker_)
 	{
 		if (m_pPrevCheckItem != NULL)
 		{
@@ -707,6 +726,22 @@ void APlayerCharacter::CheckItem()
 	}
 }
 
+// ダメージを受けた際の赤くなるエフェクト更新処理
+void APlayerCharacter::TimelineUpdate(float value)
+{
+	m_pCamera->PostProcessSettings.SceneColorTint = FVector(1.f, 1.f - value, 1.f - value);
+	m_pCamera->PostProcessSettings.VignetteIntensity = value;
+}
+
+// ダメージを受けた際の赤くなるエフェクト終了処理
+void APlayerCharacter::TimelineFinish()
+{
+	m_pCamera->PostProcessSettings.SceneColorTint = FVector(1.f, 1.f, 1.f);
+	m_pCamera->PostProcessSettings.VignetteIntensity = 0.f;
+
+	is_damaged_ = false;
+}
+
 // ベクトルの長さを返す
 float APlayerCharacter::ReturnVector2DLength(const FVector2D* _pFvector2d)
 {
@@ -766,6 +801,9 @@ void APlayerCharacter::AttackFromEnemy()
 {
 	++damage_count_;
 
+	is_damaged_ = true;
+	damage_effect_timeline_.PlayFromStart();
+
 	switch (damage_count_)
 	{
 	case 1:
@@ -804,10 +842,22 @@ void APlayerCharacter::AttackFromEnemy()
 // エネミーの攻撃範囲に入った際の処理 (追記者 増井)
 void APlayerCharacter::SetIsFound(const bool _flag, const FVector _enemy_location)
 {
-	if (_flag && damage_count_ == 3)
+	isFound = _flag;
+
+	if (isFound)
 	{
-		isFound = _flag;
-		SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), (_enemy_location + FVector(0.f, 0.f, 50.f))));
+		can_player_move_control_ = false;
+
+		if (damage_count_ == 3)
+		{
+			SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), (_enemy_location + FVector(0.f, 0.f, 50.f))));
+			can_player_camera_control_ = false;
+		}
+	}
+	else
+	{
+		can_player_move_control_ = true;
+		can_player_camera_control_ = true;
 	}
 }
 
