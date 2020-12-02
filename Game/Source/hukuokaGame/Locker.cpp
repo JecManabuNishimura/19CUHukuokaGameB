@@ -166,7 +166,8 @@ void ALocker::CheckedByPlayer()
 		location_lerp_alpha2_ = 1.f;
 	}
 	// SetInTheLockerのみだと常時カメラ移動が可能な為ControlFlagにてカメラ移動の制限をかける
-	player->SetPlayerControlFlag(false);
+	player->SetPlayerMoveControlFlag(false);
+	player->SetPlayerCameraControlFlag(false);
 }
 
 void ALocker::SetDoorRotationValue(float DeltaTime)
@@ -282,7 +283,8 @@ void ALocker::OutToLocker(float DeltaTime)
 		is_in_player_ = false;					// ロッカーの中にいないのでfalse
 		can_input_ = true;						// 入力受け付けを可能に
 		player->SetInTheLocker(false);			// Playerをロッカーの中にいない状態に
-		player->SetPlayerControlFlag(true);
+		player->SetPlayerMoveControlFlag(true);
+		player->SetPlayerCameraControlFlag(true);
 	}
 }
 
@@ -297,7 +299,8 @@ void ALocker::PlayerRotation(float DeltaTime)
 	{
 		// 回転させないように
 		player_rotation_start_flag_ = false;
-		player->SetPlayerControlFlag(true);
+		player->SetPlayerMoveControlFlag(true);
+		player->SetPlayerCameraControlFlag(true);
 	}
 }
 
