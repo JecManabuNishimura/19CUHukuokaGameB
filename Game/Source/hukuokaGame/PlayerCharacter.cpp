@@ -27,8 +27,9 @@
 //								スプリングアームの追加
 //				：2020/10/28		VRの移動としゃがむの調整
 //				：2020/11/05		PC版スマホを手前に持つ方法変更
+//				：2020/11/25		VRモードの時スマホ使えるようにに設定する
+//				：2020/11/29		VRのCheckItem追加
 //-------------------------------------------------------------------
-
 
 #include "PlayerCharacter.h"
 #include "ItemBase.h"
@@ -45,7 +46,7 @@
 #include "Containers/StringConv.h"	// 文字数をカウント用
 
 
-#define LASERLENGTH 300.0f		// VR用 LASERの長さ(手の長さを代表すること) (作成者:林雲暉)
+#define LASERLENGTH 250.0f		// VR用 LASERの長さ(手の長さを代表すること) (作成者:林雲暉)
 
 // コンストラクタ
 APlayerCharacter::APlayerCharacter()
@@ -320,14 +321,17 @@ void APlayerCharacter::Tick(float DeltaTime)
 	// プレイヤーキャラクターの更新
 	UpdatePlayerMove(DeltaTime);
 
-	// アイテムのチェック
-	CheckItem();
-
-	// ===========  VR Motion Controller's Laser Update (作成者:林雲暉) ===========
 	// 今はVRモード?
-	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
+	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+	{
+		// アイテムのチェック
+		CheckItem();
+	}
+	// ===========  VR Motion Controller's Laser Update (作成者:林雲暉) ===========
+	else 
 	{
 		// VR コントローラー ポインターの更新
+		// VRのアイテムのチェック
 		UpdateVRLaser();
 	} // end if()
 }
@@ -640,6 +644,7 @@ void APlayerCharacter::CheckItem()
 
 	TArray<AActor*> actors_to_ignore;
 	actors_to_ignore.Add(this);
+
 
 	// ライントレースからボックストレースに変更(11/20 増井)
 	//if (GetWorld()->LineTraceSingleByChannel(outHit, start, end, ECC_GameTraceChannel3))
@@ -994,6 +999,11 @@ void APlayerCharacter::OnResetVR()
 // =====  VR Motion コントローラー ポインターの関数  (作成者:林雲暉) =====
 void APlayerCharacter::UpdateVRLaser()
 {
+	// ===============================================================
+	// 11/29	VR CheckItem追加
+	// 12/01	トレースタイプ変更
+	// ===============================================================
+
 	FVector StartPoint = FVector::ZeroVector;			// Laserの初期位置
 	FVector FowardActor = FVector::ZeroVector;			// モーションコントローラーの前方向
 
@@ -1002,8 +1012,9 @@ void APlayerCharacter::UpdateVRLaser()
 	{
 		// StartPoint = RightController->ActorToWorld().GetLocation();
 
-		StartPoint = RightController->GetMotionController()->K2_GetComponentLocation() ;
+		StartPoint = RightController->GetMotionController()->K2_GetComponentLocation();
 		FowardActor = RightController->GetRootComponent()->GetChildComponent(0)->GetForwardVector();
+		StartPoint = ((FowardActor * 30.f) + StartPoint);
 
 	} // end if()
 	else
@@ -1026,22 +1037,110 @@ void APlayerCharacter::UpdateVRLaser()
 
 	ULineBatchComponent* const LineBatcher = GetWorld()->PersistentLineBatcher;
 
-	// Laserが最初に当たったのものを　vr_HitResult　に反映する
-	if (GetWorld()->LineTraceSingleByChannel(vr_HitResult, StartPoint, EndPoint, ECC_WorldStatic, CollisionParams))
-	{
-		if (vr_InCameraMode == false)
-		{
-			LineBatcher->DrawLine(StartPoint, EndPoint, FLinearColor::Red, 10, 0.f, 1.f);
-		} // end if()
 
-		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("RayHit: %s"), *HitResult.Actor->GetName()));
+	// 操作不可なら表示されているコマンドアイコンを非表示にし、return
+	if (!can_player_control || isFound || in_the_locker_)
+	{
+		if (m_pPrevCheckItem != NULL)
+		{
+			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
+			OnItemCheckEndEventDispatcher.Broadcast();
+			m_pPrevCheckItem->SetOutline(false);
+		}
+		return;
+	}
+
+	// 1フレーム前のアイテムの情報を移す
+	m_pPrevCheckItem = m_pCheckingItem;
+
+	TArray<AActor*> actors_to_ignore;
+	actors_to_ignore.Add(this);
+	actors_to_ignore.Add(LeftController);
+	actors_to_ignore.Add(RightController);
+	actors_to_ignore.Add(vr_Phone);
+
+
+	// Laserが最初に当たったのものを　vr_HitResult　に反映する
+	// if (GetWorld()->LineTraceSingleByChannel(vr_HitResult, StartPoint, EndPoint, ECC_WorldStatic, CollisionParams))
+	if (UKismetSystemLibrary::BoxTraceSingleByProfile(RightController, StartPoint, EndPoint, (box_half_size_/2), RightController->GetMotionController()->K2_GetComponentRotation(), FName("RightContollerCheckCollision"), false, actors_to_ignore, EDrawDebugTrace::ForOneFrame, vr_HitResult, true,FLinearColor::Green,FLinearColor::Red, 0.1f))
+	{
+
+		// アイテム基本クラスにキャスト
+		m_pCheckingItem = Cast<AItemBase>(vr_HitResult.GetActor());
+
+		if (m_pCheckingItem != NULL)
+		{
+			// 1フレーム前のアイテムと違うなら更新
+			if (m_pCheckingItem != m_pPrevCheckItem)
+			{
+				// 前フレームで有効なオブジェクトをチェックしていたら
+				if (m_pPrevCheckItem != NULL)
+				{
+					// 前フレームでチェックしていたオブジェクトの被チェックを無効に
+					m_pPrevCheckItem->m_isChecked = false;
+
+					// 白枠を非表示にする	by	朱適
+					m_pPrevCheckItem->SetOutline(false);
+
+					// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
+					OnItemCheckEndEventDispatcher.Broadcast();
+				}
+				// 新しくチェックしたオブジェクトの被チェックを有効に
+				m_pCheckingItem->m_isChecked = true;
+
+				// 白枠を表示にする		by	朱適
+				m_pCheckingItem->SetOutline(true);
+
+				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートに追加)
+				OnItemCheckBeginEventDispatcher.Broadcast();
+			}
+
+
+			if (vr_InCameraMode == false)
+			{
+				LineBatcher->DrawLine(StartPoint, EndPoint, FLinearColor::Red, 10, 0.f, 1.f);
+			} // end if()
+			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("RayHit: %s"), *HitResult.Actor->GetName()));
+
+		}
+		else
+		{
+			if (m_pPrevCheckItem != NULL)
+			{
+				// 前フレームでチェックしていたオブジェクトの被チェックを無効に
+				m_pPrevCheckItem->m_isChecked = false;
+
+				// 白枠を非表示にする	by	朱適
+				m_pPrevCheckItem->SetOutline(false);
+
+				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
+				OnItemCheckEndEventDispatcher.Broadcast();
+			}
+		}
+
 	} // end if()
+
 	else
 	{
 		if (vr_InCameraMode == false)
 		{
 			LineBatcher->DrawLine(StartPoint, EndPoint, FLinearColor::Green, 10, 0.f, 1.f);
 		} // end if()
+
+
+		// 前フレームでは検知していた場合そのアイテムの接触フラグを下げる
+		if (m_pPrevCheckItem != NULL)
+		{
+			m_pPrevCheckItem->m_isChecked = false;
+
+			// 白枠を非表示にする	by	朱適
+			m_pPrevCheckItem->SetOutline(false);
+
+			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
+			OnItemCheckEndEventDispatcher.Broadcast();
+		}
+		m_pCheckingItem = NULL;
+
 	} // end else
 
 } // APlayerCharacter::UpdateVRLaser()
