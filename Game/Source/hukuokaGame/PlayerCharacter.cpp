@@ -1090,7 +1090,7 @@ void APlayerCharacter::UpdateVRLaser()
 
 
 	// 操作不可なら表示されているコマンドアイコンを非表示にし、return
-	if (!can_player_control || isFound || in_the_locker_)
+	if (!can_player_move_control_ || isFound || in_the_locker_)
 	{
 		if (m_pPrevCheckItem != NULL)
 		{
