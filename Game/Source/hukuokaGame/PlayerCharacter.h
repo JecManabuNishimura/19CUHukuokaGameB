@@ -226,9 +226,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		UCameraComponent* m_pCamera;		// カメラ
 
-	UPROPERTY(EditAnywhere, Category = "Camera")
-		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (作成者:林雲暉)
-
 	UPROPERTY(EditAnywhere)
 		USoundClass* se_volume_can_change_;		// 各効果音に設定しているサウンドクラス
 
@@ -343,6 +340,9 @@ private:
 
 public: 
 	// ===== 移動としゃがむ　プロパティ  (作成者:林雲暉) =====
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (作成者:林雲暉)
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NewMove")
 		bool m_isStanding;							// 立っているかどうかのフラグ
 

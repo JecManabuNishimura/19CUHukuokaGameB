@@ -276,7 +276,6 @@ void APlayerCharacter::BeginPlay()
 	{
 		vr_Phone = GetWorld()->SpawnActor<AActor>(bp_VRphone);						// VRのスマートフォンをActorとして生成する
 
-
 		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 		{
 			vr_Phone->AttachToComponent(LeftController->GetRootComponent()->GetChildComponent(0), AttachRules);
@@ -547,8 +546,7 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 	if (m_isStanding && (GetCharacterMovement()->IsCrouching() == false))
 	{
 		//	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, FString::Printf(TEXT("Stand eye Loc: %s"), *m_pCamera->GetRelativeLocation().ToString()));
-
-		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ( m_eyeLevelWhenStanding + eyelevel_for_camera_shaking)));
+		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f,  eyelevel_for_camera_shaking));
 
 		// PC しゃがむの時　スマホ位置の調整
 		if (holdingSmartphoneState == 1)
@@ -565,7 +563,7 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 	{
 		//	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, FString::Printf(TEXT("Crouch eye Loc: %s"), *m_pCamera->GetRelativeLocation().ToString()));
 
-		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, ((m_eyeLevelWhenStanding / 4) + eyelevel_for_camera_shaking)));
+		m_pCamera->SetRelativeLocation(FVector(0.0f, 0.0f, eyelevel_for_camera_shaking));
 		
 		// PC しゃがむの時　スマホ位置の調整
 		if (holdingSmartphoneState == 1)
