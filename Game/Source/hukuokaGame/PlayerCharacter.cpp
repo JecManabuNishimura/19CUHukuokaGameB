@@ -912,7 +912,14 @@ AItemBase* APlayerCharacter::ReturnCheckingItem() const
 
 FString APlayerCharacter::ReturnCheckingItemCommandName() const
 {
-	return m_pCheckingItem->m_commandName;
+	FString command_name = "None";
+
+	if (m_pCheckingItem != NULL)
+	{
+		command_name = m_pCheckingItem->m_commandName;
+	}
+
+	return command_name;
 }
 
 FVector APlayerCharacter::ReturnCameraForwardVector()
