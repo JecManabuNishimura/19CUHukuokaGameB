@@ -182,7 +182,6 @@ public:
 	UFUNCTION(BlueprintGetter)
 		AActor* GetPhoneActor() { return vr_Phone; };
 
-public:
 	UFUNCTION(BlueprintCallable, Category = "Return State")
 		AItemBase* ReturnCheckingItem() const;
 
@@ -201,7 +200,11 @@ private:
 	UPROPERTY(BlueprintAssignable)
 		FOnItemCheckEndEventDispatcher  OnItemCheckEndEventDispatcher;
 
-	// プロパティ
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move")
+		bool m_isStanding;						// 立っているかどうかのフラグ(作成者:林雲暉)(12/06 CategoryをNewMoveからMoveに変更 修正者:増井悠斗)
+
+private:
 	UPROPERTY(EditAnywhere, Category = "Move")
 		float m_playerThresholdToRun;			// 走る閾値(0 < this <= 1)
 
@@ -342,18 +345,6 @@ public:
 	// ===== 移動としゃがむ　プロパティ  (作成者:林雲暉) =====
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (作成者:林雲暉)
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NewMove")
-		bool m_isStanding;							// 立っているかどうかのフラグ
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NewMove")
-		float m_MaxWalkSpeed_Walk ;					// 歩いての移動速度
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NewMove")
-		float m_MaxWalkSpeed_Run;					// 走るの移動速度
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NewMove")
-		float m_MaxWalkSpeed_Crouch;				// しゃがむの移動速度
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR")
 		float m_VRPlayersHeight;					// VRモードの時現実プレイヤーの立っているの高さ

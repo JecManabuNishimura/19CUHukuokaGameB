@@ -52,6 +52,7 @@ APlayerCharacter::APlayerCharacter()
 	: isHeartBeatOn(false)
 	, in_the_locker_(false)
 	, player_state(0)
+	, m_isStanding(true)
 	, m_playerThresholdToRun(1.0f)
 	, m_playerRunSpeed(10.0f)
 	, m_playerWalkSpeed(5.0f)
@@ -90,10 +91,6 @@ APlayerCharacter::APlayerCharacter()
 	, film_slope_for_debuff_(1.f)
 	, film_toe_for_debuff_(0.8f)
 	, vr_HitResult(NULL)
-	, m_isStanding(true)
-	, m_MaxWalkSpeed_Walk(250.0f)
-	, m_MaxWalkSpeed_Run(500.0f)
-	, m_MaxWalkSpeed_Crouch(150.0f)
 	, m_VRPlayersHeight(175.0f)
 	, m_HeightisChecked(false)
 	, vr_InCameraMode(false)
@@ -139,7 +136,7 @@ APlayerCharacter::APlayerCharacter()
 	// カメラ原点にカメラをアタッチ
 	m_pCamera->SetupAttachment(m_pCameraBase);
 
-	// 浮動小数点カーブ取得
+	// ダメージ演出用浮動小数点カーブ取得
 	const ConstructorHelpers::FObjectFinder<UCurveFloat> curve_for_damage_effect(TEXT("CurveFloat'/Game/Curve/DamageEffect.DamageEffect'"));
 
 	damage_effect_timeline_ = FTimeline{};
@@ -178,7 +175,6 @@ void APlayerCharacter::BeginPlay()
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;					// しゃがむを可能します
 	GetCharacterMovement()->CrouchedHalfHeight = 40.f;							// しゃがむ時の高さ
 	GetCharacterMovement()->bShrinkProxyCapsule = true;							// しゃがむ時のcollisionの変更を可能します(必要ないかも)
-	GetCharacterMovement()->MaxWalkSpeedCrouched = m_MaxWalkSpeed_Crouch;		// しゃがむ時の移動速度
 	GetCharacterMovement()->MaxAcceleration = 500.f;							// プレイヤー移動の加速度
 
 	// Epic Comment :D // Setup Player Height for various Platforms (PS4, Vive, Oculus)
@@ -446,42 +442,42 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
 
-	// 移動量を決定		(修正者:林雲暉)
-	if (m_isStanding == true && (GetCharacterMovement()->IsCrouching() == false))
-	{
-		/*
-		// unreal engine's bug, dont use it. Using BluePrint Now.
-			GetCharacterMovement()->UnCrouch(true);
-		*/
+	// 移動量を決定		(修正者:林雲暉)(12/06 仕様書通りの挙動をしていないため再修正 修正者:増井悠斗)
+	/*
+	// unreal engine's bug, dont use it. Using BluePrint Now.
+		GetCharacterMovement()->UnCrouch(true);
+	*/
 
-		// 走る
-		if (vectorLength >= 0.5f)
-		{
-			GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Running"));
-			m_playerMoveSpeed = m_playerRunSpeed;
-			GetCharacterMovement()->MaxWalkSpeed = m_MaxWalkSpeed_Run;
-		}
-		// 歩く
-		else if (vectorLength > 0.0f && vectorLength < 0.5f)
-		{
-			GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Walking"));
-			m_playerMoveSpeed = m_playerWalkSpeed;
-			GetCharacterMovement()->MaxWalkSpeed = m_MaxWalkSpeed_Walk;
-		}
-		// 止まる
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Stop"));
-			m_playerMoveSpeed = 0.0f;
-			GetCharacterMovement()->MaxWalkSpeed = m_MaxWalkSpeed_Walk;
-		}
-	} // end if()
-	// しゃがんでいた場合移動速度を1/2に
+	// 走る
+	if (vectorLength >= m_playerThresholdToRun)
+	{
+		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Running"));
+		m_playerMoveSpeed = m_playerRunSpeed;
+	}
+	// 歩く
+	else if (vectorLength > 0.0f)
+	{
+		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Walking"));
+		m_playerMoveSpeed = m_playerWalkSpeed;
+	}
+	// 止まる
 	else
 	{
+		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Stop"));
+		m_playerMoveSpeed = 0.0f;
+	}
+
+	// 立っている時の速度設定
+	GetCharacterMovement()->MaxWalkSpeed = m_playerMoveSpeed;
+
+	// しゃがんでいた場合設定した速度を1/2に
+	if (m_isStanding == false && (GetCharacterMovement()->IsCrouching() == true))
+	{
 		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Squat"));
-		GetCharacterMovement()->MaxWalkSpeed = m_MaxWalkSpeed_Crouch;
-		m_playerMoveSpeed = m_playerWalkSpeed / 2.0f;
+		m_playerMoveSpeed /= 2.0f;
+
+		// しゃがんでいる時の速度設定
+		GetCharacterMovement()->MaxWalkSpeedCrouched = m_playerMoveSpeed;
 
 		/*
 		// unreal engine's bug, dont use it. Using BluePrint Now.
@@ -490,7 +486,7 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 			GetCharacterMovement()->Crouch(true);
 		} // end if
 		*/
-	} // end else 
+	}
 
 	// ベクトルの正規化
 	NormalizedVector2D(vectorLength, &m_playerMoveInput);
@@ -501,7 +497,6 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// 地面との距離を測りプレイヤーの高さを設定
 	SetEyeLevel(_deltaTime, (m_playerMoveSpeed * _deltaTime));
 
-	
 	// VR時の移動 (作成者:林雲暉)
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 	{
@@ -522,7 +517,6 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 		AddMovementInput(GetActorRightVector(), (m_playerMoveSpeed * m_playerMoveInput.Y));
 	} // end else
 }
-
 
 void APlayerCharacter::PlayerStand() {
 	// C++のしゃがむが使えないため, コメントアウトしました（BluePrintに設定している）  (作成者:林雲暉)
@@ -663,9 +657,7 @@ void APlayerCharacter::CheckItem()
 	TArray<AActor*> actors_to_ignore;
 	actors_to_ignore.Add(this);
 
-
 	// ライントレースからボックストレースに変更(11/20 増井)
-	//if (GetWorld()->LineTraceSingleByChannel(outHit, start, end, ECC_GameTraceChannel3))
 	if(UKismetSystemLibrary::BoxTraceSingle(this, start, end, box_half_size_, GetActorRotation(), TraceTypeQuery3, false, actors_to_ignore, draw_debug_trace_type_, outHit, true, FLinearColor::Red, FLinearColor::Green, 1.0f))
 	{
 		// アイテム基本クラスにキャスト
@@ -999,6 +991,7 @@ void APlayerCharacter::EyeDamaged_Implementation()
 {
 }
 
+// カメラの座標を返す
 FVector APlayerCharacter::ReturnCameraLocation()
 {
 	FVector camera_location = FVector::ZeroVector;
