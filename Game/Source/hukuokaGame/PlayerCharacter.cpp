@@ -119,10 +119,10 @@ APlayerCharacter::APlayerCharacter()
 	m_pSpringArm->bDoCollisionTest = false;
 
 	// カメラ追従ラグを使うかを設定
-	m_pSpringArm->bEnableCameraLag = true;
+	m_pSpringArm->bEnableCameraLag = false;
 
 	// カメラ追従ラグの速度を設定
-	m_pSpringArm->CameraLagSpeed = 20.f;
+	m_pSpringArm->CameraLagSpeed = 35.f;
 
 	// カメラ原点の生成
 	m_pCameraBase = CreateDefaultSubobject<USceneComponent>(TEXT("VROrigin"));
@@ -477,7 +477,7 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 		m_playerMoveSpeed /= 2.0f;
 
 		// しゃがんでいる時の速度設定
-		GetCharacterMovement()->MaxWalkSpeedCrouched = m_playerMoveSpeed;
+		// GetCharacterMovement()->MaxWalkSpeedCrouched = m_playerMoveSpeed;
 
 		/*
 		// unreal engine's bug, dont use it. Using BluePrint Now.
