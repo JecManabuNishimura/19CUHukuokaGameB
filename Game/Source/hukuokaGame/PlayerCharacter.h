@@ -226,9 +226,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		class USceneComponent* m_pCameraBase;	// カメラの原点
 
-	UPROPERTY(EditAnywhere, Category = "Camera")
-		UCameraComponent* m_pCamera;		// カメラ
-
 	UPROPERTY(EditAnywhere)
 		USoundClass* se_volume_can_change_;		// 各効果音に設定しているサウンドクラス
 
@@ -345,6 +342,9 @@ public:
 	// ===== 移動としゃがむ　プロパティ  (作成者:林雲暉) =====
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (作成者:林雲暉)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+		UCameraComponent* m_pCamera;		// カメラ
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR")
 		float m_VRPlayersHeight;					// VRモードの時現実プレイヤーの立っているの高さ
