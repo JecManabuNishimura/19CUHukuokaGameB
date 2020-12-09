@@ -290,7 +290,7 @@ void APlayerCharacter::BeginPlay()
 			vr_Phone->SetActorRelativeLocation(FVector(100, 0, 10));
 
 			// VRスマホのサイズ
-			vr_Phone->SetActorScale3D(FVector(0.5f, 0.5f, 0.5f));
+			vr_Phone->SetActorScale3D(FVector(0.2f, 0.2f, 0.2f));
 
 			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetActorRotation().ToString()));
 			
