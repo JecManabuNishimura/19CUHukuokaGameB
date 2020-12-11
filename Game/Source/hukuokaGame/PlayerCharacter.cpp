@@ -303,17 +303,23 @@ void APlayerCharacter::BeginPlay()
 
 			// PC確認用配置
 			vr_Phone->SetActorRelativeRotation(FRotator(-90.f, -180.f, 180.f));
-			vr_Phone->SetActorRelativeLocation(FVector(200.f, -150.f, -50.f));
+			vr_Phone->SetActorRelativeLocation(FVector(10.f, -6.f, -2.f));
 
 			// PCスマホのサイズ
-			vr_Phone->SetActorScale3D(FVector(0.4f, 0.4f, 0.4f));
+			vr_Phone->SetActorScale3D(FVector(0.02f, 0.02f, 0.02f));						
 
-			vr_Phone->SetActorHiddenInGame(true);
+			vr_Phone->SetActorHiddenInGame(false);
 
+			holdingSmartphoneState = 1;
 		} // end else
 
 		// 確認用
 		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetName()));
+
+		// ミッションの内容を表示する
+		FString FuncName_and_Solution = FString::Printf(TEXT("SetMissionContents_FullSamepage 0"));
+		FOutputDeviceNull ar;
+		vr_Phone->CallFunctionByNameWithArguments(*FuncName_and_Solution, ar, NULL, true);
 
 	} // end if()
 
@@ -371,14 +377,16 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	// プレイヤーアクション：拾う、調べる、作動させる
 	InputComponent->BindAction("PickUpandCheck", IE_Released, this, &APlayerCharacter::CheckToActor);
 
-	// スマホを構える・構えを解除(作成者：尾崎)　今は使いている (作成者:林雲暉)
-	InputComponent->BindAction("HaveSmartphone", IE_Pressed, this, &APlayerCharacter::ChangeHaveSmartphoneFlag);
-	InputComponent->BindAction("Smartphone_Light", IE_Pressed, this, &APlayerCharacter::ChangeLightFlag);
-	InputComponent->BindAction("Smartphone_Shutter", IE_Pressed, this, &APlayerCharacter::ChangeShutterFlag);
+	// スマホを構える・構えを解除(作成者：尾崎)　
+	// 今は使いていない (作成者:林雲暉、更新12/11)
+	//	InputComponent->BindAction("HaveSmartphone", IE_Pressed, this, &APlayerCharacter::ChangeHaveSmartphoneFlag);
+	//	InputComponent->BindAction("Smartphone_Light", IE_Pressed, this, &APlayerCharacter::ChangeLightFlag);
+	//	InputComponent->BindAction("Smartphone_Shutter", IE_Pressed, this, &APlayerCharacter::ChangeShutterFlag);
 
 	// 心拍数アプリの切り替え
 	// VRコントロールに対応するため統一になった(作成者:林雲暉)
-	InputComponent->BindAction("UseSmartPhone", IE_Pressed, this, &APlayerCharacter::HeartBeatStatusSwitch);
+	// 今は使いていない (更新者:林雲暉、12/11)
+	// InputComponent->BindAction("UseSmartPhone", IE_Pressed, this, &APlayerCharacter::HeartBeatStatusSwitch);
 }
 
 // カメラ(Pitch)の更新
@@ -933,8 +941,9 @@ FVector APlayerCharacter::ReturnCameraForwardVector()
 
 // _missionIDというミッションのフラグと表示を処理する	(作成者:林雲暉)
 // utilityやセーブデータのミッションフラグも処理するを入れで方がいいです。
-// _isDeleteはtrueの時ミッションを画面から削除する。
-// falseの時ミッションを追加する
+// _updateModeは0の時ミッションを追加する
+// _updateModeは1の時ミッションを画面から削除する。
+// _updateModeは1の時ミッションを更新する。
 void APlayerCharacter::UpdateTheMission(int _updateMode, int _missionID, bool& _hasUpdated)
 {
 	// CurrentMissionUpdate(1, 1);
@@ -1019,10 +1028,19 @@ void APlayerCharacter::SetInTheLocker(const bool flag)
 {
 	in_the_locker_ = flag;
 	// スマホを使えない判定追加(作成者:林雲暉)
-	if (in_the_locker_ == true && holdingSmartphoneState != 0)
+	if (in_the_locker_ == true )
 	{
-		ChangeHaveSmartphoneFlag();
+		holdingSmartphoneState = 0;
+		vr_Phone->SetActorHiddenInGame(true);
 	} // end if()
+	else
+	{
+		holdingSmartphoneState = 1;
+		vr_Phone->SetActorRelativeLocation(FVector(10.f, -6.f, -2.f));
+		vr_Phone->SetActorScale3D(FVector(0.02f, 0.02f, 0.02f));						// PCスマホのサイズ
+		vr_Phone->SetActorHiddenInGame(false);
+
+	} // end else
 
 }
 
