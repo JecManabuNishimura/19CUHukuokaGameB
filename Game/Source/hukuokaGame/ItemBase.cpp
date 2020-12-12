@@ -9,6 +9,7 @@
 // ファイル		：ItemCanPickup.h
 // 作成者		：19CU0217 朱適
 // 更新日		：2020/10/14		白枠の表示の追加
+// 更新日		：2020/12/12		SetOutlineのオブジェクトを指定できるようにする
 //-------------------------------------------------------------------
 
 #include "ItemBase.h"
@@ -38,11 +39,16 @@ void AItemBase::Tick(float DeltaTime)
 }
 
 // 白枠の表示の制御		by 朱適
+// SetOutlineのオブジェクトを指定できるようにする	by 朱適
 void AItemBase::SetOutline(bool _isCustomDepthOn)
 {
 	//UActorComponent* meshComponent = GetComponentByClass(UStaticMeshComponent::StaticClass());
-
-	USceneComponent* sceneComponent = GetRootComponent()->GetChildComponent(0);
+	USceneComponent* sceneComponent = NULL;
+	TArray<UActorComponent*> compArray = GetComponentsByTag(UStaticMeshComponent::StaticClass(), FName("Outline"));
+	if (compArray.Num() > 0)
+	{
+		sceneComponent = Cast<USceneComponent>(compArray[0]);
+	}
 
 	if (sceneComponent)
 	{
