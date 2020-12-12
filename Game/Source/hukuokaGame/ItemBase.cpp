@@ -45,18 +45,19 @@ void AItemBase::SetOutline(bool _isCustomDepthOn)
 	//UActorComponent* meshComponent = GetComponentByClass(UStaticMeshComponent::StaticClass());
 	USceneComponent* sceneComponent = NULL;
 	TArray<UActorComponent*> compArray = GetComponentsByTag(UStaticMeshComponent::StaticClass(), FName("Outline"));
-	if (compArray.Num() > 0)
+
+	for (int i = 0; i < compArray.Num(); ++i)
 	{
-		sceneComponent = Cast<USceneComponent>(compArray[0]);
+		Cast<UPrimitiveComponent>(compArray[i])->SetRenderCustomDepth(_isCustomDepthOn);
 	}
 
-	if (sceneComponent)
-	{
-		Cast<UPrimitiveComponent>(sceneComponent)->SetRenderCustomDepth(_isCustomDepthOn);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("cant find outline mesh"));
-	}
+	//if (sceneComponent)
+	//{
+	//	Cast<UPrimitiveComponent>(sceneComponent)->SetRenderCustomDepth(_isCustomDepthOn);
+	//}
+	//else
+	//{
+	//	UE_LOG(LogTemp, Log, TEXT("cant find outline mesh"));
+	//}
 
 }
