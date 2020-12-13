@@ -148,6 +148,9 @@ void ACanExamineItem::CheckedByPlayer()
 		// まだ調べられていないならプレイヤーの目の前に表示
 		if (is_show_details_ == false)
 		{
+			// 取得音を鳴らす
+			if (sound_when_checked_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_when_checked_);
+
 			// プレイヤーの操作を不可にする
 			player_character_->SetPlayerMoveControlFlag(false);
 			player_character_->SetPlayerCameraControlFlag(false);

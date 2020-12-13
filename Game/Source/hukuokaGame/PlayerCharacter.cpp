@@ -62,6 +62,7 @@ APlayerCharacter::APlayerCharacter()
 	, m_pCamera(NULL)
 	, se_volume_can_change_(NULL)
 	, sound_player_footstep_(NULL)
+	, footstep_default_volume_(1.f)
 	, m_eyeLevelWhenStanding(170.0f)
 	, camera_shaking_value(10.0f)
 	, m_reverseInputPitch(false)
@@ -83,6 +84,10 @@ APlayerCharacter::APlayerCharacter()
 	, m_cameraRotateInput(FVector2D::ZeroVector)
 	, m_pCheckingItem(NULL)
 	, m_pPrevCheckItem(NULL)
+	, checking_item_comp_(NULL)
+	, prev_check_item_comp_(NULL)
+	, checking_item_comp_index_(0)
+	, prev_check_item_comp_index_(0)
 	, se_volume_for_debuff_(1.f)
 	, saturation_for_debuff_(1.f, 1.f, 1.f, 0.f)
 	, contrast_for_debuff_(1.f, 1.f, 1.f, 2.f)
@@ -478,14 +483,14 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// 立っている時の速度設定
 	GetCharacterMovement()->MaxWalkSpeed = m_playerMoveSpeed;
 
-	// しゃがんでいた場合設定した速度を1/2に
+	// しゃがんでいた場合設定した速度を1/3に
 	if (m_isStanding == false && (GetCharacterMovement()->IsCrouching() == true))
 	{
 		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Squat"));
-		m_playerMoveSpeed /= 2.0f;
+		m_playerMoveSpeed /= 3.0f;
 
 		// しゃがんでいる時の速度設定
-		// GetCharacterMovement()->MaxWalkSpeedCrouched = m_playerMoveSpeed;
+		GetCharacterMovement()->MaxWalkSpeedCrouched = m_playerMoveSpeed;
 
 		/*
 		// unreal engine's bug, dont use it. Using BluePrint Now.
@@ -633,7 +638,7 @@ void APlayerCharacter::MakeFootstep(const float _deltaTime, const float _player_
 	float volume = _player_move_speed / (m_playerRunSpeed * _deltaTime);
 	
 	// 再生
-	if (sound_player_footstep_ != NULL)UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_player_footstep_, GetActorLocation(), volume, 1.0f, 0.0f);
+	if (sound_player_footstep_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_player_footstep_, GetActorLocation(), volume * footstep_default_volume_, 0.9f, 0.0f);
 
 	MakeNoise(volume, this, this->GetActorLocation(), 1.0f);
 }
@@ -647,7 +652,7 @@ void APlayerCharacter::CheckItem()
 		{
 			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 			OnItemCheckEndEventDispatcher.Broadcast();
-			m_pPrevCheckItem->SetOutline(false);
+			m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
 		}
 		return;
 	}
@@ -661,6 +666,8 @@ void APlayerCharacter::CheckItem()
 
 	// 1フレーム前のアイテムの情報を移す
 	m_pPrevCheckItem = m_pCheckingItem;
+	prev_check_item_comp_ = checking_item_comp_;
+	prev_check_item_comp_index_ = checking_item_comp_index_;
 
 	TArray<AActor*> actors_to_ignore;
 	actors_to_ignore.Add(this);
@@ -676,6 +683,18 @@ void APlayerCharacter::CheckItem()
 			// 1フレーム前のアイテムと違うなら更新
 			if (m_pCheckingItem != m_pPrevCheckItem)
 			{
+				checking_item_comp_ = outHit.GetComponent();
+
+				// ヒットしたコンポーネントのインデックスを取得
+				for (int i = 0; i < m_pCheckingItem->GetRootComponent()->GetNumChildrenComponents(); ++i)
+				{
+					if (checking_item_comp_ == m_pCheckingItem->GetRootComponent()->GetChildComponent(i))
+					{
+						checking_item_comp_index_ = i;
+						break;
+					}
+				}
+
 				// 前フレームで有効なオブジェクトをチェックしていたら
 				if (m_pPrevCheckItem != NULL)
 				{
@@ -683,7 +702,7 @@ void APlayerCharacter::CheckItem()
 					m_pPrevCheckItem->m_isChecked = false;
 
 					// 白枠を非表示にする	by	朱適
-					m_pPrevCheckItem->SetOutline(false);
+					m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
 
 					// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 					OnItemCheckEndEventDispatcher.Broadcast();
@@ -692,7 +711,7 @@ void APlayerCharacter::CheckItem()
 				m_pCheckingItem->m_isChecked = true;
 
 				// 白枠を表示にする		by	朱適
-				m_pCheckingItem->SetOutline(true);
+				m_pCheckingItem->SetOutline(true, checking_item_comp_index_);
 
 				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートに追加)
 				OnItemCheckBeginEventDispatcher.Broadcast();
@@ -706,7 +725,7 @@ void APlayerCharacter::CheckItem()
 				m_pPrevCheckItem->m_isChecked = false;
 
 				// 白枠を非表示にする	by	朱適
-				m_pPrevCheckItem->SetOutline(false);
+				m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
 
 				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 				OnItemCheckEndEventDispatcher.Broadcast();
@@ -721,7 +740,7 @@ void APlayerCharacter::CheckItem()
 			m_pPrevCheckItem->m_isChecked = false;
 
 			// 白枠を非表示にする	by	朱適
-			m_pPrevCheckItem->SetOutline(false);
+			m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
 
 			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 			OnItemCheckEndEventDispatcher.Broadcast();
@@ -786,12 +805,14 @@ void APlayerCharacter::PlayerMoveX(float _axisValue)
 
 	m_playerMoveInput.X = _axisValue;
 }
+
 // プレイヤー移動：移動Y軸方向(横)
 void APlayerCharacter::PlayerMoveY(float _axisValue)
 {
 	GEngine->AddOnScreenDebugMessage(10, 5.0f, FColor::Purple, TEXT("  Y  "));
 	m_playerMoveInput.Y = _axisValue;
 }
+
 // プレイヤーアクション：拾う、調べる、作動させる
 void APlayerCharacter::CheckToActor()
 {
@@ -801,6 +822,7 @@ void APlayerCharacter::CheckToActor()
 	}
 }
 
+// ダメージを受ける時にBPから呼ばれる関数
 void APlayerCharacter::AttackFromEnemy()
 {
 	++damage_count_;
@@ -928,6 +950,11 @@ FString APlayerCharacter::ReturnCheckingItemCommandName() const
 	}
 
 	return command_name;
+}
+
+USceneComponent* APlayerCharacter::ReturnCheckingComp() const
+{
+	return checking_item_comp_;
 }
 
 FVector APlayerCharacter::ReturnCameraForwardVector()
@@ -1112,13 +1139,15 @@ void APlayerCharacter::UpdateVRLaser()
 		{
 			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 			OnItemCheckEndEventDispatcher.Broadcast();
-			m_pPrevCheckItem->SetOutline(false);
+			m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
 		}
 		return;
 	}
 
 	// 1フレーム前のアイテムの情報を移す
 	m_pPrevCheckItem = m_pCheckingItem;
+	prev_check_item_comp_ = checking_item_comp_;
+	prev_check_item_comp_index_ = checking_item_comp_index_;
 
 	TArray<AActor*> actors_to_ignore;
 	actors_to_ignore.Add(this);
@@ -1131,7 +1160,6 @@ void APlayerCharacter::UpdateVRLaser()
 	// if (GetWorld()->LineTraceSingleByChannel(vr_HitResult, StartPoint, EndPoint, ECC_WorldStatic, CollisionParams))
 	if (UKismetSystemLibrary::BoxTraceSingleByProfile(RightController, StartPoint, EndPoint, (box_half_size_/2), RightController->GetMotionController()->K2_GetComponentRotation(), FName("RightContollerCheckCollision"), false, actors_to_ignore, EDrawDebugTrace::ForOneFrame, vr_HitResult, true,FLinearColor::Green,FLinearColor::Red, 0.1f))
 	{
-
 		// アイテム基本クラスにキャスト
 		m_pCheckingItem = Cast<AItemBase>(vr_HitResult.GetActor());
 
@@ -1140,6 +1168,18 @@ void APlayerCharacter::UpdateVRLaser()
 			// 1フレーム前のアイテムと違うなら更新
 			if (m_pCheckingItem != m_pPrevCheckItem)
 			{
+				checking_item_comp_ = vr_HitResult.GetComponent();
+
+				// ヒットしたコンポーネントのインデックスを取得
+				for (int i = 0; i < m_pCheckingItem->GetRootComponent()->GetNumChildrenComponents(); ++i)
+				{
+					if (checking_item_comp_ == m_pCheckingItem->GetRootComponent()->GetChildComponent(i))
+					{
+						checking_item_comp_index_ = i;
+						break;
+					}
+				}
+
 				// 前フレームで有効なオブジェクトをチェックしていたら
 				if (m_pPrevCheckItem != NULL)
 				{
@@ -1147,7 +1187,7 @@ void APlayerCharacter::UpdateVRLaser()
 					m_pPrevCheckItem->m_isChecked = false;
 
 					// 白枠を非表示にする	by	朱適
-					m_pPrevCheckItem->SetOutline(false);
+					m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
 
 					// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 					OnItemCheckEndEventDispatcher.Broadcast();
@@ -1156,7 +1196,7 @@ void APlayerCharacter::UpdateVRLaser()
 				m_pCheckingItem->m_isChecked = true;
 
 				// 白枠を表示にする		by	朱適
-				m_pCheckingItem->SetOutline(true);
+				m_pCheckingItem->SetOutline(true, prev_check_item_comp_index_);
 
 				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートに追加)
 				OnItemCheckBeginEventDispatcher.Broadcast();
@@ -1178,7 +1218,7 @@ void APlayerCharacter::UpdateVRLaser()
 				m_pPrevCheckItem->m_isChecked = false;
 
 				// 白枠を非表示にする	by	朱適
-				m_pPrevCheckItem->SetOutline(false);
+				m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
 
 				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 				OnItemCheckEndEventDispatcher.Broadcast();
@@ -1201,7 +1241,7 @@ void APlayerCharacter::UpdateVRLaser()
 			m_pPrevCheckItem->m_isChecked = false;
 
 			// 白枠を非表示にする	by	朱適
-			m_pPrevCheckItem->SetOutline(false);
+			m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
 
 			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 			OnItemCheckEndEventDispatcher.Broadcast();

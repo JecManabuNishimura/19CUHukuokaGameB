@@ -16,6 +16,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Sound/SoundBase.h"
+#include "Kismet/GameplayStatics.h"
 #include "ItemBase.generated.h"
 
 UCLASS()
@@ -35,6 +37,16 @@ public:
 	// プレイヤーのチェックを受ける
 	virtual void CheckedByPlayer() {}
 
+protected:
+	UPROPERTY(EditAnywhere)
+		USoundBase* sound_when_checked_;	// チェックされた時の効果音
+
+public:
+	bool m_isChecked;				// プレイヤーにチェックされているか
+
+	UPROPERTY(EditAnywhere)
+		FString m_commandName;		// コマンドの名前(種類)
+
 public:
 	// プレイヤーによる被チェック状態を返す
 	UFUNCTION(BlueprintCallable, Category = "Return State")
@@ -47,10 +59,5 @@ public:
 		bool isMissionComplete;					// 対応したミッション完成しましたか			(作成者:林雲暉)
 
 public:
-	bool m_isChecked;			// プレイヤーにチェックされているか
-
-	UPROPERTY(EditAnywhere)
-		FString m_commandName;		// コマンドの名前(種類)
-
-	void SetOutline(bool _isCustomDepthOn);
+	void SetOutline(bool _isCustomDepthOn, const int _checking_comp_index);
 };

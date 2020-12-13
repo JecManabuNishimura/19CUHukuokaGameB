@@ -12,7 +12,6 @@
 #include "ItemBase.h"
 #include "ItemCanPickup.generated.h"
 
-
 UCLASS()
 class HUKUOKAGAME_API AItemCanPickup : public AItemBase
 {

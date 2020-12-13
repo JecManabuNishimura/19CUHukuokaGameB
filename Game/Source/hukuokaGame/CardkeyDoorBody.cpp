@@ -9,13 +9,11 @@
 #include "Engine.h"				// GEngineを呼び出すためのヘッダ
 
 ACardkeyDoorBody::ACardkeyDoorBody()
-	: cardreader_triggerbox_1_(NULL)
-	, cardreader_triggerbox_2_(NULL)
-	, door_body_eventtriggerbox_(NULL)
+	: door_body_eventtriggerbox_(NULL)
 	, cardreader_mesh_1_(NULL)
 	, cardreader_mesh_2_(NULL)
-	, leftdoor_mesh(NULL)
-	, rightdoor_mesh(NULL)
+	, leftdoor_mesh_(NULL)
+	, rightdoor_mesh_(NULL)
 	, door_state_mesh_1_(NULL)
 	, door_state_mesh_2_(NULL)
 	, door_state_material(NULL)
@@ -33,7 +31,6 @@ ACardkeyDoorBody::ACardkeyDoorBody()
 	, m_rightDoorStartPosY(0.0f)
 	, m_doorFilter(0)
 	, m_doorState(DOOR_STATE_CLOSED)
-	, is_cardreader_eventbox_overlap(false)
 	, is_doorbody_eventbox_overlap(false)
 	, door_eventbox_overlap_sum(0)
 	, m_openTimeCount(0.0f)
@@ -46,12 +43,6 @@ ACardkeyDoorBody::ACardkeyDoorBody()
 	// Root用SceneComponent生成
 	USceneComponent* scene_comp = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComp"));
 
-	// 検知用イベントボックスその1生成
-	cardreader_triggerbox_1_ = CreateDefaultSubobject<UBoxComponent>(TEXT("cardreader_triggerbox_1_"));
-
-	// 検知用イベントボックスその2生成
-	cardreader_triggerbox_2_ = CreateDefaultSubobject<UBoxComponent>(TEXT("cardreader_triggerbox_2_"));
-
 	// ドア本体の検知トリガーボックス生成
 	door_body_eventtriggerbox_ = CreateDefaultSubobject<UBoxComponent>(TEXT("door_body_eventtriggerbox_"));
 
@@ -62,10 +53,10 @@ ACardkeyDoorBody::ACardkeyDoorBody()
 	cardreader_mesh_2_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CardReader_Mesh_2"));
 
 	// 左ドアのメッシュ作成
-	leftdoor_mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftDoorMesh"));
+	leftdoor_mesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftDoorMesh"));
 
 	// 右ドアのメッシュ作成
-	rightdoor_mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RightDoorMesh"));
+	rightdoor_mesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CardReader_Mesh_Parent"));
 
 	// 左ドアのロック状態メッシュ作成
 	door_state_mesh_1_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LeftDoorStateMesh"));
@@ -74,32 +65,18 @@ ACardkeyDoorBody::ACardkeyDoorBody()
 	door_state_mesh_2_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RightDoorStateMesh"));
 
 	door_state_material = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), NULL, TEXT("/Game/Materials/CardReaderStateMaterial")));
-
+	
 	if (scene_comp != NULL)				RootComponent = scene_comp;
-	if (leftdoor_mesh != NULL)			leftdoor_mesh->SetupAttachment(RootComponent);
-	if (rightdoor_mesh != NULL)			rightdoor_mesh->SetupAttachment(RootComponent);
+	if (leftdoor_mesh_ != NULL)			leftdoor_mesh_->SetupAttachment(RootComponent);
+	if (rightdoor_mesh_ != NULL)		rightdoor_mesh_->SetupAttachment(RootComponent);
 
-	if (cardreader_triggerbox_1_ != NULL)
-	{
-		cardreader_triggerbox_1_->SetupAttachment(RootComponent);
-		
-		// 関数バインド
-		cardreader_triggerbox_1_->OnComponentBeginOverlap.AddDynamic(this, &ACardkeyDoorBody::OnCardReaderOverlapBegin);
-		cardreader_triggerbox_1_->OnComponentEndOverlap.AddDynamic(this, &ACardkeyDoorBody::OnCardReaderOverlapEnd);
+	if (cardreader_mesh_1_ != NULL)		cardreader_mesh_1_->SetupAttachment(RootComponent);
 
-		if (cardreader_mesh_1_ != NULL)	cardreader_mesh_1_->SetupAttachment(cardreader_triggerbox_1_);
-	}
+	if (cardreader_mesh_2_ != NULL)		cardreader_mesh_2_->SetupAttachment(RootComponent);
 
-	if (cardreader_triggerbox_2_ != NULL)
-	{
-		cardreader_triggerbox_2_->SetupAttachment(RootComponent);
-		
-		// 関数バインド
-		cardreader_triggerbox_2_->OnComponentBeginOverlap.AddDynamic(this, &ACardkeyDoorBody::OnCardReaderOverlapBegin);
-		cardreader_triggerbox_2_->OnComponentEndOverlap.AddDynamic(this, &ACardkeyDoorBody::OnCardReaderOverlapEnd);
+	if (door_state_mesh_1_ != NULL)		door_state_mesh_1_->SetupAttachment(cardreader_mesh_1_);
 
-		if (cardreader_mesh_2_ != NULL)	cardreader_mesh_2_->SetupAttachment(cardreader_triggerbox_2_);
-	}
+	if (door_state_mesh_2_ != NULL)		door_state_mesh_2_->SetupAttachment(cardreader_mesh_2_);
 
 	if (door_body_eventtriggerbox_ != NULL)
 	{
@@ -108,10 +85,6 @@ ACardkeyDoorBody::ACardkeyDoorBody()
 		door_body_eventtriggerbox_->OnComponentBeginOverlap.AddDynamic(this, &ACardkeyDoorBody::OnDoorBodyOverlapBegin);
 		door_body_eventtriggerbox_->OnComponentEndOverlap.AddDynamic(this, &ACardkeyDoorBody::OnDoorBodyOverlapEnd);
 	}
-
-	if (door_state_mesh_1_ != NULL)		door_state_mesh_1_->SetupAttachment(cardreader_mesh_1_);
-
-	if (door_state_mesh_2_ != NULL)		door_state_mesh_2_->SetupAttachment(cardreader_mesh_2_);
 }
 ACardkeyDoorBody::~ACardkeyDoorBody()
 {
@@ -135,8 +108,8 @@ void ACardkeyDoorBody::BeginPlay()
 	else	GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("Door_state_material is NULL."));	
 
 	// ドアの初期位置を取得
-	m_leftDoorStartPosY = leftdoor_mesh->GetRelativeLocation().Y;
-	m_rightDoorStartPosY = rightdoor_mesh->GetRelativeLocation().Y;
+	m_leftDoorStartPosY = leftdoor_mesh_->GetRelativeLocation().Y;
+	m_rightDoorStartPosY = rightdoor_mesh_->GetRelativeLocation().Y;
 
 	// ドアの始点から終点までの距離を計算
 	m_distanceStartToEnd = FMath::Abs(m_leftDoorEndPosY - m_leftDoorStartPosY);
@@ -169,7 +142,7 @@ void ACardkeyDoorBody::UpdateDoorState(float _deltatime)
 		if (count_for_check_display_time_ >= check_cardkey_time_)
 		{			
 			count_for_check_display_time_ = 0.0f;
-			if ((player_character_->player_state & (1 << m_doorFilter)) != 0 && is_cardreader_eventbox_overlap)
+			if ((player_character_->player_state & (1 << m_doorFilter)) != 0)
 			{
 				if (material_instance_dynamic_ != NULL)	material_instance_dynamic_->SetVectorParameterValue(TEXT("door_state_color"), success_state_color);
 
@@ -197,16 +170,9 @@ void ACardkeyDoorBody::UpdateDoorState(float _deltatime)
 		if (count_for_check_display_time_ >= display_error_time_)
 		{
 			count_for_check_display_time_ = 0.0f;
-			if (is_cardreader_eventbox_overlap)
-			{
-				if (material_instance_dynamic_ != NULL)	material_instance_dynamic_->SetVectorParameterValue(TEXT("door_state_color"), loading_state_color);
-				m_doorState = DOOR_STATE_LOADING;
-			}
-			else
-			{
 				if (material_instance_dynamic_ != NULL)	material_instance_dynamic_->SetVectorParameterValue(TEXT("door_state_color"), standby_state_color);
 				m_doorState = DOOR_STATE_CLOSED;
-			}
+			
 		}
 		break;
 
@@ -215,11 +181,6 @@ void ACardkeyDoorBody::UpdateDoorState(float _deltatime)
 		break;
 
 	case DOOR_STATE_CLOSED:
-		if (is_cardreader_eventbox_overlap)
-		{
-			if (material_instance_dynamic_ != NULL)	material_instance_dynamic_->SetVectorParameterValue(TEXT("door_state_color"), loading_state_color);
-			m_doorState = DOOR_STATE_LOADING;
-		}
 		break;
 
 	case DOOR_STATE_CLOSING:
@@ -275,11 +236,11 @@ void ACardkeyDoorBody::UpdateDoorMove(float _deltatime)
 
 	// 左ドアの処理
 	float newLocationY = m_leftDoorStartPosY + ((m_distanceStartToEnd * m_requiredTime) * m_leftDoorMoveDirection);
-	leftdoor_mesh->SetRelativeLocation(FVector(0, newLocationY, 0));
+	leftdoor_mesh_->SetRelativeLocation(FVector(0, newLocationY, 0));
 
 	// 右ドアの処理
 	newLocationY = m_rightDoorStartPosY + ((m_distanceStartToEnd * m_requiredTime) * m_leftDoorMoveDirection * -1.0f);
-	rightdoor_mesh->SetRelativeLocation(FVector(0, newLocationY, 0));
+	rightdoor_mesh_->SetRelativeLocation(FVector(0, newLocationY, 0));
 }
 
 void ACardkeyDoorBody::CheckDetectSpan(float _deltatime)
@@ -290,7 +251,7 @@ void ACardkeyDoorBody::CheckDetectSpan(float _deltatime)
 	if (m_openTimeCount > m_detectSpan)
 	{
 		// 検知できなければ状態をCLOSINGへ
-		if (is_cardreader_eventbox_overlap || is_doorbody_eventbox_overlap)
+		if (is_doorbody_eventbox_overlap)
 		{
 			// 開く処理継続のための数値代入
 			m_openTimeCount = 0.0f;
@@ -303,27 +264,13 @@ void ACardkeyDoorBody::CheckDetectSpan(float _deltatime)
 	}
 }
 
-void ACardkeyDoorBody::OnCardReaderOverlapBegin(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComponent, int32 _otherBodyIndex, bool _bFromSweep, const FHitResult& _sweepResult)
+void ACardkeyDoorBody::CheckedByPlayer()
 {
-	if (_otherActor->ActorHasTag("Player"))
+	if (m_doorState == DOOR_STATE_CLOSED)
 	{
-		if (player_character_->player_state != 0)
-		{
-			// 検知フラグを立てる
-			is_cardreader_eventbox_overlap = true;
-
-			if (m_doorState == DOOR_STATE_CLOSED)
-			{
-				if (material_instance_dynamic_ != NULL)	material_instance_dynamic_->SetVectorParameterValue(TEXT("door_state_color"), loading_state_color);
-				m_doorState = DOOR_STATE_LOADING;
-			}
-		}
+		if (material_instance_dynamic_ != NULL)	material_instance_dynamic_->SetVectorParameterValue(TEXT("door_state_color"), loading_state_color);
+		m_doorState = DOOR_STATE_LOADING;
 	}
-}
-
-void ACardkeyDoorBody::OnCardReaderOverlapEnd(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComp, int32 _otherBodyIndex)
-{
-	if (_otherActor->ActorHasTag("Player"))		is_cardreader_eventbox_overlap = false;
 }
 
 void ACardkeyDoorBody::OnDoorBodyOverlapBegin(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComponent, int32 _otherBodyIndex, bool _bFromSweep, const FHitResult& _sweepResult)

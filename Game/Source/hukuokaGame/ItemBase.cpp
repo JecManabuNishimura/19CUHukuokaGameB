@@ -19,7 +19,8 @@
 
 // Sets default values
 AItemBase::AItemBase()
-	: m_isChecked(false)
+	: sound_when_checked_(NULL)
+	, m_isChecked(false)
 	, m_commandName("")
 	, items_Mission_Num(0)
 	, isMissionComplete(false)
@@ -38,26 +39,17 @@ void AItemBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-// 白枠の表示の制御		by 朱適
-// SetOutlineのオブジェクトを指定できるようにする	by 朱適
-void AItemBase::SetOutline(bool _isCustomDepthOn)
+// 白枠の表示の制御	by 朱適 (12/13 修正者:増井 引数にコンポーネントのインデックスを追加)
+void AItemBase::SetOutline(bool _isCustomDepthOn, const int _checking_comp_index)
 {
-	//UActorComponent* meshComponent = GetComponentByClass(UStaticMeshComponent::StaticClass());
-	USceneComponent* sceneComponent = NULL;
-	TArray<UActorComponent*> compArray = GetComponentsByTag(UStaticMeshComponent::StaticClass(), FName("Outline"));
+	USceneComponent* sceneComponent = GetRootComponent()->GetChildComponent(_checking_comp_index);
 
-	for (int i = 0; i < compArray.Num(); ++i)
+	if (sceneComponent)
 	{
-		Cast<UPrimitiveComponent>(compArray[i])->SetRenderCustomDepth(_isCustomDepthOn);
+		Cast<UPrimitiveComponent>(sceneComponent)->SetRenderCustomDepth(_isCustomDepthOn);
 	}
-
-	//if (sceneComponent)
-	//{
-	//	Cast<UPrimitiveComponent>(sceneComponent)->SetRenderCustomDepth(_isCustomDepthOn);
-	//}
-	//else
-	//{
-	//	UE_LOG(LogTemp, Log, TEXT("cant find outline mesh"));
-	//}
-
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("cant find outline mesh"));
+	}
 }

@@ -1,6 +1,6 @@
 //-------------------------------------------------------------------
 // ファイル		：CardkeyDoorBody.h
-// 概要			：カードキー対応のドアを制御するクラス
+// 概要			：カードキー対応のドアを制御するクラス(修正日:12/11 ItemBaseを継承してコマンドでかざせるように)
 // 作成者		：19CU0233 増井悠斗
 // 作成日		：2020/10/22
 //-------------------------------------------------------------------
@@ -8,14 +8,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "ItemBase.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "PlayerCharacter.h"
 #include "CardkeyDoorBody.generated.h"
 
 UCLASS()
-class HUKUOKAGAME_API ACardkeyDoorBody : public AActor
+class HUKUOKAGAME_API ACardkeyDoorBody : public AItemBase
 {
 	// ドアの状態
 	enum DOOR_STATE
@@ -46,24 +46,12 @@ public:
 
 private:
 	UFUNCTION()
-		void OnCardReaderOverlapBegin(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComponent, int32 _otherBodyIndex, bool _bFromSweep, const FHitResult& _sweepResult);
-
-	UFUNCTION()
-		void OnCardReaderOverlapEnd(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComp, int32 _otherBodyIndex);
-
-	UFUNCTION()
 		void OnDoorBodyOverlapBegin(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComponent, int32 _otherBodyIndex, bool _bFromSweep, const FHitResult& _sweepResult);
 
 	UFUNCTION()
 		void OnDoorBodyOverlapEnd(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComp, int32 _otherBodyIndex);
 
 private:
-	UPROPERTY(EditAnywhere)
-		UBoxComponent* cardreader_triggerbox_1_;	// カードキー検知用トリガーボックスその1
-
-	UPROPERTY(EditAnywhere)
-		UBoxComponent* cardreader_triggerbox_2_;	// カードキー検知用トリガーボックスその2
-
 	UPROPERTY(EditAnywhere)
 		UBoxComponent* door_body_eventtriggerbox_;	// プレイヤー、敵挟み防止用トリガーボックス
 
@@ -74,10 +62,10 @@ private:
 		UStaticMeshComponent* cardreader_mesh_2_;	// カード読み込み口のメッシュコンポーネントその2
 
 	UPROPERTY(EditAnywhere)
-		UStaticMeshComponent* leftdoor_mesh;	// 左ドアのメッシュコンポーネント
+		UStaticMeshComponent* leftdoor_mesh_;		// 左ドアのメッシュコンポーネント
 
 	UPROPERTY(EditAnywhere)
-		UStaticMeshComponent* rightdoor_mesh;	// 右ドアのメッシュコンポーネント
+		UStaticMeshComponent* rightdoor_mesh_;		// 右ドアのメッシュコンポーネント
 
 	UPROPERTY(EditAnywhere)
 		UStaticMeshComponent* door_state_mesh_1_;	// 左ドアのロック状態メッシュコンポーネント
@@ -136,9 +124,6 @@ private:
 	DOOR_STATE m_doorState;						// ドアの状態
 
 	UPROPERTY(EditAnywhere)
-		bool is_cardreader_eventbox_overlap;	// プレイヤーもしくは敵が検知内に入っているかのフラグ
-
-	UPROPERTY(EditAnywhere)
 		bool is_doorbody_eventbox_overlap;		// ドア本体のイベントボックスにプレイヤー、敵がオーバーラップしているか
 
 	UPROPERTY(EditAnywhere)
@@ -162,4 +147,7 @@ public:
 
 	// ドアのフィルター番号を返す
 	int GetDoorFilter()const { return m_doorFilter; }
+
+	// プレイヤーにチェックされたら呼ばれる(かざす)
+	void CheckedByPlayer();
 };

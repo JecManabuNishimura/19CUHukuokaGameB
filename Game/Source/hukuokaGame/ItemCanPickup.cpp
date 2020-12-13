@@ -18,7 +18,7 @@ AItemCanPickup::AItemCanPickup()
 void AItemCanPickup::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	player_character = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 }
 
@@ -32,6 +32,9 @@ void AItemCanPickup::CheckedByPlayer()
 {
 	// 対応するフラグを立てる
 	player_character->player_state = player_character->player_state | (1 << cardkey_filter);
+
+	// 取得音を鳴らす
+	if (sound_when_checked_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_when_checked_);
 
 	// ミッションに反映する場合、スマホのミッションをアップデート
 	if (this->isMissionComplete == false) {
