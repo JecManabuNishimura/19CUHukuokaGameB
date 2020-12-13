@@ -188,6 +188,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Return State")
 		FString ReturnCheckingItemCommandName() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Return State")
+		USceneComponent* ReturnCheckingComp() const;
+
 	unsigned char player_state;
 
 private:
@@ -226,11 +229,14 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		class USceneComponent* m_pCameraBase;	// カメラの原点
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "FootStep")
 		USoundClass* se_volume_can_change_;		// 各効果音に設定しているサウンドクラス
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "FootStep")
 		USoundBase* sound_player_footstep_;		// プレイヤーの足音SE
+
+	UPROPERTY(EditAnywhere, Category = "FootStep")
+		float footstep_default_volume_;			// 通常時のプレイヤーの足音SE音量
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ
@@ -282,8 +288,14 @@ private:
 	FVector2D m_playerMoveInput;				// プレイヤーの移動入力量
 	FVector2D m_cameraRotateInput;				// カメラの回転入力量
 
-	AItemBase* m_pCheckingItem;					// チェック中のアイテム
-	AItemBase* m_pPrevCheckItem;				// 1フレーム前にチェックしていたアイテム)
+	AItemBase* m_pCheckingItem;					// チェック中のアイテム(Actor)
+	AItemBase* m_pPrevCheckItem;				// 1フレーム前にチェックしていたアイテム(Actor)
+
+	USceneComponent* checking_item_comp_;		// チェック中のComponent
+	USceneComponent* prev_check_item_comp_;		// 1フレーム前にチェックしていたComponent
+
+	int checking_item_comp_index_;				// チェック中のComponentの要素番号
+	int prev_check_item_comp_index_;			// チェック中のComponentの要素番号
 
 	//-----------------------------------------------------------------------------------------------------------------
 	// 聴覚デバフのためのプロパティ各効果音の音量に適用して疑似的に聴覚が弱まったようにみせる(作成者 増井悠斗)

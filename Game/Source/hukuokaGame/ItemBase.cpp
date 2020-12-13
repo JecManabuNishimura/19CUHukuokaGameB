@@ -18,7 +18,8 @@
 
 // Sets default values
 AItemBase::AItemBase()
-	: m_isChecked(false)
+	: sound_when_checked_(NULL)
+	, m_isChecked(false)
 	, m_commandName("")
 	, items_Mission_Num(0)
 	, isMissionComplete(false)
@@ -37,12 +38,12 @@ void AItemBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-// 白枠の表示の制御		by 朱適
-void AItemBase::SetOutline(bool _isCustomDepthOn)
+// 白枠の表示の制御	by 朱適 (12/13 修正者:増井 引数にコンポーネントのインデックスを追加)1
+void AItemBase::SetOutline(bool _isCustomDepthOn, const int _checking_comp_index)
 {
 	//UActorComponent* meshComponent = GetComponentByClass(UStaticMeshComponent::StaticClass());
 
-	USceneComponent* sceneComponent = GetRootComponent()->GetChildComponent(0);
+	USceneComponent* sceneComponent = GetRootComponent()->GetChildComponent(_checking_comp_index);
 
 	if (sceneComponent)
 	{
