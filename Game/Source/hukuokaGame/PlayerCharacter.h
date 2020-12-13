@@ -330,6 +330,9 @@ private:
 
 	FString path = "Blueprint'/Game/Blueprints/BP_VRSmartPhone.BP_VRSmartPhone_C'";
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VR", meta = (AllowPrivateAccess = "true"))
+		FVector vr_ItemHitPoint;
+
 	// VR's smart phone component
 	UPROPERTY(EditAnywhere, Category = "VR_Phone")
 		TSubclassOf<class AActor> bp_VRphone;

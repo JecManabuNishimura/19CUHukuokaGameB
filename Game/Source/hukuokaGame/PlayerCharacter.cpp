@@ -24,11 +24,12 @@
 // 更新日		：2020/09/06		VRのrayの作成
 //				：2020/09/19		VRのスマートフォン作成
 //				：2020/10/20		Player移動としゃがむの調整
-//								スプリングアームの追加
+//									スプリングアームの追加
 //				：2020/10/28		VRの移動としゃがむの調整
 //				：2020/11/05		PC版スマホを手前に持つ方法変更
 //				：2020/11/25		VRモードの時スマホ使えるようにに設定する
 //				：2020/11/29		VRのCheckItem追加
+//				：2020/12/11		VRの3DUIの生成を追加
 //-------------------------------------------------------------------
 
 #include "PlayerCharacter.h"
@@ -91,6 +92,7 @@ APlayerCharacter::APlayerCharacter()
 	, film_slope_for_debuff_(1.f)
 	, film_toe_for_debuff_(0.8f)
 	, vr_HitResult(NULL)
+	, vr_ItemHitPoint(FVector::ZeroVector)
 	, m_VRPlayersHeight(175.0f)
 	, m_HeightisChecked(false)
 	, vr_InCameraMode(false)
@@ -657,6 +659,7 @@ void APlayerCharacter::CheckItem()
 	TArray<AActor*> actors_to_ignore;
 	actors_to_ignore.Add(this);
 
+
 	// ライントレースからボックストレースに変更(11/20 増井)
 	if(UKismetSystemLibrary::BoxTraceSingle(this, start, end, box_half_size_, GetActorRotation(), TraceTypeQuery3, false, actors_to_ignore, draw_debug_trace_type_, outHit, true, FLinearColor::Red, FLinearColor::Green, 1.0f))
 	{
@@ -665,6 +668,7 @@ void APlayerCharacter::CheckItem()
 
 		if (m_pCheckingItem != NULL)
 		{
+
 			// 1フレーム前のアイテムと違うなら更新
 			if (m_pCheckingItem != m_pPrevCheckItem)
 			{
@@ -688,6 +692,7 @@ void APlayerCharacter::CheckItem()
 
 				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートに追加)
 				OnItemCheckBeginEventDispatcher.Broadcast();
+				
 			}
 		}
 		else
@@ -1095,6 +1100,8 @@ void APlayerCharacter::UpdateVRLaser()
 			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 			OnItemCheckEndEventDispatcher.Broadcast();
 			m_pPrevCheckItem->SetOutline(false);
+
+			m_pCheckingItem->m_isChecked = false;	// (12/12 林)
 		}
 		return;
 	}
@@ -1119,6 +1126,8 @@ void APlayerCharacter::UpdateVRLaser()
 
 		if (m_pCheckingItem != NULL)
 		{
+			vr_ItemHitPoint = vr_HitResult.ImpactPoint;
+
 			// 1フレーム前のアイテムと違うなら更新
 			if (m_pCheckingItem != m_pPrevCheckItem)
 			{
@@ -1142,6 +1151,19 @@ void APlayerCharacter::UpdateVRLaser()
 
 				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートに追加)
 				OnItemCheckBeginEventDispatcher.Broadcast();
+
+				const FTransform SpawnTransform = FTransform(FRotator(0.0f, 0.0f, 0.0f), vr_ItemHitPoint, FVector(1.0f, 1.0f, 1.0f));
+				AActor* vr_ItemActor;
+
+				// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("=== %s"), *outHit.ImpactPoint.ToString()));
+
+				TSubclassOf<class AActor> vr_ItemCommand = TSoftClassPtr<AActor>(FSoftObjectPath("Blueprint'/Game/Blueprints/BP_VR_3DUI_ItemCommandActor.BP_VR_3DUI_ItemCommandActor_C'")).LoadSynchronous();	// pathにあるクラスを取得
+				if (vr_ItemCommand != nullptr)
+				{
+					vr_ItemActor = GetWorld()->SpawnActor<AActor>(vr_ItemCommand, SpawnTransform);						// VRのItem UIをActorとして生成する
+					vr_Phone->SetActorEnableCollision(false);
+				} // end if()
+
 			}
 
 
