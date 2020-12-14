@@ -1,4 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//-------------------------------------------------------------------
+// ファイル		：DestroyDoor.h
+// 概要			：赤ちゃんが泣いたとき、敵が突き破るドアの処理の作成
+// 作成者		：19CU0209 尾崎蒼宙
+// 作成日		：2020/12/10
+//-------------------------------------------------------------------
 
 
 #include "DestroyDoor.h"
@@ -7,7 +12,10 @@
 ADestroyDoor::ADestroyDoor()
 	: m_is_baby_cry(false)
 	, m_pdoor_mesh_(NULL)
-	,m_Impulsevalue(FVector::ZeroVector)
+	, m_impulsevalue_(FVector::ZeroVector)
+	, m_disappea_collision_time_(0.f)
+	, m_time_cnt_(0.f)
+	, m_impuls_flag_(false)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -33,8 +41,26 @@ void ADestroyDoor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (m_is_baby_cry)
 	{	m_pdoor_mesh_ ->SetSimulatePhysics(true);
-		m_pdoor_mesh_->AddImpulse(m_Impulsevalue);
+		m_pdoor_mesh_->AddImpulse(m_impulsevalue_);
 		m_is_baby_cry = false;
+		m_pdoor_mesh_->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		m_impuls_flag_ = true;
+	}
+	
+	if(m_impuls_flag_)
+	{
+		if (m_disappea_collision_time_ == 0)
+		{
+			return;
+		}
+
+		m_time_cnt_ += DeltaTime;
+		if (m_time_cnt_ >= m_disappea_collision_time_)
+		{
+			m_pdoor_mesh_->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+			m_disappea_collision_time_ = 0;
+			m_impuls_flag_ = false;
+		}
 	}
 }
 

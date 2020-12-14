@@ -2,7 +2,7 @@
 // ファイル		：DestroyDoor.h
 // 概要			：赤ちゃんが泣いたとき、敵が突き破るドアの処理の作成
 // 作成者		：19CU0209 尾崎蒼宙
-// 作成日		：2020/12/
+// 作成日		：2020/12/10
 //-------------------------------------------------------------------
 
 #pragma once
@@ -31,17 +31,19 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	//bool m_is_baby_cry;
+	float m_time_cnt_;	// タイムカウント
+	bool m_impuls_flag_;
+	bool m_is_baby_cry;
 
 public:
 	UPROPERTY(EditAnywhere, Category = "Mesh")
 		UStaticMeshComponent* m_pdoor_mesh_;		// 扉本体のメッシュ
-	//UPROPERTY(EditAnywhere, Category = "Mesh")
-		//UStaticMeshComponent* m_pdoorglass_mesh;	// 扉に付いているガラスのメッシュ(余力があれば倒れるときに割ることを出来るようにするため)
-	UPROPERTY(EditAnywhere, Category = "Baby")
-		bool m_is_baby_cry;								// 終わったらprivateに移動
+	//UPROPERTY(EditAnywhere, Category = "Baby")
+	//	bool m_is_baby_cry;								// 終わったらprivateに移動
 	UPROPERTY(EditAnywhere, Category = "ImpulseValue")
-		FVector m_Impulsevalue;
+		FVector m_impulsevalue_;
 	UFUNCTION(BlueprintCallable, Category = "Baby")
 		void GetIsCry(bool flag) { m_is_baby_cry = flag; }
+	UPROPERTY(EditAnywhere, Category = "Mesh")
+		float m_disappea_collision_time_;		// 何秒間当たり判定をなくすか
 };
