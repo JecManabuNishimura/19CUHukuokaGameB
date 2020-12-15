@@ -294,7 +294,7 @@ void APlayerCharacter::BeginPlay()
 
 			//  vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, 0.f));			//   ↑display
 																							//   ||
-			vr_Phone->SetActorRelativeLocation(FVector(100, 0, 10));
+			vr_Phone->SetActorRelativeLocation(FVector(20, 0, 10));
 
 			// VRスマホのサイズ
 			vr_Phone->SetActorScale3D(FVector(0.2f, 0.2f, 0.2f));
@@ -1067,9 +1067,14 @@ void APlayerCharacter::SetInTheLocker(const bool flag)
 	} // end if()
 	else
 	{
+
+		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+		{
+			vr_Phone->SetActorRelativeLocation(FVector(10.f, -6.f, -2.f));
+			vr_Phone->SetActorScale3D(FVector(0.02f, 0.02f, 0.02f));						// PCスマホのサイズ
+		} // end if()
+
 		holdingSmartphoneState = 1;
-		vr_Phone->SetActorRelativeLocation(FVector(10.f, -6.f, -2.f));
-		vr_Phone->SetActorScale3D(FVector(0.02f, 0.02f, 0.02f));						// PCスマホのサイズ
 		vr_Phone->SetActorHiddenInGame(false);
 
 	} // end else
@@ -1143,7 +1148,7 @@ void APlayerCharacter::UpdateVRLaser()
 		if (m_pPrevCheckItem != NULL)
 		{
 			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
-			OnItemCheckEndEventDispatcher.Broadcast();
+			// OnItemCheckEndEventDispatcher.Broadcast();
 
 			m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
 
@@ -1200,7 +1205,7 @@ void APlayerCharacter::UpdateVRLaser()
 					m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
 
 					// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
-					OnItemCheckEndEventDispatcher.Broadcast();
+					// OnItemCheckEndEventDispatcher.Broadcast();
 				}
 				// 新しくチェックしたオブジェクトの被チェックを有効に
 				m_pCheckingItem->m_isChecked = true;
@@ -1209,7 +1214,7 @@ void APlayerCharacter::UpdateVRLaser()
 				m_pCheckingItem->SetOutline(true, prev_check_item_comp_index_);
 
 				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートに追加)
-				OnItemCheckBeginEventDispatcher.Broadcast();
+				// OnItemCheckBeginEventDispatcher.Broadcast();
 
 				const FTransform SpawnTransform = FTransform(FRotator(0.0f, 0.0f, 0.0f), vr_ItemHitPoint, FVector(1.0f, 1.0f, 1.0f));
 				AActor* vr_ItemActor;
@@ -1244,7 +1249,7 @@ void APlayerCharacter::UpdateVRLaser()
 				m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
 
 				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
-				OnItemCheckEndEventDispatcher.Broadcast();
+				// OnItemCheckEndEventDispatcher.Broadcast();
 			}
 		}
 
@@ -1267,7 +1272,7 @@ void APlayerCharacter::UpdateVRLaser()
 			m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
 
 			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
-			OnItemCheckEndEventDispatcher.Broadcast();
+			// OnItemCheckEndEventDispatcher.Broadcast();
 		}
 		m_pCheckingItem = NULL;
 
