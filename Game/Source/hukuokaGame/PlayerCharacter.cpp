@@ -452,7 +452,11 @@ void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 {
 	// 操作不可ならreturn
-	if (!can_player_move_control_ || in_the_locker_)	return;
+	if (!can_player_move_control_ || in_the_locker_)
+	{
+		GetCharacterMovement()->StopMovementImmediately();
+		return;
+	}
 
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
@@ -650,11 +654,11 @@ void APlayerCharacter::CheckItem()
 	// 操作不可なら表示されているコマンドアイコンを非表示にし、return
 	if (!can_player_move_control_ || isFound || in_the_locker_)
 	{
-		if (m_pPrevCheckItem != NULL)
+		if (m_pCheckingItem != NULL)
 		{
 			// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
 			OnItemCheckEndEventDispatcher.Broadcast();
-			m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
+			m_pCheckingItem->SetOutline(false, checking_item_comp_index_);
 		}
 		return;
 	}

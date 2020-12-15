@@ -24,6 +24,7 @@ ACanExamineItem::ACanExamineItem()
 	, can_start_anim_(false)
 	, can_turn_page_(false)
 	, can_show_detial_(true)
+	, do_file_loc_correction_(false)
 	, widget_comp_(NULL)
 {
 	// 動的配列の初期化
@@ -98,6 +99,15 @@ void ACanExamineItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (do_file_loc_correction_)
+	{
+		do_file_loc_correction_ = false;
+
+		// プレイヤーの目の前に表示
+		SetActorLocation(player_character_->ReturnCameraLocation() + (player_character_->ReturnCameraForwardVector() * distance_from_file_to_player_));
+		SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), player_character_->ReturnCameraLocation()));
+	}
+
 	count_for_time_open_close_ += DeltaTime;
 
 	// 調べられているならカウント
@@ -158,11 +168,10 @@ void ACanExamineItem::CheckedByPlayer()
 			// 調べているフラグを立てる
 			is_show_details_ = true;
 
-			count_for_time_open_close_ = 0.0f;
+			// 位置補正フラグを立てる
+			do_file_loc_correction_ = true;
 
-			// プレイヤーの目の前に表示
-			SetActorLocation(player_character_->ReturnCameraLocation() + (player_character_->ReturnCameraForwardVector() * distance_from_file_to_player_));
-			SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), player_character_->ReturnCameraLocation()));
+			count_for_time_open_close_ = 0.0f;
 		}
 		else
 		{

@@ -120,6 +120,8 @@ private:
 
 	bool can_show_detial_;				// 戻そうとするときに再度調べてしまうのを防止するためのフラグ
 
+	bool do_file_loc_correction_;		// ファイル位置補正用フラグ
+
 	void TurnPage();
 
 	UPROPERTY(BlueprintAssignable)
