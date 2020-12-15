@@ -65,16 +65,23 @@ void AAutomaticDoorLever::CheckedByPlayer()
 	// レバーの操作が不可ならreturn
 	if (!can_control_) return;
 
-	// レバーの状態を反転
-	m_isLeverOn = !m_isLeverOn;
+	// OFFだったらONに
+	if (!m_isLeverOn)
+	{
+		// 動作音を鳴らす
+		if (sound_when_checked_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_when_checked_);
 
-	// ドア本体の作動フラグを更新
-	if (m_pDoorBody != NULL)
-	{
-		m_pDoorBody->UpdateSwitchState(this);
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("The corresponding door is not installed on the level !"));
+		// レバーの状態を反転
+		m_isLeverOn = true;
+
+		// ドア本体の作動フラグを更新
+		if (m_pDoorBody != NULL)
+		{
+			m_pDoorBody->UpdateSwitchState(this);
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("The corresponding door is not installed on the level !"));
+		}
 	}
 }
