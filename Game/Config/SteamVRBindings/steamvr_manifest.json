@@ -114,6 +114,14 @@
 			"type": "boolean"
 		},
 		{
+			"name": "/actions/main/in/VRCameraTurnRight",
+			"type": "boolean"
+		},
+		{
+			"name": "/actions/main/in/VRCameraTurnLeft",
+			"type": "boolean"
+		},
+		{
 			"name": "/actions/main/in/MoveForward,MoveForward X Y_axis2d",
 			"type": "vector2"
 		},
@@ -172,50 +180,6 @@
 		{
 			"controller_type": "vive_tracker_camera",
 			"binding_url": "vive_tracker_camera.json"
-		},
-		{
-			"controller_type": "knuckles",
-			"binding_url": "knuckles.json"
-		},
-		{
-			"controller_type": "vive_controller",
-			"binding_url": "vive_controller.json"
-		},
-		{
-			"controller_type": "vive_cosmos_controller",
-			"binding_url": "vive_cosmos_controller.json"
-		},
-		{
-			"controller_type": "oculus_touch",
-			"binding_url": "oculus_touch.json"
-		},
-		{
-			"controller_type": "holographic_controller",
-			"binding_url": "holographic_controller.json"
-		},
-		{
-			"controller_type": "indexhmd",
-			"binding_url": "indexhmd.json"
-		},
-		{
-			"controller_type": "vive",
-			"binding_url": "vive.json"
-		},
-		{
-			"controller_type": "vive_pro",
-			"binding_url": "vive_pro.json"
-		},
-		{
-			"controller_type": "rift",
-			"binding_url": "rift.json"
-		},
-		{
-			"controller_type": "vive_tracker_camera",
-			"binding_url": "vive_tracker_camera.json"
-		},
-		{
-			"controller_type": "gamepad",
-			"binding_url": "gamepad.json"
 		}
 	],
 	"localization": [
@@ -245,6 +209,8 @@
 			"/actions/main/in/ResetHeight": "ResetHeight",
 			"/actions/main/in/ChangeAppNext": "ChangeAppNext",
 			"/actions/main/in/UseSmartPhone": "UseSmartPhone",
+			"/actions/main/in/VRCameraTurnRight": "VRCameraTurnRight",
+			"/actions/main/in/VRCameraTurnLeft": "VRCameraTurnLeft",
 			"/actions/main/in/MoveForward,MoveForward X Y_axis2d": "MoveForward",
 			"/actions/main/in/MoveRight,MoveRight X Y_axis2d": "MoveRight",
 			"/actions/main": "Main Game Actions"
