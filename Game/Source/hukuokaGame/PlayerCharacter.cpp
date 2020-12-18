@@ -216,43 +216,6 @@ void APlayerCharacter::BeginPlay()
 			LeftController->AttachToComponent(m_pCameraBase, AttachRules);
 			LeftController->GetMotionController()->bDisableLowLatencyUpdate = true;
 
-			/*
-			bp_VRphone = TSoftClassPtr<AActor>(FSoftObjectPath(*path)).LoadSynchronous();	// pathにあるクラスを取得
-			if (bp_VRphone != nullptr)
-			{
-				vr_Phone = GetWorld()->SpawnActor<AActor>(bp_VRphone);						// VRのスマートフォンをActorとして生成する
-
-				vr_Phone->AttachToComponent(LeftController->GetRootComponent()->GetChildComponent(0), AttachRules);
-				vr_Phone->SetActorEnableCollision(false);
-
-				if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
-				{
-					// VR用配置
-					// スマホ他の方向、先に確認しました (仮(メッシュの初期方向対応め)Y X Z)
-					vr_Phone->SetActorRelativeRotation(FRotator(270.f, 0.f, 0.f));			//  ↑1
-
-					// vr_Phone->SetActorRelativeRotation(FRotator( 0.f, -180.f, -90.f));		//   display <- ||
-
-					//  vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, -90.f));		//   || -> display
-
-					//  vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, 0.f));			//   ↑display
-																									//   ||
-					vr_Phone->SetActorRelativeLocation(FVector(200, 0, 10));
-
-					// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetActorRotation().ToString()));
-				} // end if
-				else
-				{
-					// PC確認用配置
-					vr_Phone->SetActorRelativeRotation(FRotator(-90.f, -180.f, 180.f));
-					vr_Phone->SetActorRelativeLocation(FVector(400, 0, 70));
-				} // end else
-
-				// 確認用
-				// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetName()));
-
-			} // end if()
-			*/
 		} // end if()
 
 		RightController = GetWorld()->SpawnActorDeferred<AThrillerVR_MotionController>(AThrillerVR_MotionController::StaticClass(), SpawnTransform, this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
@@ -269,9 +232,7 @@ void APlayerCharacter::BeginPlay()
 		UE_LOG(LogTemp, Log, TEXT("Is Not VR Mode"));
 	} // end else
 
-	// 仮用PCスマホ
-	// Epic Comment :D // Spawn and attach both motion controllers
-	const FTransform SpawnTransform = FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f), FVector(1.0f, 1.0f, 1.0f)); // = FTransform::Identity;
+	// スマホ生成
 	FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
 
 	bp_VRphone = TSoftClassPtr<AActor>(FSoftObjectPath(*path)).LoadSynchronous();	// pathにあるクラスを取得
@@ -310,7 +271,7 @@ void APlayerCharacter::BeginPlay()
 
 			// PC確認用配置
 			vr_Phone->SetActorRelativeRotation(FRotator(-90.f, -180.f, 180.f));
-			vr_Phone->SetActorRelativeLocation(FVector(10.f, -6.f, -2.f));
+			vr_Phone->SetActorRelativeLocation(FVector(21.f, -16.f, -5.f));
 
 			// PCスマホのサイズ
 			vr_Phone->SetActorScale3D(FVector(0.02f, 0.02f, 0.02f));						
@@ -566,7 +527,7 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 		{
 			if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
 			{
-				vr_Phone->SetActorRelativeLocation(FVector(10.f, -6.f, -2.f));			// PC用のスマホ配置
+				vr_Phone->SetActorRelativeLocation(FVector(21.f, -16.f, -5.f));			// PC用のスマホ配置
 			
 			} // end if()
 		} // end if()
@@ -583,7 +544,7 @@ void APlayerCharacter::SetEyeLevel(const float _deltaTime, const float _player_m
 		{
 			if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
 			{
-				vr_Phone->SetActorRelativeLocation(FVector(10.f, -6.f, 0.f));			// PC用のスマホ配置
+				vr_Phone->SetActorRelativeLocation(FVector(21.f, -16.f, -5.f));			// PC用のスマホ配置
 			} // end if()
 		} // end if()
 		
@@ -1074,7 +1035,7 @@ void APlayerCharacter::SetInTheLocker(const bool flag)
 
 		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
 		{
-			vr_Phone->SetActorRelativeLocation(FVector(10.f, -6.f, -2.f));
+			vr_Phone->SetActorRelativeLocation(FVector(21.f, -16.f, -5.f));
 			vr_Phone->SetActorScale3D(FVector(0.02f, 0.02f, 0.02f));						// PCスマホのサイズ
 		} // end if()
 
@@ -1172,10 +1133,9 @@ void APlayerCharacter::UpdateVRLaser()
 	actors_to_ignore.Add(RightController);
 	actors_to_ignore.Add(vr_Phone);
 
-
 	// Laserが最初に当たったのものを　vr_HitResult　に反映する
 	// if (GetWorld()->LineTraceSingleByChannel(vr_HitResult, StartPoint, EndPoint, ECC_WorldStatic, CollisionParams))
-	if (UKismetSystemLibrary::BoxTraceSingleByProfile(RightController, StartPoint, EndPoint, (box_half_size_/2), RightController->GetMotionController()->K2_GetComponentRotation(), FName("RightContollerCheckCollision"), false, actors_to_ignore, EDrawDebugTrace::ForOneFrame, vr_HitResult, true,FLinearColor::Green,FLinearColor::Red, 0.1f))
+	if (UKismetSystemLibrary::BoxTraceSingleByProfile(RightController, StartPoint, EndPoint, FVector(15.f, 15.f, 15.f), RightController->GetMotionController()->K2_GetComponentRotation(), FName("RightContollerCheckCollision"), false, actors_to_ignore, draw_debug_trace_type_ , vr_HitResult, true,FLinearColor::Green,FLinearColor::Red, 0.1f))
 	{
 		// アイテム基本クラスにキャスト
 		m_pCheckingItem = Cast<AItemBase>(vr_HitResult.GetActor());
@@ -1229,7 +1189,7 @@ void APlayerCharacter::UpdateVRLaser()
 				if (vr_ItemCommand != nullptr)
 				{
 					vr_ItemActor = GetWorld()->SpawnActor<AActor>(vr_ItemCommand, SpawnTransform);						// VRのItem UIをActorとして生成する
-					vr_Phone->SetActorEnableCollision(false);
+					vr_ItemActor->SetActorEnableCollision(false);
 				} // end if()
 
 			}
@@ -1237,7 +1197,7 @@ void APlayerCharacter::UpdateVRLaser()
 
 			if (vr_InCameraMode == false)
 			{
-				LineBatcher->DrawLine(StartPoint, EndPoint, FLinearColor::Red, 10, 0.f, 1.f);
+				LineBatcher->DrawLine(StartPoint, EndPoint, FLinearColor::Red, 10, 0.f, 0.05f);
 			} // end if()
 			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("RayHit: %s"), *HitResult.Actor->GetName()));
 
@@ -1263,7 +1223,7 @@ void APlayerCharacter::UpdateVRLaser()
 	{
 		if (vr_InCameraMode == false)
 		{
-			LineBatcher->DrawLine(StartPoint, EndPoint, FLinearColor::Green, 10, 0.f, 1.f);
+			LineBatcher->DrawLine(StartPoint, EndPoint, FLinearColor::Green, 10, 0.f, 0.05f);
 		} // end if()
 
 
