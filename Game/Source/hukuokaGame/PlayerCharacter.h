@@ -229,14 +229,18 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		class USceneComponent* m_pCameraBase;	// カメラの原点
 
-	UPROPERTY(EditAnywhere, Category = "FootStep")
+	UPROPERTY(EditAnywhere, Category = "Sound")
 		USoundClass* se_volume_can_change_;		// 各効果音に設定しているサウンドクラス
 
-	UPROPERTY(EditAnywhere, Category = "FootStep")
+	UPROPERTY(EditAnywhere, Category = "Sound")
 		USoundBase* sound_player_footstep_;		// プレイヤーの足音SE
 
-	UPROPERTY(EditAnywhere, Category = "FootStep")
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
 		float footstep_default_volume_;			// 通常時のプレイヤーの足音SE音量
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+		USoundBase* sound_damaged_;				// ダメージを食らった時のSE
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_eyeLevelWhenStanding;			// 立っているときの目の高さ

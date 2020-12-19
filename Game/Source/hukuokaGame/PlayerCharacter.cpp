@@ -64,6 +64,7 @@ APlayerCharacter::APlayerCharacter()
 	, se_volume_can_change_(NULL)
 	, sound_player_footstep_(NULL)
 	, footstep_default_volume_(1.f)
+	, sound_damaged_(NULL)
 	, m_eyeLevelWhenStanding(170.0f)
 	, camera_shaking_value(10.0f)
 	, m_reverseInputPitch(false)
@@ -838,6 +839,9 @@ void APlayerCharacter::AttackFromEnemy()
 
 	is_damaged_ = true;
 	damage_effect_timeline_.PlayFromStart();
+
+	// ダメージを食らった時の音を鳴らす
+	if (sound_damaged_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_damaged_);
 
 	switch (damage_count_)
 	{

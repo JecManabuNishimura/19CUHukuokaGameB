@@ -132,6 +132,9 @@ public:
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)
 		UWidgetComponent* widget_comp_;	// エディタ上で生成したものを取得
 
+	UPROPERTY(EditAnywhere)
+		USoundBase* sound_when_turnpage_;	// チェックされた時の効果音
+
 	// プレイヤーにチェックされたら呼ばれる(作動)
 	void CheckedByPlayer();
 

@@ -72,6 +72,12 @@ private:
 		UMaterial* lever_off_state_material_;
 
 	UPROPERTY(EditAnywhere)
+		USoundBase* sound_door_open_;			// ドアが開く時のSE
+
+	UPROPERTY(EditAnywhere)
+		USoundBase* sound_door_close_;			// ドアが閉じる時のSE
+
+	UPROPERTY(EditAnywhere)
 		float m_detectSpan;						// 敵、プレイヤーの検知スパン
 
 	UPROPERTY(EditAnywhere)
