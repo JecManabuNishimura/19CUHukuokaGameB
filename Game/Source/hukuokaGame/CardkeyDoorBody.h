@@ -78,6 +78,12 @@ private:
 	UMaterialInstanceDynamic* material_instance_dynamic_;
 
 	UPROPERTY(EditAnywhere)
+		USoundBase* sound_door_open_;			// ドアが開く時のSE
+
+	UPROPERTY(EditAnywhere)
+		USoundBase* sound_door_close_;			// ドアが閉じる時のSE
+
+	UPROPERTY(EditAnywhere)
 		FLinearColor standby_state_color;
 
 	UPROPERTY(EditAnywhere)

@@ -16,6 +16,8 @@ AAutomaticDoorBody::AAutomaticDoorBody()
 	, lever_state_lamp_(NULL)
 	, lever_on_state_material_(NULL)
 	, lever_off_state_material_(NULL)
+	, sound_door_open_(NULL)
+	, sound_door_close_(NULL)
 	, m_detectSpan(3.0f)
 	, m_openAndCloseTime(1.0f)
 	, m_leftDoorStartPosY(0.0f)
@@ -156,6 +158,9 @@ void AAutomaticDoorBody::UpdateDoorState()
 		if (m_isSwitchOn && m_isOverlap)
 		{
 			m_doorState = DOOR_STATE_OPENING;
+
+			// ドアが開く時のSEを鳴らす
+			if (sound_door_open_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_door_open_);
 		}
 		break;
 
@@ -170,6 +175,9 @@ void AAutomaticDoorBody::UpdateDoorState()
 		if (m_isSwitchOn && m_isOverlap)
 		{
 			m_doorState = DOOR_STATE_OPENING;
+
+			// ドアが開く時のSEを鳴らす
+			if (sound_door_open_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_door_open_);
 		}
 		else if (m_requiredTime <= 0.0f)
 		{
@@ -238,6 +246,9 @@ void AAutomaticDoorBody::CheckDetectSpan(float _deltaTime)
 		if (!m_isOverlap)
 		{
 			m_doorState = DOOR_STATE_CLOSING;
+
+			// ドアが閉じる時のSEを鳴らす
+			if (sound_door_close_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_door_close_);
 		}
 		else
 		{

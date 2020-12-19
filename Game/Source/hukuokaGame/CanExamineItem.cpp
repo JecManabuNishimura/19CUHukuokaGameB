@@ -26,6 +26,7 @@ ACanExamineItem::ACanExamineItem()
 	, can_show_detial_(true)
 	, do_file_loc_correction_(false)
 	, widget_comp_(NULL)
+	, sound_when_turnpage_(NULL)
 {
 	// 動的配列の初期化
 	text_in_file_kind_.Reset();
@@ -90,7 +91,25 @@ void ACanExamineItem::BeginPlay()
 	transform_on_map_ = GetActorTransform();
 
 	// 初期テキスト表示
-	TurnPage();
+	// TurnPage();
+	if ((left_page_open_now_num_ + 1) < page_num_)
+	{
+		++left_page_open_now_num_;
+		left_text_ = text_in_file_kind_[left_page_open_now_num_];
+
+		++left_page_open_now_num_;
+
+		// 次の右ページが有効ならテキスト切り替え
+		if ((left_page_open_now_num_) < page_num_)
+		{
+			right_text_ = text_in_file_kind_[left_page_open_now_num_];
+		}
+		// 無効なら空白1文字に
+		else
+		{
+			right_text_ = " ";
+		}
+	}
 
 	Super::BeginPlay();
 }
@@ -190,6 +209,9 @@ void ACanExamineItem::TurnPage()
 	// 次の左ページが有効ならテキスト切り替え
 	if ((left_page_open_now_num_ + 1) < page_num_)
 	{
+		// ページをめくる音を鳴らす
+		if (sound_when_turnpage_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_when_turnpage_);
+
 		++left_page_open_now_num_;
 		left_text_ = text_in_file_kind_[left_page_open_now_num_];
 
@@ -217,7 +239,26 @@ void ACanExamineItem::TurnPage()
 
 		// 開いているページ情報を初期化し更新
 		left_page_open_now_num_ = -1;
-		TurnPage();
+
+		// TurnPage();
+		if ((left_page_open_now_num_ + 1) < page_num_)
+		{
+			++left_page_open_now_num_;
+			left_text_ = text_in_file_kind_[left_page_open_now_num_];
+
+			++left_page_open_now_num_;
+
+			// 次の右ページが有効ならテキスト切り替え
+			if ((left_page_open_now_num_) < page_num_)
+			{
+				right_text_ = text_in_file_kind_[left_page_open_now_num_];
+			}
+			// 無効なら空白1文字に
+			else
+			{
+				right_text_ = " ";
+			}
+		}
 
 		// ファイルを開いているフラグを降ろす
 		can_start_anim_ = false;
