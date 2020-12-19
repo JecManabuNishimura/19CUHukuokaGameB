@@ -150,10 +150,10 @@ void ACardkeyDoorBody::UpdateDoorState(float _deltatime)
 
 				if (sound_loading_success != NULL)
 				{
-					UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_loading_success, GetActorLocation(), 1.0f, 1.0f, 0.0f);
+					UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_loading_success, GetActorLocation());
 
 					// ドアが開く時のSEを鳴らす
-					if (sound_door_open_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_door_open_);
+					if (sound_door_open_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_door_open_, GetActorLocation());
 				}
 				m_doorState = DOOR_STATE_OPENING;
 			}
@@ -163,7 +163,7 @@ void ACardkeyDoorBody::UpdateDoorState(float _deltatime)
 
 				if (sound_loading_error != NULL)
 				{
-					UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_loading_error, GetActorLocation(), 1.0f, 1.0f, 0.0f);
+					UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_loading_error, GetActorLocation());
 				}
 				m_doorState = DOOR_STATE_ERROR;
 			}
@@ -267,7 +267,7 @@ void ACardkeyDoorBody::CheckDetectSpan(float _deltatime)
 			m_doorState = DOOR_STATE_CLOSING;
 
 			// ドアが閉じる時のSEを鳴らす
-			if (sound_door_close_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_door_close_);
+			if (sound_door_close_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_door_close_, GetActorLocation());
 		}
 	}
 }
@@ -277,7 +277,7 @@ void ACardkeyDoorBody::CheckedByPlayer()
 	if (m_doorState == DOOR_STATE_CLOSED)
 	{
 		// カード読み込み音を鳴らす
-		if (sound_when_checked_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_when_checked_);
+		if (sound_when_checked_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_when_checked_, GetActorLocation());
 		
 		if (material_instance_dynamic_ != NULL)	material_instance_dynamic_->SetVectorParameterValue(TEXT("door_state_color"), loading_state_color);
 		m_doorState = DOOR_STATE_LOADING;

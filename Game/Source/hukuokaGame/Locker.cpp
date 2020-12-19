@@ -137,7 +137,7 @@ void ALocker::CheckedByPlayer()
 	}
 
 	// ロッカーを開ける音を鳴らす
-	if (sound_when_checked_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_when_checked_);
+	if (sound_when_checked_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_when_checked_, GetActorLocation());
 
 	// 入力可能な為チェック状態の反転とロッカーに対する入力受け付けを無効に
 	is_check_ = !is_check_;

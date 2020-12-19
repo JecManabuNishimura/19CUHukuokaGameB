@@ -160,7 +160,7 @@ void AAutomaticDoorBody::UpdateDoorState()
 			m_doorState = DOOR_STATE_OPENING;
 
 			// ドアが開く時のSEを鳴らす
-			if (sound_door_open_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_door_open_);
+			if (sound_door_open_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_door_open_, GetActorLocation());
 		}
 		break;
 
@@ -177,7 +177,7 @@ void AAutomaticDoorBody::UpdateDoorState()
 			m_doorState = DOOR_STATE_OPENING;
 
 			// ドアが開く時のSEを鳴らす
-			if (sound_door_open_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_door_open_);
+			if (sound_door_open_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_door_open_, GetActorLocation());
 		}
 		else if (m_requiredTime <= 0.0f)
 		{
@@ -248,7 +248,7 @@ void AAutomaticDoorBody::CheckDetectSpan(float _deltaTime)
 			m_doorState = DOOR_STATE_CLOSING;
 
 			// ドアが閉じる時のSEを鳴らす
-			if (sound_door_close_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_door_close_);
+			if (sound_door_close_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_door_close_, GetActorLocation());
 		}
 		else
 		{

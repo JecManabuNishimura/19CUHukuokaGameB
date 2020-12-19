@@ -69,7 +69,7 @@ void AAutomaticDoorLever::CheckedByPlayer()
 	if (!m_isLeverOn)
 	{
 		// “®ì‰¹‚ğ–Â‚ç‚·
-		if (sound_when_checked_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_when_checked_);
+		if (sound_when_checked_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_when_checked_, GetActorLocation());
 
 		// ƒŒƒo[‚Ìó‘Ô‚ğ”½“]
 		m_isLeverOn = true;
