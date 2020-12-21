@@ -8,7 +8,7 @@
 #include "VRCameraComponent.h"
 
 UVRCameraComponent::UVRCameraComponent()
-	: numToDevideSpeed(5.f)
+	: numToDevideSpeed(3.f)
 {
 }
 
@@ -33,7 +33,7 @@ void UVRCameraComponent::GetCameraView(float DeltaTime, FMinimalViewInfo& Desire
 					FVector Position;
 					if (XRCamera->UpdatePlayerCamera(Orientation, Position))
 					{
-						Position = FVector((Position.X / numToDevideSpeed), (Position.Y / numToDevideSpeed), (Position.Z / numToDevideSpeed));
+						Position = FVector((Position.X / numToDevideSpeed), (Position.Y / numToDevideSpeed), Position.Z);
 						SetRelativeTransform(FTransform(Orientation, Position));
 					}
 					else
