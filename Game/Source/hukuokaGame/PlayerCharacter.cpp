@@ -136,7 +136,7 @@ APlayerCharacter::APlayerCharacter()
 	m_pCameraBase = CreateDefaultSubobject<USceneComponent>(TEXT("VROrigin"));
 
 	// カメラを生成
-	m_pCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("m_pCamera"));
+	m_pCamera = CreateDefaultSubobject<UVRCameraComponent>(TEXT("m_pCamera"));
 
 	// カメラ原点にスプリングアームをアタッチ
 	m_pCameraBase->SetupAttachment(m_pSpringArm, USpringArmComponent::SocketName);

@@ -34,6 +34,7 @@
 #include "Camera/CameraComponent.h"
 #include "Sound/SoundClass.h"
 #include "HeartBeatAppWidgetComponent.h"	// 心拍数アプリ用（作成者：朱適）
+#include "VRCameraComponent.h"
 #include "PlayerCharacter.generated.h"
 
 // イベントディスパッチャー宣言
