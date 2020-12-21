@@ -408,6 +408,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "VR_Phone|Mission")
 		int GetTheWideStringsByteLength(FString _inString, FText _inText);		// 文字数のByteをカウントする
 
+	void SwitchTheSmartPhoneLight( bool isOn );									// スマホのライトをON/OFF
+
+	void TakeOutTheSmartPhone( bool _bool);										// スマホを出す
+
 	bool isFound;		// 敵の攻撃範囲内に入ったか(作成者：尾崎)
 
 	UFUNCTION(BlueprintCallable, Category = "PlayerDamage")

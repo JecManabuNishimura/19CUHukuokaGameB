@@ -159,6 +159,7 @@ void ACanExamineItem::Tick(float DeltaTime)
 					// プレイヤーの操作を有効に
 					player_character_->SetPlayerMoveControlFlag(true);
 					player_character_->SetPlayerCameraControlFlag(true);
+					player_character_->TakeOutTheSmartPhone(true);			// スマホを使かえる追加(作成者:林雲暉)
 
 					SetActorTransform(transform_on_map_);
 
@@ -183,7 +184,7 @@ void ACanExamineItem::CheckedByPlayer()
 			// プレイヤーの操作を不可にする
 			player_character_->SetPlayerMoveControlFlag(false);
 			player_character_->SetPlayerCameraControlFlag(false);
-
+			player_character_->TakeOutTheSmartPhone( false );			// スマホを使えない追加(作成者:林雲暉)
 			// 調べているフラグを立てる
 			is_show_details_ = true;
 

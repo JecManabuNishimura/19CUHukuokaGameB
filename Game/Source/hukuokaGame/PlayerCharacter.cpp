@@ -996,6 +996,35 @@ int APlayerCharacter::GetTheWideStringsByteLength(FString _inString, FText _inTe
 	return length_byByte;
 }  // GetTheWideStringsByteLength()
 
+void APlayerCharacter::SwitchTheSmartPhoneLight(bool isOn)
+{
+	FString FuncName_and_Solution = FString::Printf(TEXT("SetCameraLightOnOff "));
+	FOutputDeviceNull ar;
+	if (isOn)
+	{
+		FuncName_and_Solution += FString::Printf(TEXT("1"));
+	} // end if()
+	else { FuncName_and_Solution += FString::Printf(TEXT("0"));  }
+
+	vr_Phone->CallFunctionByNameWithArguments(*FuncName_and_Solution, ar, NULL, true);
+
+} // SwitchTheSmartPhoneLight()
+
+void APlayerCharacter::TakeOutTheSmartPhone(bool _bool)
+{
+	if (_bool)
+	{
+		holdingSmartphoneState = 1;
+		vr_Phone->SetActorHiddenInGame(false);
+	}
+	else
+	{
+		holdingSmartphoneState = 0;
+		vr_Phone->SetActorHiddenInGame(true);
+	} // end else
+
+} // TakeOutTheSmartPhone()
+
 
 // ダメージ状態の処理（C++側）（作成者：朱適）
 void APlayerCharacter::EarDamaged_Implementation()
@@ -1031,20 +1060,17 @@ void APlayerCharacter::SetInTheLocker(const bool flag)
 	// スマホを使えない判定追加(作成者:林雲暉)
 	if (in_the_locker_ == true )
 	{
-		holdingSmartphoneState = 0;
-		vr_Phone->SetActorHiddenInGame(true);
+		TakeOutTheSmartPhone(false);
 	} // end if()
 	else
 	{
-
 		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
 		{
 			vr_Phone->SetActorRelativeLocation(FVector(21.f, -16.f, -5.f));
 			vr_Phone->SetActorScale3D(FVector(0.02f, 0.02f, 0.02f));						// PCスマホのサイズ
 		} // end if()
 
-		holdingSmartphoneState = 1;
-		vr_Phone->SetActorHiddenInGame(false);
+		TakeOutTheSmartPhone(true);
 
 	} // end else
 
