@@ -3,6 +3,7 @@
 // 作成者		：19CU0217 朱適
 // 作成日		：2020/11/18
 // 概要			：全てのライトを制御するコントローラー
+// 更新履歴		：2020/12/22		ライトのMeshComponentの色変えを追加しました
 //-------------------------------------------------------------------
 
 #pragma once
@@ -32,8 +33,11 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	// 全てのライトを格納する配列
+	// 全てのライトコンポネントを格納する配列
 	TArray<ULightComponent*> lightComponentsArray;
+
+	// 全てのライトのMeshComponentを格納する配列	by	朱適
+	TArray<UStaticMeshComponent*> lightMeshCompArray;
 
 public:
 	// 全てのライトの色を変更する

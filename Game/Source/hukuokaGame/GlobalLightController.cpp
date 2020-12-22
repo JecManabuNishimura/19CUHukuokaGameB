@@ -3,11 +3,13 @@
 // 作成者		：19CU0217 朱適
 // 作成日		：2020/11/18
 // 概要			：全体的なライトを制御するコントローラー
+// 更新履歴		：2020/12/22		ライトのMeshComponentの色変えを追加しました
 //-------------------------------------------------------------------
 
 #include "GlobalLightController.h"
 #include "Components/LightComponent.h"
 #include "Components/RectLightComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -34,10 +36,24 @@ void AGlobalLightController::BeginPlay()
 
 	for (AActor* actor : lightActors)
 	{
+		// LightComponentを取得する
 		auto lightCmp = actor->GetComponentByClass(ULightComponent::StaticClass());
 		if (lightCmp != NULL)
 		{
 			lightComponentsArray.Add(Cast<ULightComponent>(lightCmp));
+		}
+
+		// MeshComponentを取得する		by 朱適
+		auto lightMeshCmpList = actor->GetComponentsByClass(UStaticMeshComponent::StaticClass());
+		if (lightMeshCmpList.Num() > 0)
+		{
+			for (auto* cmp : lightMeshCmpList)
+			{
+				if (cmp->ComponentHasTag(TEXT("LightMeshComponent")))
+				{
+					lightMeshCompArray.Add(Cast<UStaticMeshComponent>(cmp));
+				}
+			}
 		}
 	}
 }
@@ -56,6 +72,11 @@ void AGlobalLightController::SetLightsColor(FLinearColor _color)
 	for (ULightComponent* light : lightComponentsArray)
 	{
 		light->SetLightColor(_color);
+	}
+	// MeshComponentの色変え		by	朱適
+	for (UStaticMeshComponent* meshCmp : lightMeshCompArray)
+	{
+		meshCmp->SetVectorParameterValueOnMaterials(TEXT("LightColor"), FVector::ForwardVector);
 	}
 }
 
