@@ -227,9 +227,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Camera")
 		float m_cameraPitchLimitMax;			// カメラのPitch制限最大角度
 
-	UPROPERTY(EditAnywhere, Category = "Camera")
-		class USceneComponent* m_pCameraBase;	// カメラの原点
-
 	UPROPERTY(EditAnywhere, Category = "Sound")
 		USoundClass* se_volume_can_change_;		// 各効果音に設定しているサウンドクラス
 
@@ -362,6 +359,9 @@ public:
 	// ===== 移動としゃがむ　プロパティ  (作成者:林雲暉) =====
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (作成者:林雲暉)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+		class USceneComponent* m_pCameraBase;	// カメラの原点
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 		UCameraComponent* m_pCamera;		// カメラ

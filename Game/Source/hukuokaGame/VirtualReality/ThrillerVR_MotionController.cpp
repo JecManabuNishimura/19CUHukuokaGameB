@@ -87,7 +87,7 @@ AThrillerVR_MotionController::AThrillerVR_MotionController()
 	MotionController->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
 	MotionController->SetCollisionProfileName(TEXT("BlockAll"));
 
-
+	/*
 	// ==================== VR Hand's creation & Teleport's Object ====================
 	HandMesh->SetupAttachment(MotionController);
 	HandMesh->SetRelativeLocation(FVector(-12.8f, -0.03f, -1.8f));
@@ -103,6 +103,7 @@ AThrillerVR_MotionController::AThrillerVR_MotionController()
 			HandMesh->SetAnimInstanceClass(AnimBP_HandAnimation.Object);
 		}
 	}
+	*/
 	/*
 	ArcDirection->SetupAttachment(HandMesh);
 	ArcDirection->SetRelativeLocation(FVector(14.175764f, 0.859525f, -4.318897f));
@@ -112,14 +113,14 @@ AThrillerVR_MotionController::AThrillerVR_MotionController()
 	ArcSpline->SetRelativeLocation(FVector(12.532683f, -1.756977f, 2.553327f));
 
 	*/
-
+	/*
 	GrabShpere->SetupAttachment(HandMesh);
 	GrabShpere->SetRelativeLocation(FVector(14.286342f, 0.224237f, 1.484932f));
 	GrabShpere->SetSphereRadius(10.0f);
 	GrabShpere->SetCollisionProfileName(TEXT("OverlapAllDynamic"));
 	GrabShpere->SetGenerateOverlapEvents(true);
 	GrabShpere->OnComponentBeginOverlap.AddDynamic(this, &AThrillerVR_MotionController::OnComponentBeginOverlap);
-
+	*/
 	/*
 	ArcEndPoint->SetupAttachment(RootComponent);
 
@@ -212,7 +213,7 @@ AThrillerVR_MotionController::AThrillerVR_MotionController()
 			BeamMaterial = M_Beam.Object;
 		}
 	}
-
+	/*
 	Hand = EControllerHand::Left;
 	AttachedActor = nullptr;
 	bIsTeleporterActive = false;
@@ -226,7 +227,7 @@ AThrillerVR_MotionController::AThrillerVR_MotionController()
 	TeleportRotation = FRotator(0.0f, 0.0f, 0.0f);
 	TeleportLaunchVelocity = 900.0f;
 	InitialControllerRotation = FRotator(0.0f, 0.0f, 0.0f);
-
+	*/
 } // AThrillerVR_MotionController() コンストラクタ
 
 
@@ -256,12 +257,12 @@ void AThrillerVR_MotionController::BeginPlay()
 	// Epic Comment :D // Invert scale on hand mesh to create left-hand
 	// SomWorks :D // if Controller state is Left then Reflect Hand
 	// ==================== VR Hand's  ====================
-
+	/*
 	if (Hand == EControllerHand::Left)
 	{
 		HandMesh->SetWorldScale3D(FVector(1.0f, 1.0f, -1.0f));
 	}
-
+	*/
 } // BeginPlay()
 
 // Called every frame
@@ -270,9 +271,9 @@ void AThrillerVR_MotionController::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// ==================== VR Hand's & Teleport's Object ====================
-	UpdateHandAnimation();
+	//UpdateHandAnimation();
 
-	UpdateRoomScaleOutline();
+	//UpdateRoomScaleOutline();
 
 	// Epic Comment :D // Handle Teleportation Arc
 	// ==================== Teleport's Object ====================
