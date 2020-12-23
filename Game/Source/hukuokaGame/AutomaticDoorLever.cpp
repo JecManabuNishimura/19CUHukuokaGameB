@@ -11,7 +11,8 @@
 #include "Engine.h"				// GEngineを呼び出すためのヘッダ
 
 AAutomaticDoorLever::AAutomaticDoorLever()
-	: m_leverFilter(-1)
+	: m_leverFilter(-1) 
+	, sound_when_lever_up_(NULL)
 	, m_isLeverOn(false)
 	, can_control_(true)
 	, m_pDoorBody(NULL)
@@ -68,7 +69,7 @@ void AAutomaticDoorLever::CheckedByPlayer()
 	// OFFだったらONに
 	if (!m_isLeverOn)
 	{
-		// 動作音を鳴らす
+		// 動作音を鳴らす(下げる)
 		if (sound_when_checked_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_when_checked_, GetActorLocation());
 
 		// レバーの状態を反転
@@ -83,5 +84,10 @@ void AAutomaticDoorLever::CheckedByPlayer()
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("The corresponding door is not installed on the level !"));
 		}
+	}
+	else
+	{
+		// 動作音を鳴らす(上げる)
+		if (sound_when_lever_up_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_when_lever_up_, GetActorLocation());
 	}
 }

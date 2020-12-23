@@ -34,6 +34,9 @@ private:
 	UPROPERTY(EditAnywhere)
 		int m_leverFilter;				// レバーとドアを対応させるための数字
 
+	UPROPERTY(EditAnywhere)
+		USoundBase* sound_when_lever_up_;	// チェックされた時の効果音
+
 	bool m_isLeverOn;					// レバーのON/OFF状態
 
 	bool can_control_;					// 操作可能か
