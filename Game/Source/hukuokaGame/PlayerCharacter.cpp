@@ -183,7 +183,7 @@ void APlayerCharacter::BeginPlay()
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;					// しゃがむを可能します
 	GetCharacterMovement()->CrouchedHalfHeight = 40.f;							// しゃがむ時の高さ
 	GetCharacterMovement()->bShrinkProxyCapsule = true;							// しゃがむ時のcollisionの変更を可能します(必要ないかも)
-	GetCharacterMovement()->MaxAcceleration = 500.f;							// プレイヤー移動の加速度
+	GetCharacterMovement()->MaxAcceleration = 100000.f;							// プレイヤー移動の加速度
 
 	// Epic Comment :D // Setup Player Height for various Platforms (PS4, Vive, Oculus)
 	FName DeviceName = UHeadMountedDisplayFunctionLibrary::GetHMDDeviceName();
@@ -449,7 +449,15 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	}
 
 	// 立っている時の速度設定
-	GetCharacterMovement()->MaxWalkSpeed = m_playerMoveSpeed;
+	// VRの判定追加(追加者:林雲暉 20/12/23)
+	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = m_playerMoveSpeed;
+	} // end if()
+	else 
+	{
+		GetCharacterMovement()->MaxWalkSpeed = m_playerMoveSpeed * 0.8;
+	} // end else
 
 	// しゃがんでいた場合設定した速度を1/3に
 	if (m_isStanding == false && (GetCharacterMovement()->IsCrouching() == true))
