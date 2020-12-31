@@ -30,6 +30,7 @@
 //				：2020/11/25		VRモードの時スマホ使えるようにに設定する
 //				：2020/11/29		VRのCheckItem追加
 //				：2020/12/11		VRの3DUIの生成を追加
+//				：2020/12/26		VR Rotation Test
 //-------------------------------------------------------------------
 
 #include "PlayerCharacter.h"
@@ -366,14 +367,18 @@ void APlayerCharacter::UpdateCameraPitch(const float _deltaTime)
 
 	if (m_pCamera != NULL)
 	{
-		// 現在のカメラの回転情報を取得
-		FRotator newRotationCamera = m_pCamera->GetRelativeRotation();
+		// VR判定の追加 (作成者:林雲暉)
+		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
+		{
+			// 現在のカメラの回転情報を取得
+			FRotator newRotationCamera = m_pCamera->GetRelativeRotation();
 
-		// Pitch(カメラを回転させる)
-		newRotationCamera.Pitch = FMath::Clamp((newRotationCamera.Pitch - (m_cameraRotateInput.Y * m_cameraRotateSpeed * _deltaTime)), m_cameraPitchLimitMin, m_cameraPitchLimitMax);
+			// Pitch(カメラを回転させる)
+			newRotationCamera.Pitch = FMath::Clamp((newRotationCamera.Pitch - (m_cameraRotateInput.Y * m_cameraRotateSpeed * _deltaTime)), m_cameraPitchLimitMin, m_cameraPitchLimitMax);
 
-		// カメラに回転情報を設定
-		m_pCamera->SetRelativeRotation(newRotationCamera);
+			// カメラに回転情報を設定
+			m_pCamera->SetRelativeRotation(newRotationCamera);
+		} // end if
 	}
 }
 
@@ -399,6 +404,11 @@ void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Blue, FString::SanitizeFloat(HMDRotation.Quaternion().Z));
 		*/
 
+		// 1226 Rotation Test bt Rin
+		FRotator HMDRotation;
+		FVector HMDLocation;
+		UHeadMountedDisplayFunctionLibrary::GetOrientationAndPosition(HMDRotation, HMDLocation);
+		newRotationPlayer.Yaw = HMDRotation.Yaw;
 	} // end if()
 	else
 	{
