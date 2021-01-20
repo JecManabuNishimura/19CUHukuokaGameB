@@ -52,6 +52,8 @@ public:
 		float player_to_locker_second_;			// プレイヤーがロッカーに入る・出る時の秒数
 	UPROPERTY(EditAnywhere)
 		int flont_distance_;					// プレイヤーがロッカーに入る・出る時の秒数
+	UPROPERTY(EditAnywhere)
+		USoundBase* close_se_;	// チェックされた時の効果音
 
 	// 関数
 		// プレイヤーにチェックされたら呼ばれる(作動)

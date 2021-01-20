@@ -17,6 +17,7 @@ ALocker::ALocker()
 	, player_change_rotation_second_(0.5f)
 	, player_to_locker_second_(1.f)
 	, flont_distance_(200)
+	, close_se_(NULL)
 	, player(NULL)
 	, is_end_rotation_(false)
 	, can_input_(true)
@@ -146,8 +147,6 @@ void ALocker::CheckedByPlayer()
 	// ボタンが押された際にプレイヤーがロッカーの中にいるかどうか
 	if (!is_in_player_)
 	{
-
-
 		// 現在位置の保存
 		player_location_save_ = player->GetActorLocation();
 
@@ -204,6 +203,7 @@ void ALocker::SetDoorRotationValue(float DeltaTime)
 			if (now_rotation_value_ >= 0)
 			{
 				now_rotation_value_ = 0.f;
+				if (close_se_!= NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_when_checked_, GetActorLocation());
 				// 閉まるときは要らない(移動してしまう為)
 				//is_end_rotation_ = true;			
 			}
