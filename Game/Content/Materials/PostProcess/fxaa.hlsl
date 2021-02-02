@@ -85,9 +85,20 @@ float edgeHorz =
 bool horzSpan = edgeHorz >= edgeVert;
 
 // End-of-edge Search
+bool doneN;
+bool doneP;
+int2 offNP = int2(0, 1);
+float2 posN = float2(0, 0), posP = float2(0, 0);
+float lumaEndN, lumaEndP;
+
 for(int i = 0; i < FXAA_SEARCH_STEPS; i++)
 {
     #if FXAA_SEARCH_ACCELERATION == 1
+        if(!doneN) lumaEndN = f.FxaaLuma(Texture2DSample(color, TexColorSampler, TexCoord + offset))
+        if(!doneP) lumaEndP = f.FxaaLuma(TexColor, posP, offNP)
+    #else
+
+    #endif   
 }
 
 
