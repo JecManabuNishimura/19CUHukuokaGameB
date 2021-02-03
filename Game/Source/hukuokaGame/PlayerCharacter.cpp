@@ -53,15 +53,14 @@
 APlayerCharacter::APlayerCharacter()
 	: isHeartBeatOn(false)
 	, in_the_locker_(false)
-	, player_state(0)
 	, m_isStanding(true)
-	, m_playerThresholdToRun(1.0f)
-	, m_playerRunSpeed(10.0f)
-	, m_playerWalkSpeed(5.0f)
-	, player_footstep_span_(200.0f)
-	, m_cameraPitchLimitMin(-89.0f)
-	, m_cameraPitchLimitMax(89.0f)
-	, m_pCamera(NULL)
+	, have_cardkey_state_(0)
+	, player_threshold_to_run_(1.0f)
+	, player_run_speed_(500.0f)
+	, player_walk_speed_(250.0f)
+	, player_footstep_span_(100.0f)
+	, camera_pitch_limit_min_(-89.0f)
+	, camera_pitch_limit_max_(89.0f)
 	, se_volume_can_change_(NULL)
 	, sound_player_footstep_(NULL)
 	, footstep_default_volume_(1.f)
@@ -100,6 +99,9 @@ APlayerCharacter::APlayerCharacter()
 	, film_toe_for_debuff_(0.8f)
 	, vr_HitResult(NULL)
 	, vr_ItemHitPoint(FVector::ZeroVector)
+	, m_pSpringArm(NULL)
+	, m_pCameraBase(NULL)
+	, m_pCamera(NULL)
 	, m_VRPlayersHeight(175.0f)
 	, m_HeightisChecked(false)
 	, vr_InCameraMode(false)
@@ -167,7 +169,6 @@ APlayerCharacter::~APlayerCharacter()
 {
 }
 
-// 実行時に一度呼ばれる
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -374,7 +375,7 @@ void APlayerCharacter::UpdateCameraPitch(const float _deltaTime)
 			FRotator newRotationCamera = m_pCamera->GetRelativeRotation();
 
 			// Pitch(カメラを回転させる)
-			newRotationCamera.Pitch = FMath::Clamp((newRotationCamera.Pitch - (m_cameraRotateInput.Y * m_cameraRotateSpeed * _deltaTime)), m_cameraPitchLimitMin, m_cameraPitchLimitMax);
+			newRotationCamera.Pitch = FMath::Clamp((newRotationCamera.Pitch - (m_cameraRotateInput.Y * m_cameraRotateSpeed * _deltaTime)), camera_pitch_limit_min_, camera_pitch_limit_max_);
 
 			// カメラに回転情報を設定
 			m_pCamera->SetRelativeRotation(newRotationCamera);
@@ -440,16 +441,16 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	*/
 
 	// 走る
-	if (vectorLength >= m_playerThresholdToRun)
+	if (vectorLength >= player_threshold_to_run_)
 	{
 		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Running"));
-		m_playerMoveSpeed = m_playerRunSpeed;
+		m_playerMoveSpeed = player_run_speed_;
 	}
 	// 歩く
 	else if (vectorLength > 0.0f)
 	{
 		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Walking"));
-		m_playerMoveSpeed = m_playerWalkSpeed;
+		m_playerMoveSpeed = player_walk_speed_;
 	}
 	// 止まる
 	else
@@ -621,7 +622,7 @@ float APlayerCharacter::ReturnCameraVerticalShaking(const float _deltaTime, cons
 void APlayerCharacter::MakeFootstep(const float _deltaTime, const float _player_move_speed)
 {
 	// 音量調節
-	float volume = _player_move_speed / (m_playerRunSpeed * _deltaTime);
+	float volume = _player_move_speed / (player_run_speed_ * _deltaTime);
 	
 	// 再生
 	if (sound_player_footstep_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_player_footstep_, GetActorLocation(), volume * footstep_default_volume_, 0.9f, 0.0f);
@@ -687,7 +688,7 @@ void APlayerCharacter::CheckItem()
 				if (m_pPrevCheckItem != NULL)
 				{
 					// 前フレームでチェックしていたオブジェクトの被チェックを無効に
-					m_pPrevCheckItem->m_isChecked = false;
+					m_pPrevCheckItem->SetCheckedState(false);
 
 					// 白枠を非表示にする	by	朱適
 					m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
@@ -696,7 +697,7 @@ void APlayerCharacter::CheckItem()
 					OnItemCheckEndEventDispatcher.Broadcast();
 				}
 				// 新しくチェックしたオブジェクトの被チェックを有効に
-				m_pCheckingItem->m_isChecked = true;
+				m_pCheckingItem->SetCheckedState(true);
 
 				// 白枠を表示にする		by	朱適
 				m_pCheckingItem->SetOutline(true, checking_item_comp_index_);
@@ -711,7 +712,7 @@ void APlayerCharacter::CheckItem()
 			if (m_pPrevCheckItem != NULL)
 			{
 				// 前フレームでチェックしていたオブジェクトの被チェックを無効に
-				m_pPrevCheckItem->m_isChecked = false;
+				m_pPrevCheckItem->SetCheckedState(false);
 
 				// 白枠を非表示にする	by	朱適
 				m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
@@ -726,7 +727,7 @@ void APlayerCharacter::CheckItem()
 		// 前フレームでは検知していた場合そのアイテムの接触フラグを下げる
 		if (m_pPrevCheckItem != NULL)
 		{
-			m_pPrevCheckItem->m_isChecked = false;
+			m_pPrevCheckItem->SetCheckedState(false);
 
 			// 白枠を非表示にする	by	朱適
 			m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
@@ -739,7 +740,7 @@ void APlayerCharacter::CheckItem()
 }
 
 // ダメージを受けた際の赤くなるエフェクト更新処理
-void APlayerCharacter::TimelineUpdate(float value)
+void APlayerCharacter::TimelineUpdate(const float value)
 {
 	m_pCamera->PostProcessSettings.SceneColorTint = FVector(1.f, 1.f - value, 1.f - value);
 	m_pCamera->PostProcessSettings.VignetteIntensity = value;
@@ -771,15 +772,16 @@ void APlayerCharacter::NormalizedVector2D(float _vectorLength, FVector2D* _pFvec
 
 // 入力バインド
 // カメラ回転：Pitch(Y軸)
-void APlayerCharacter::CameraRotatePitch(float _axisValue)
+void APlayerCharacter::CameraRotatePitch(const float _axisValue)
 {
 	// Pitchの操作反転フラグが立っていたら反転
 	if (m_reverseInputPitch) m_cameraRotateInput.Y = _axisValue * -1.0f;
 	// 降りていたらそのままの入力値
 	else                     m_cameraRotateInput.Y = _axisValue;
 }
+
 // カメラ回転：Yaw(Z軸)
-void APlayerCharacter::CameraRotateYaw(float _axisValue)
+void APlayerCharacter::CameraRotateYaw(const float _axisValue)
 {
 	// Pitchの操作反転フラグが立っていたら反転
 	if (m_reverseInputYaw) m_cameraRotateInput.X = _axisValue * -1.0f;
@@ -788,7 +790,7 @@ void APlayerCharacter::CameraRotateYaw(float _axisValue)
 }
 
 // プレイヤー移動：移動X軸方向(縦)
-void APlayerCharacter::PlayerMoveX(float _axisValue)
+void APlayerCharacter::PlayerMoveX(const float _axisValue)
 {
 	GEngine->AddOnScreenDebugMessage(10, 5.0f, FColor::Purple, TEXT("  X  "));
 
@@ -796,7 +798,7 @@ void APlayerCharacter::PlayerMoveX(float _axisValue)
 }
 
 // プレイヤー移動：移動Y軸方向(横)
-void APlayerCharacter::PlayerMoveY(float _axisValue)
+void APlayerCharacter::PlayerMoveY(const float _axisValue)
 {
 	GEngine->AddOnScreenDebugMessage(10, 5.0f, FColor::Purple, TEXT("  Y  "));
 	m_playerMoveInput.Y = _axisValue;
@@ -927,35 +929,29 @@ void APlayerCharacter::ChangeHaveSmartphoneFlag()
 
 } // ChangeHaveSmartphoneFlag()
 
+// 現在見ているアイテムを返す、何も見ていなければNULLを返す(作成者：増井)
 AItemBase* APlayerCharacter::ReturnCheckingItem() const
 {
 	return m_pCheckingItem;
 }
 
+// 現在見ているアイテムのコマンド名を返す、何も見ていなければ文字列"None"を返す(作成者：増井)
 FString APlayerCharacter::ReturnCheckingItemCommandName() const
 {
 	FString command_name = "None";
 
 	if (m_pCheckingItem != NULL)
 	{
-		command_name = m_pCheckingItem->m_commandName;
+		command_name = m_pCheckingItem->GetCommandName();
 	}
 
 	return command_name;
 }
 
+// 現在見ているアイテムのコンポーネントを返す、何も見ていなければNULLを返す(作成者：増井)
 USceneComponent* APlayerCharacter::ReturnCheckingComp() const
 {
 	return checking_item_comp_;
-}
-
-FVector APlayerCharacter::ReturnCameraForwardVector()
-{ 
-	FVector forward_vector = FVector::ZeroVector;
-
-	if (m_pCamera != NULL)	forward_vector = m_pCamera->GetForwardVector();
-
-	return forward_vector;
 }
 
 // _missionIDというミッションのフラグと表示を処理する	(作成者:林雲暉)
@@ -1055,14 +1051,33 @@ void APlayerCharacter::EyeDamaged_Implementation()
 {
 }
 
+// カードキーの所持状態を設定
+void APlayerCharacter::SetHaveCardkeyState(const int _cardkey_filter)
+{
+	// 無効なカード番号ならreturn
+	if (_cardkey_filter < 0 || _cardkey_filter > 7) return;
+
+	have_cardkey_state_ = have_cardkey_state_ | (1 << _cardkey_filter);
+}
+
 // カメラの座標を返す
-FVector APlayerCharacter::ReturnCameraLocation()
+FVector APlayerCharacter::GetCameraLocation()const
 {
 	FVector camera_location = FVector::ZeroVector;
 
 	if (m_pCamera != NULL)	camera_location = m_pCamera->GetComponentLocation();
 
 	return camera_location;
+}
+
+// カメラのフォワードベクターを返す
+FVector APlayerCharacter::GetCameraForwardVector()const
+{
+	FVector forward_vector = FVector::ZeroVector;
+
+	if (m_pCamera != NULL)	forward_vector = m_pCamera->GetForwardVector();
+
+	return forward_vector;
 }
 
 // プレイヤーアクション：スマホのシャッターフラグを変更(作成者：尾崎)
@@ -1165,7 +1180,7 @@ void APlayerCharacter::UpdateVRLaser()
 
 			m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
 
-			m_pCheckingItem->m_isChecked = false;	// (12/12 林)
+			m_pCheckingItem->SetCheckedState(false);	// (12/12 林)
 		}
 		return;
 	}
@@ -1211,7 +1226,7 @@ void APlayerCharacter::UpdateVRLaser()
 				if (m_pPrevCheckItem != NULL)
 				{
 					// 前フレームでチェックしていたオブジェクトの被チェックを無効に
-					m_pPrevCheckItem->m_isChecked = false;
+					m_pPrevCheckItem->SetCheckedState(false);
 
 					// 白枠を非表示にする	by	朱適
 					m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
@@ -1220,7 +1235,7 @@ void APlayerCharacter::UpdateVRLaser()
 					// OnItemCheckEndEventDispatcher.Broadcast();
 				}
 				// 新しくチェックしたオブジェクトの被チェックを有効に
-				m_pCheckingItem->m_isChecked = true;
+				m_pCheckingItem->SetCheckedState(true);
 
 				// 白枠を表示にする		by	朱適
 				m_pCheckingItem->SetOutline(true, prev_check_item_comp_index_);
@@ -1255,7 +1270,7 @@ void APlayerCharacter::UpdateVRLaser()
 			if (m_pPrevCheckItem != NULL)
 			{
 				// 前フレームでチェックしていたオブジェクトの被チェックを無効に
-				m_pPrevCheckItem->m_isChecked = false;
+				m_pPrevCheckItem->SetCheckedState(false);
 
 				// 白枠を非表示にする	by	朱適
 				m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
@@ -1278,7 +1293,7 @@ void APlayerCharacter::UpdateVRLaser()
 		// 前フレームでは検知していた場合そのアイテムの接触フラグを下げる
 		if (m_pPrevCheckItem != NULL)
 		{
-			m_pPrevCheckItem->m_isChecked = false;
+			m_pPrevCheckItem->SetCheckedState(false);
 
 			// 白枠を非表示にする	by	朱適
 			m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);

@@ -144,7 +144,7 @@ void ACardkeyDoorBody::UpdateDoorState(float _deltatime)
 		if (count_for_check_display_time_ >= check_cardkey_time_)
 		{			
 			count_for_check_display_time_ = 0.0f;
-			if ((player_character_->player_state & (1 << m_doorFilter)) != 0)
+			if ((player_character_->GetHaveCardkeyState() & (1 << m_doorFilter)) != 0)
 			{
 				if (material_instance_dynamic_ != NULL)	material_instance_dynamic_->SetVectorParameterValue(TEXT("door_state_color"), success_state_color);
 

@@ -67,6 +67,7 @@ public:
 	// Resets HMD orientation and position in VR
 	void OnResetVR();
 
+// C++で完結する関数
 private:
 	// カメラ(Pitch)の更新
 	void UpdateCameraPitch(const float _deltaTime);
@@ -91,7 +92,7 @@ private:
 
 	// ダメージを受けた際の赤くなるエフェクト更新処理
 	UFUNCTION()
-		void TimelineUpdate(float value);
+		void TimelineUpdate(const float value);
 
 	// ダメージを受けた際の赤くなるエフェクト終了処理
 	UFUNCTION()
@@ -107,17 +108,18 @@ private:
 	void UpdateVRLaser();
 	void CheckStandingVR();
 
+// 入力関係
 private:
 	// 入力バインド
 	// カメラ回転：Pitch(Y軸)
-	void CameraRotatePitch(float _axisValue);
+	void CameraRotatePitch(const float _axisValue);
 	// カメラ回転：Yaw(Z軸)
-	void CameraRotateYaw(float _axisValue);
+	void CameraRotateYaw(const float _axisValue);
 
 	// プレイヤー移動：移動X軸方向(縦)
-	void PlayerMoveX(float _axisValue);
+	void PlayerMoveX(const float _axisValue);
 	// プレイヤー移動：移動Y軸方向(横)
-	void PlayerMoveY(float _axisValue);
+	void PlayerMoveY(const float _axisValue);
 
 	// プレイヤーアクション：立ちあがる
 	void PlayerStand();
@@ -179,21 +181,25 @@ public:
 
 	void SetInTheLocker(const bool flag);				// 定義がcppに移りました　(作成者:林雲暉)
 
+// BPで呼び出す関数
+public:
 	// Phoneアクターを取得する関数（作成者：朱適）
 	UFUNCTION(BlueprintGetter)
 		AActor* GetPhoneActor() { return vr_Phone; };
 
+	// 現在見ているアイテム（Actor）を返す、何も見ていなければNULLを返す(作成者：増井)
 	UFUNCTION(BlueprintCallable, Category = "Return State")
 		AItemBase* ReturnCheckingItem() const;
 
+	// 現在見ているアイテムのコマンド名を返す、何も見ていなければ文字列"None"を返す(作成者：増井)
 	UFUNCTION(BlueprintCallable, Category = "Return State")
 		FString ReturnCheckingItemCommandName() const;
 
+	// 現在見ているアイテムのコンポーネントを返す、何も見ていなければNULLを返す(作成者：増井)
 	UFUNCTION(BlueprintCallable, Category = "Return State")
 		USceneComponent* ReturnCheckingComp() const;
 
-	unsigned char player_state;
-
+// イベントディスパッチャー
 private:
 	// イベントディスパッチャー定義
 	// プレイヤーの視線がCanCheckアイテムに当たった時
@@ -209,30 +215,34 @@ public:
 		bool m_isStanding;						// 立っているかどうかのフラグ(作成者:林雲暉)(12/06 CategoryをNewMoveからMoveに変更 修正者:増井悠斗)
 
 private:
+	// カードキーの所持状態
+	unsigned char have_cardkey_state_;
+
+// エディタに公開する変数
+private:
 	UPROPERTY(EditAnywhere, Category = "Move")
-		float m_playerThresholdToRun;			// 走る閾値(0 < this <= 1)
+		float player_threshold_to_run_;			// 走る閾値(0 < this <= 1)
 
 	UPROPERTY(EditAnywhere, Category = "Move")
-		float m_playerRunSpeed;					// プレイヤーの歩く速度
+		float player_run_speed_;					// プレイヤーの歩く速度
 
 	UPROPERTY(EditAnywhere, Category = "Move")
-		float m_playerWalkSpeed;				// プレイヤーの走る速度
+		float player_walk_speed_;				// プレイヤーの走る速度
 
 	UPROPERTY(EditAnyWhere, Category = "Move")
 		float player_footstep_span_;			// プレイヤーの足音の間隔(プレイヤーの速度 / 間隔 = 1秒間に鳴る足音の数)
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-		float m_cameraPitchLimitMin;			// カメラのPitch制限最小角度
+		float camera_pitch_limit_min_;			// カメラのPitch制限最小角度
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-		float m_cameraPitchLimitMax;			// カメラのPitch制限最大角度
+		float camera_pitch_limit_max_;			// カメラのPitch制限最大角度
 
 	UPROPERTY(EditAnywhere, Category = "Sound")
 		USoundClass* se_volume_can_change_;		// 各効果音に設定しているサウンドクラス
 
 	UPROPERTY(EditAnywhere, Category = "Sound")
 		USoundBase* sound_player_footstep_;		// プレイヤーの足音SE
-
 
 	UPROPERTY(EditAnywhere, Category = "Sound")
 		float footstep_default_volume_;			// 通常時のプレイヤーの足音SE音量
@@ -433,15 +443,23 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlayerDamage")
 		void EyeDamaged();
 	
-	FVector ReturnCameraLocation();
+	// カードキーの所持状態を設定
+	void SetHaveCardkeyState(const int _cardkey_filter);
 
-	FVector ReturnCameraForwardVector();
+	// カードキーの所持状態を返す
+	unsigned char GetHaveCardkeyState()const { return have_cardkey_state_; }
 
-	void SetPlayerMoveControlFlag(bool _flag) { can_player_move_control_ = _flag; }
+	// カメラの座標を返す
+	FVector GetCameraLocation()const;
 
-	void SetPlayerCameraControlFlag(bool _flag) { can_player_camera_control_ = _flag; }
+	// カメラのフォワードベクターを返す
+	FVector GetCameraForwardVector()const;
+
+	// プレイヤーの移動許可を設定
+	void SetPlayerMoveControlFlag(const bool _flag) { can_player_move_control_ = _flag; }
+
+	// カメラの回転許可を設定
+	void SetPlayerCameraControlFlag(const bool _flag) { can_player_camera_control_ = _flag; }
 
 	void Respawn();	// リスポーンする関数(作成者：尾崎)
-
-	//UFUNCTION(BlueprintCallable, Category = "PlayerMakeNoise")
 };
