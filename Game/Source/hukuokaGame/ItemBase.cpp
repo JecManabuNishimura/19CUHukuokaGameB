@@ -20,8 +20,8 @@
 // Sets default values
 AItemBase::AItemBase()
 	: sound_when_checked_(NULL)
-	, m_isChecked(false)
-	, m_commandName("")
+	, command_name_("")
+	, is_checked_(false)
 	, items_Mission_Num(0)
 	, isMissionComplete(false)
 {

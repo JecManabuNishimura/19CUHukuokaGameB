@@ -123,8 +123,8 @@ void ACanExamineItem::Tick(float DeltaTime)
 		do_file_loc_correction_ = false;
 
 		// プレイヤーの目の前に表示
-		SetActorLocation(player_character_->ReturnCameraLocation() + (player_character_->ReturnCameraForwardVector() * distance_from_file_to_player_));
-		SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), player_character_->ReturnCameraLocation()));
+		SetActorLocation(player_character_->GetCameraLocation() + (player_character_->GetCameraForwardVector() * distance_from_file_to_player_));
+		SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), player_character_->GetCameraLocation()));
 	}
 
 	count_for_time_open_close_ += DeltaTime;

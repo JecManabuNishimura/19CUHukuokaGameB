@@ -8,8 +8,8 @@
 #include "ItemCanPickup.h"
 
 AItemCanPickup::AItemCanPickup()
-	: player_character(NULL)
-	, cardkey_filter(0)
+	: player_character_(NULL)
+	, cardkey_filter_(0)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -19,7 +19,7 @@ void AItemCanPickup::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	player_character = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	player_character_ = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 }
 
 void AItemCanPickup::Tick(float DeltaTime)
@@ -31,7 +31,7 @@ void AItemCanPickup::Tick(float DeltaTime)
 void AItemCanPickup::CheckedByPlayer()
 {
 	// 対応するフラグを立てる
-	player_character->player_state = player_character->player_state | (1 << cardkey_filter);
+	player_character_->SetHaveCardkeyState(cardkey_filter_);
 
 	// 取得音を鳴らす
 	if (sound_when_checked_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_when_checked_);
@@ -41,7 +41,7 @@ void AItemCanPickup::CheckedByPlayer()
 
 		if (this->items_Mission_Num != 0)
 		{
-			player_character->UpdateTheMission(2, this->items_Mission_Num, this->isMissionComplete);
+			player_character_->UpdateTheMission(2, this->items_Mission_Num, this->isMissionComplete);
 		} // end if()
 
 	} // end if()
@@ -49,5 +49,3 @@ void AItemCanPickup::CheckedByPlayer()
 	// レベル上から自身を消す
 	this->Destroy();
 }
-
-

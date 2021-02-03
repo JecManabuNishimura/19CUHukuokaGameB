@@ -28,6 +28,8 @@ class HUKUOKAGAME_API AItemBase : public AActor
 public:	
 	AItemBase();
 
+	virtual ~AItemBase() {}
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -41,16 +43,23 @@ protected:
 	UPROPERTY(EditAnywhere)
 		USoundBase* sound_when_checked_;	// チェックされた時の効果音
 
-public:
-	bool m_isChecked;				// プレイヤーにチェックされているか
-
 	UPROPERTY(EditAnywhere)
-		FString m_commandName;		// コマンドの名前(種類)
+		FString command_name_;				// コマンドの名前(種類)
+
+protected:
+	bool is_checked_;						// プレイヤーにチェックされているか
+
+public:
+	// プレイヤーによる被チェック状態を設定
+	void SetCheckedState(const bool _new_state) { is_checked_ = _new_state; }
+
+	// コマンド名を返す
+	FString GetCommandName()const { return command_name_; }
 
 public:
 	// プレイヤーによる被チェック状態を返す
 	UFUNCTION(BlueprintCallable, Category = "Return State")
-		bool ReturnCheckedState() { return m_isChecked; }
+		bool ReturnCheckedState()const { return is_checked_; }
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
 		int items_Mission_Num;					// 持っているミッションナンバー、ないなら0	(作成者:林雲暉)

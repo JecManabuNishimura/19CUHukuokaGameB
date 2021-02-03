@@ -20,14 +20,16 @@ class HUKUOKAGAME_API AItemCanPickup : public AItemBase
 public:
 	AItemCanPickup();
 
+	virtual ~AItemCanPickup() {}
+
 protected:
 	virtual void BeginPlay() override;
 
 private:
-	APlayerCharacter* player_character;
+	APlayerCharacter* player_character_;
 
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0, ClampMax = 7))
-		int cardkey_filter;
+		int cardkey_filter_;
 
 public:
 	virtual void Tick(float DeltaTime) override;
