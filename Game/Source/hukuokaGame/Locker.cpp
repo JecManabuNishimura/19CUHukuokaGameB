@@ -203,7 +203,7 @@ void ALocker::SetDoorRotationValue(float DeltaTime)
 			if (now_rotation_value_ >= 0)
 			{
 				now_rotation_value_ = 0.f;
-				if (close_se_!= NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_when_checked_, GetActorLocation());
+				if (close_se_!= NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), close_se_, GetActorLocation());	// (修正者：増井)開ける音を指定していたので修正
 				// 閉まるときは要らない(移動してしまう為)
 				//is_end_rotation_ = true;			
 			}

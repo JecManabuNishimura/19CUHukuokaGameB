@@ -11,11 +11,11 @@
 #include "Engine.h"				// GEngineを呼び出すためのヘッダ
 
 AAutomaticDoorLever::AAutomaticDoorLever()
-	: m_leverFilter(-1) 
-	, sound_when_lever_up_(NULL)
-	, m_isLeverOn(false)
+	: lever_filter_num_(-1) 
+	, p_sound_when_lever_up_(NULL)
+	, p_door_body_(NULL)
+	, is_lever_on_(false)
 	, can_control_(true)
-	, m_pDoorBody(NULL)
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
@@ -34,16 +34,16 @@ void AAutomaticDoorLever::BeginPlay()
 	{
 		for (int idx = 0; idx < actors.Num(); ++idx)
 		{
-			AAutomaticDoorBody* pDoorBody = Cast<AAutomaticDoorBody>(actors[idx]);
+			AAutomaticDoorBody* p_door_body = Cast<AAutomaticDoorBody>(actors[idx]);
 			// ドア本体のフィルター番号がレバーのフィルター番号と一致していれば格納する
-			if (pDoorBody->GetDoorFilter() == m_leverFilter)
+			if (p_door_body->GetDoorFilter() == lever_filter_num_)
 			{
-				m_pDoorBody = pDoorBody;
+				p_door_body_ = p_door_body;
 				break;
 			}
 		}
 		// レバーに対応するドアがレベルに配置されていないためエラー
-		if (!m_pDoorBody)
+		if (!p_door_body_)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("The corresponding door is not installed on the level !"));
 		}
@@ -67,18 +67,18 @@ void AAutomaticDoorLever::CheckedByPlayer()
 	if (!can_control_) return;
 
 	// OFFだったらONに
-	if (!m_isLeverOn)
+	if (!is_lever_on_)
 	{
 		// 動作音を鳴らす(下げる)
 		if (sound_when_checked_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_when_checked_, GetActorLocation());
 
 		// レバーの状態を反転
-		m_isLeverOn = true;
+		is_lever_on_ = true;
 
 		// ドア本体の作動フラグを更新
-		if (m_pDoorBody != NULL)
+		if (p_door_body_ != NULL)
 		{
-			m_pDoorBody->UpdateSwitchState(this);
+			p_door_body_->UpdateSwitchState(this);
 		}
 		else
 		{
@@ -88,6 +88,6 @@ void AAutomaticDoorLever::CheckedByPlayer()
 	else
 	{
 		// 動作音を鳴らす(上げる)
-		if (sound_when_lever_up_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_when_lever_up_, GetActorLocation());
+		if (p_sound_when_lever_up_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), p_sound_when_lever_up_, GetActorLocation());
 	}
 }

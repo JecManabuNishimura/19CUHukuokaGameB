@@ -9,30 +9,30 @@
 #include "Engine.h"				// GEngineを呼び出すためのヘッダ
 
 AAutomaticDoorBody::AAutomaticDoorBody()
-	: m_pEventTriggerBox(NULL)
-	, m_pLeftDoorComp(NULL)
-	, m_pRightDoorComp(NULL)
-	, lamp_for_decide_pos_(NULL)
-	, lever_state_lamp_(NULL)
-	, lever_on_state_material_(NULL)
-	, lever_off_state_material_(NULL)
-	, sound_door_open_(NULL)
-	, sound_door_close_(NULL)
-	, m_detectSpan(3.0f)
-	, m_openAndCloseTime(1.0f)
-	, m_leftDoorStartPosY(0.0f)
-	, m_leftDoorEndPosY(0.0f)
-	, m_rightDoorStartPosY(0.0f)
-	, m_doorFilter(0)
+	: p_eventTriggerBox_(NULL)
+	, p_left_door_comp_(NULL)
+	, p_right_door_comp_(NULL)
+	, p_lamp_for_decide_pos_(NULL)
+	, p_lever_state_lamp_(NULL)
+	, p_lever_on_state_material_(NULL)
+	, p_lever_off_state_material_(NULL)
+	, p_sound_door_open_(NULL)
+	, p_sound_door_close_(NULL)
+	, detect_span_(3.0f)
+	, open_and_close_time_(1.0f)
+	, left_door_start_posY_(0.0f)
+	, left_door_end_posY_(0.0f)
+	, right_door_start_posY_(0.0f)
+	, door_filter_num_(0)
 	, lamp_generate_pos_(FVector::ZeroVector)
-	, m_isSwitchOn(false)
-	, m_isOverlap(false)
-	, m_openTimeCount(0.0f)
-	, m_requiredTime(0.0f)
-	, m_leftDoorMoveDirection(1.0f)
-	, m_distanceStartToEnd(0.0f)
-	, m_detectNum(0)
-	, m_doorState(DOOR_STATE_CLOSED)
+	, is_switch_on_(false)
+	, is_overlap_(false)
+	, open_time_count_(0.0f)
+	, required_time_for_open_and_close_(0.0f)
+	, left_door_dire_for_move_(1.0f)
+	, distance_start_to_end_(0.0f)
+	, detect_num_(0)
+	, door_state_(kDoorStateClosed)
 	, items_Mission_Num(0)
 	, next_Items_Mission_Num(0)
 	, isMissionComplete(false)
@@ -44,39 +44,39 @@ AAutomaticDoorBody::AAutomaticDoorBody()
 	match_lever_state_lamps_.Reset();
 
 	// 検知用イベントボックス生成
-	m_pEventTriggerBox = CreateDefaultSubobject<UBoxComponent>(TEXT("m_pEventTriggerBox"));
-	if (m_pEventTriggerBox != NULL)
+	p_eventTriggerBox_ = CreateDefaultSubobject<UBoxComponent>(TEXT("p_eventTriggerBox_"));
+	if (p_eventTriggerBox_ != NULL)
 	{
-		RootComponent = m_pEventTriggerBox;
+		RootComponent = p_eventTriggerBox_;
 	}
 	else	UE_LOG(LogTemp, Error, TEXT("m_pEventTrigerBox has not been created."));
 
 	// 左ドアのもととなるメッシュ作成
-	m_pLeftDoorComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_pLeftDoorComp"));
-	if (m_pLeftDoorComp != NULL)
+	p_left_door_comp_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("p_left_door_comp_"));
+	if (p_left_door_comp_ != NULL)
 	{
-		m_pLeftDoorComp->SetupAttachment(RootComponent);
+		p_left_door_comp_->SetupAttachment(RootComponent);
 	}
-	else	UE_LOG(LogTemp, Error, TEXT("m_pLeftDoorComp has not been created."));
+	else	UE_LOG(LogTemp, Error, TEXT("p_left_door_comp_ has not been created."));
 
 	// 右ドアのもととなるメッシュ作成
-	m_pRightDoorComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_pRightDoorComp"));
-	if (m_pRightDoorComp != NULL)
+	p_right_door_comp_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("p_right_door_comp_"));
+	if (p_right_door_comp_ != NULL)
 	{
-		m_pRightDoorComp->SetupAttachment(RootComponent);
+		p_right_door_comp_->SetupAttachment(RootComponent);
 	}
-	else	UE_LOG(LogTemp, Error, TEXT("m_pRightDoorComp has not been created."));
+	else	UE_LOG(LogTemp, Error, TEXT("p_right_door_comp_ has not been created."));
 
-	lamp_for_decide_pos_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("lamp_for_decide_pos_"));
-	if (lamp_for_decide_pos_ != NULL)
+	p_lamp_for_decide_pos_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("p_lamp_for_decide_pos_"));
+	if (p_lamp_for_decide_pos_ != NULL)
 	{
-		lamp_for_decide_pos_->SetupAttachment(RootComponent);
+		p_lamp_for_decide_pos_->SetupAttachment(RootComponent);
 	}
-	else	UE_LOG(LogTemp, Error, TEXT("lamp_for_decide_pos_ has not been created."));
+	else	UE_LOG(LogTemp, Error, TEXT("p_lamp_for_decide_pos_ has not been created."));
 
 	// 関数バインド
-	m_pEventTriggerBox->OnComponentBeginOverlap.AddDynamic(this, &AAutomaticDoorBody::OnOverlapBegin);
-	m_pEventTriggerBox->OnComponentEndOverlap.AddDynamic(this, &AAutomaticDoorBody::OnOverlapEnd);
+	p_eventTriggerBox_->OnComponentBeginOverlap.AddDynamic(this, &AAutomaticDoorBody::OnOverlapBegin);
+	p_eventTriggerBox_->OnComponentEndOverlap.AddDynamic(this, &AAutomaticDoorBody::OnOverlapEnd);
 }
 AAutomaticDoorBody::~AAutomaticDoorBody()
 {
@@ -98,7 +98,7 @@ void AAutomaticDoorBody::BeginPlay()
 		{
 			AAutomaticDoorLever* pLever = Cast<AAutomaticDoorLever>(actors[idx]);
 			// レバーのフィルター番号がドア自身のフィルター番号と一致していれば配列に追加する
-			if (pLever->GetLeverFilter() == m_doorFilter)
+			if (pLever->GetLeverFilter() == door_filter_num_)
 			{
 				filter_match_levers_.Add(pLever);
 			}
@@ -109,36 +109,36 @@ void AAutomaticDoorBody::BeginPlay()
 		// ドアに対応するレバーがレベルに配置されていればその数ランプを生成
 		if (filter_match_levers_num_ != 0)
 		{
-			lamp_generate_pos_ = lamp_for_decide_pos_->GetRelativeLocation();
+			lamp_generate_pos_ = p_lamp_for_decide_pos_->GetRelativeLocation();
 
 			FString lamp_name = "lever_state_lamp";
 
-			if (lever_state_lamp_ != NULL)
+			if (p_lever_state_lamp_ != NULL)
 			{
 				for (int i = 0; i < filter_match_levers_num_; ++i)
 				{
 					match_lever_state_lamps_.Add(NewObject<UStaticMeshComponent>(this));
 					match_lever_state_lamps_[i]->RegisterComponent();
 					match_lever_state_lamps_[i]->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
-					match_lever_state_lamps_[i]->SetStaticMesh(lever_state_lamp_);
-					match_lever_state_lamps_[i]->SetRelativeLocation(FVector(lamp_generate_pos_.X, ((50.f * (i + 1)) + (-25.f * (float)(filter_match_levers_num_ + 1)) + lamp_generate_pos_.Y) * (lamp_for_decide_pos_->GetRelativeScale3D().X / 1.0f), lamp_generate_pos_.Z));
-					match_lever_state_lamps_[i]->SetWorldScale3D(lamp_for_decide_pos_->GetRelativeScale3D());
+					match_lever_state_lamps_[i]->SetStaticMesh(p_lever_state_lamp_);
+					match_lever_state_lamps_[i]->SetRelativeLocation(FVector(lamp_generate_pos_.X, ((((40.f * (i + 1)) + (-20.f * (float)(filter_match_levers_num_ + 1))) * p_lamp_for_decide_pos_->GetRelativeScale3D().X) + lamp_generate_pos_.Y), lamp_generate_pos_.Z));
+					match_lever_state_lamps_[i]->SetRelativeScale3D(p_lamp_for_decide_pos_->GetRelativeScale3D());
 				}
 			}
 		}
 	}
 
-	lamp_for_decide_pos_->DestroyComponent();
+	p_lamp_for_decide_pos_->DestroyComponent();
 
 	// ドアの初期位置を取得
-	m_leftDoorStartPosY = m_pLeftDoorComp->GetRelativeLocation().Y;
-	m_rightDoorStartPosY = m_pRightDoorComp->GetRelativeLocation().Y;
+	left_door_start_posY_ = p_left_door_comp_->GetRelativeLocation().Y;
+	right_door_start_posY_ = p_right_door_comp_->GetRelativeLocation().Y;
 
 	// ドアの始点から終点までの距離を計算
-	m_distanceStartToEnd = FMath::Abs(m_leftDoorEndPosY - m_leftDoorStartPosY);
+	distance_start_to_end_ = FMath::Abs(left_door_end_posY_ - left_door_start_posY_);
 
 	// 左ドアの開くときの移動方向を設定(右ドアはこれを反転して利用)
-	m_leftDoorMoveDirection = FMath::Abs(m_leftDoorEndPosY) / m_leftDoorEndPosY;
+	left_door_dire_for_move_ = FMath::Abs(left_door_end_posY_) / left_door_end_posY_;
 }
 
 void AAutomaticDoorBody::Tick(float DeltaTime)
@@ -152,47 +152,47 @@ void AAutomaticDoorBody::Tick(float DeltaTime)
 
 void AAutomaticDoorBody::UpdateDoorState()
 {
-	switch (m_doorState)
+	switch (door_state_)
 	{
-	case DOOR_STATE_CLOSED:
-		if (m_isSwitchOn && m_isOverlap)
+	case kDoorStateClosed:
+		if (is_switch_on_ && is_overlap_)
 		{
-			m_doorState = DOOR_STATE_OPENING;
+			door_state_ = kDoorStateOpening;
 
 			// ドアが開く時のSEを鳴らす
-			if (sound_door_open_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_door_open_, GetActorLocation());
+			if (p_sound_door_open_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), p_sound_door_open_, GetActorLocation());
 		}
 		break;
 
-	case DOOR_STATE_OPENED:
-		if (!m_isSwitchOn)
+	case kDoorStateOpened:
+		if (!is_switch_on_)
 		{
-			m_doorState = DOOR_STATE_CLOSING;
+			door_state_ = kDoorStateClosing;
 		}
 		break;
 
-	case DOOR_STATE_CLOSING:
-		if (m_isSwitchOn && m_isOverlap)
+	case kDoorStateClosing:
+		if (is_switch_on_ && is_overlap_)
 		{
-			m_doorState = DOOR_STATE_OPENING;
+			door_state_ = kDoorStateOpening;
 
 			// ドアが開く時のSEを鳴らす
-			if (sound_door_open_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_door_open_, GetActorLocation());
+			if (p_sound_door_open_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), p_sound_door_open_, GetActorLocation());
 		}
-		else if (m_requiredTime <= 0.0f)
+		else if (required_time_for_open_and_close_ <= 0.0f)
 		{
-			m_doorState = DOOR_STATE_CLOSED;
+			door_state_ = kDoorStateClosed;
 		}
 		break;
 
-	case DOOR_STATE_OPENING:
-		if (!m_isSwitchOn)
+	case kDoorStateOpening:
+		if (!is_switch_on_)
 		{
-			m_doorState = DOOR_STATE_CLOSING;
+			door_state_ = kDoorStateClosing;
 		}
-		else if (m_requiredTime >= m_openAndCloseTime)
+		else if (required_time_for_open_and_close_ >= open_and_close_time_)
 		{
-			m_doorState = DOOR_STATE_OPENED;
+			door_state_ = kDoorStateOpened;
 		}
 		break;
 
@@ -203,23 +203,23 @@ void AAutomaticDoorBody::UpdateDoorState()
 
 void AAutomaticDoorBody::UpdateDoorMove(float _deltaTime)
 {
-	switch (m_doorState)
+	switch (door_state_)
 	{
-	case DOOR_STATE_OPENED:
+	case kDoorStateOpened:
 		CheckDetectSpan(_deltaTime);
-	case DOOR_STATE_CLOSED:
+	case kDoorStateClosed:
 		return;
 		break;
 
-	case DOOR_STATE_CLOSING:
-		m_openTimeCount = 0.0f;
-		m_requiredTime -= _deltaTime;		
-		if (m_requiredTime < 0.0f) { m_requiredTime = 0.0f; }
+	case kDoorStateClosing:
+		open_time_count_ = 0.0f;
+		required_time_for_open_and_close_ -= _deltaTime;		
+		if (required_time_for_open_and_close_ < 0.0f) { required_time_for_open_and_close_ = 0.0f; }
 		break;
 
-	case DOOR_STATE_OPENING:
-		m_requiredTime += _deltaTime;
-		if (m_requiredTime > m_openAndCloseTime) { m_requiredTime = m_openAndCloseTime; }
+	case kDoorStateOpening:
+		required_time_for_open_and_close_ += _deltaTime;
+		if (required_time_for_open_and_close_ > open_and_close_time_) { required_time_for_open_and_close_ = open_and_close_time_; }
 		break;
 
 	default:
@@ -227,33 +227,33 @@ void AAutomaticDoorBody::UpdateDoorMove(float _deltaTime)
 	}
 
 	// 左ドアの処理
-	float newLocationY = m_leftDoorStartPosY + ((m_distanceStartToEnd * m_requiredTime) * m_leftDoorMoveDirection);
-	m_pLeftDoorComp->SetRelativeLocation(FVector(0, newLocationY, 0));
+	float newLocationY = left_door_start_posY_ + ((distance_start_to_end_ * required_time_for_open_and_close_) * left_door_dire_for_move_);
+	p_left_door_comp_->SetRelativeLocation(FVector(0, newLocationY, 0));
 
 	// 右ドアの処理
-	newLocationY = m_rightDoorStartPosY + ((m_distanceStartToEnd * m_requiredTime) * m_leftDoorMoveDirection * -1.0f);
-	m_pRightDoorComp->SetRelativeLocation(FVector(0, newLocationY, 0));
+	newLocationY = right_door_start_posY_ + ((distance_start_to_end_ * required_time_for_open_and_close_) * left_door_dire_for_move_ * -1.0f);
+	p_right_door_comp_->SetRelativeLocation(FVector(0, newLocationY, 0));
 }
 
 void AAutomaticDoorBody::CheckDetectSpan(float _deltaTime)
 {
-	m_openTimeCount += _deltaTime;
+	open_time_count_ += _deltaTime;
 
 	// 決めた時間を超えたらチェック
-	if (m_openTimeCount > m_detectSpan)
+	if (open_time_count_ > detect_span_)
 	{
 		// 検知できなければ状態をCLOSINGへ
-		if (!m_isOverlap)
+		if (!is_overlap_)
 		{
-			m_doorState = DOOR_STATE_CLOSING;
+			door_state_ = kDoorStateClosing;
 
 			// ドアが閉じる時のSEを鳴らす
-			if (sound_door_close_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), sound_door_close_, GetActorLocation());
+			if (p_sound_door_close_ != NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), p_sound_door_close_, GetActorLocation());
 		}
 		else
 		{
 			// 開く処理継続のための数値代入
-			m_openTimeCount = 0.0f;
+			open_time_count_ = 0.0f;
 		}
 	}
 }
@@ -264,10 +264,10 @@ void AAutomaticDoorBody::OnOverlapBegin(UPrimitiveComponent* _overlappedComponen
 	if (_otherActor->ActorHasTag("Player") || _otherActor->ActorHasTag("Enemy"))
 	{
 		// 範囲内検知数をインクリメント
-		++m_detectNum;
+		++detect_num_;
 
 		// 検知フラグを立てる
-		m_isOverlap = true;
+		is_overlap_ = true;
 
 		// ドアの作動フラグの更新
 		UpdateSwitchState();
@@ -280,12 +280,12 @@ void AAutomaticDoorBody::OnOverlapEnd(UPrimitiveComponent* _overlappedComponent,
 	if (_otherActor->ActorHasTag("Player") || _otherActor->ActorHasTag("Enemy"))
 	{
 		// 範囲内検知数をデクリメント
-		--m_detectNum;
+		--detect_num_;
 
 		// 範囲内に誰もいないなら検知フラグを下げる
-		if (m_detectNum == 0)
+		if (detect_num_ == 0)
 		{
-			m_isOverlap = false;
+			is_overlap_ = false;
 		}
 	}
 }
@@ -302,8 +302,8 @@ void AAutomaticDoorBody::UpdateSwitchState(const AAutomaticDoorLever* const oper
 			{
 				if (filter_match_levers_[i]->GetLeverState() == false)
 				{
-					match_lever_state_lamps_[i]->SetMaterial(0, lever_off_state_material_);
-					m_isSwitchOn = false;
+					match_lever_state_lamps_[i]->SetMaterial(0, p_lever_off_state_material_);
+					is_switch_on_ = false;
 					return;
 				}
 				break;
@@ -318,25 +318,25 @@ void AAutomaticDoorBody::UpdateSwitchState(const AAutomaticDoorLever* const oper
 	{
 		if (filter_match_levers_[i]->GetLeverState() == true)
 		{
-			match_lever_state_lamps_[i]->SetMaterial(0, lever_on_state_material_);
+			match_lever_state_lamps_[i]->SetMaterial(0, p_lever_on_state_material_);
 			switch_state = switch_state && true;
 		}
 		else
 		{
-			match_lever_state_lamps_[i]->SetMaterial(0, lever_off_state_material_);
+			match_lever_state_lamps_[i]->SetMaterial(0, p_lever_off_state_material_);
 			switch_state = switch_state && false;
 		}
 	}
-
+	
 	// 対応するレバー全ての状態がON(=true)なら検知フラグを立てる
-	m_isSwitchOn = switch_state;
+	is_switch_on_ = switch_state;
 
 	// ミッションに反映する場合、スマホのミッションをアップデート (作成者:林雲暉)
 	if (this->isMissionComplete == false) {
 
 		if (this->items_Mission_Num != 0)
 		{
-			if (m_isSwitchOn == true)
+			if (is_switch_on_ == true)
 				GoToPlayerCharacterAndUpdateMission();
 
 		} // end if()

@@ -32,21 +32,21 @@ public:
 
 private:
 	UPROPERTY(EditAnywhere)
-		int m_leverFilter;				// レバーとドアを対応させるための数字
+		int lever_filter_num_;				// レバーとドアを対応させるための数字
 
 	UPROPERTY(EditAnywhere)
-		USoundBase* sound_when_lever_up_;	// チェックされた時の効果音
+		USoundBase* p_sound_when_lever_up_;	// チェックされた時の効果音
 
-	bool m_isLeverOn;					// レバーのON/OFF状態
+	AAutomaticDoorBody* p_door_body_;	// 対応するドア本体のポインタ
+
+	bool is_lever_on_;					// レバーのON/OFF状態
 
 	bool can_control_;					// 操作可能か
-
-	AAutomaticDoorBody* m_pDoorBody;	// 対応するドア本体のポインタ
 
 public:
 	// レバーのON/OFF状態を返す
 	UFUNCTION(BlueprintCallable, Category = "Get State")
-		bool GetLeverState()const { return m_isLeverOn; }
+		bool GetLeverState()const { return is_lever_on_; }
 
 	// レバーの操作可・不可フラグを返す
 	UFUNCTION(BlueprintCallable, Category = "Get State")
@@ -58,8 +58,8 @@ public:
 
 	// レバーのON/OFF状態を変更(作成者　尾崎)
 	UFUNCTION(BlueprintCallable, Category = "Set State")
-		void SetLeverState(const bool flag) { m_isLeverOn = flag; }
+		void SetLeverState(const bool _flag) { is_lever_on_ = _flag; }
 
 	// レバーのフィルター番号を返す
-	int GetLeverFilter()const { return m_leverFilter; }
+	int GetLeverFilter()const { return lever_filter_num_; }
 };

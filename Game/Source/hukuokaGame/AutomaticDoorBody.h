@@ -21,10 +21,10 @@ class HUKUOKAGAME_API AAutomaticDoorBody : public AActor
 	// ドアの状態
 	enum DOOR_STATE
 	{
-		DOOR_STATE_CLOSED = 0,			// 閉じきっている
-		DOOR_STATE_OPENED,				// 開ききっている
-		DOOR_STATE_CLOSING,				// 閉じ途中（開→閉）
-		DOOR_STATE_OPENING,				// 開き途中（閉→開）
+		kDoorStateClosed = 0,			// 閉じきっている
+		kDoorStateOpened,				// 開ききっている
+		kDoorStateClosing,				// 閉じ途中（開→閉）
+		kDoorStateOpening,				// 開き途中（閉→開）
 	};
 
 	GENERATED_BODY()
@@ -51,65 +51,65 @@ private:
 		void OnOverlapEnd(UPrimitiveComponent* _overlappedComponent, AActor* _otherActor, UPrimitiveComponent* _otherComp, int32 _otherBodyIndex);
 
 	UPROPERTY(EditAnywhere)
-		UBoxComponent* m_pEventTriggerBox;		// プレイヤー、敵検知用トリガーボックス
+		UBoxComponent* p_eventTriggerBox_;		// プレイヤー、敵検知用トリガーボックス
 
 	UPROPERTY(EditAnywhere)
-		UStaticMeshComponent* m_pLeftDoorComp;	// 左ドアのメッシュコンポーネント
+		UStaticMeshComponent* p_left_door_comp_;	// 左ドアのメッシュコンポーネント
 
 	UPROPERTY(EditAnywhere)
-		UStaticMeshComponent* m_pRightDoorComp;	// 右ドアのメッシュコンポーネント
+		UStaticMeshComponent* p_right_door_comp_;	// 右ドアのメッシュコンポーネント
 
 	UPROPERTY(EditAnywhere)
-		UStaticMeshComponent* lamp_for_decide_pos_;	// 生成するランプの位置を決めるためのランプメッシュ
+		UStaticMeshComponent* p_lamp_for_decide_pos_;	// 生成するランプの位置を決めるためのランプメッシュ
 
 	UPROPERTY(EditAnywhere)
-		UStaticMesh* lever_state_lamp_;			// レバーの状態を表すランプメッシュ
+		UStaticMesh* p_lever_state_lamp_;			// レバーの状態を表すランプメッシュ
 
 	UPROPERTY(EditAnywhere)
-		UMaterial* lever_on_state_material_;
+		UMaterial* p_lever_on_state_material_;	// レバーがオンの時のマテリアル
 
 	UPROPERTY(EditAnywhere)
-		UMaterial* lever_off_state_material_;
+		UMaterial* p_lever_off_state_material_;	// レバーがオフの時のマテリアル
 
 	UPROPERTY(EditAnywhere)
-		USoundBase* sound_door_open_;			// ドアが開く時のSE
+		USoundBase* p_sound_door_open_;			// ドアが開く時のSE
 
 	UPROPERTY(EditAnywhere)
-		USoundBase* sound_door_close_;			// ドアが閉じる時のSE
+		USoundBase* p_sound_door_close_;		// ドアが閉じる時のSE
 
 	UPROPERTY(EditAnywhere)
-		float m_detectSpan;						// 敵、プレイヤーの検知スパン
+		float detect_span_;						// 敵、プレイヤーの検知スパン
 
 	UPROPERTY(EditAnywhere)
-		float m_openAndCloseTime;				// 開閉に要する時間
+		float open_and_close_time_;				// 開閉に要する時間
 
-	float m_leftDoorStartPosY;					// 左ドアのY座標始点
-
-	UPROPERTY(EditAnywhere)
-		float m_leftDoorEndPosY;				// 左ドアのY座標終点
-
-	float m_rightDoorStartPosY;					// 右ドアのY座標始点
+	float left_door_start_posY_;				// 左ドアのY座標始点
 
 	UPROPERTY(EditAnywhere)
-		int m_doorFilter;						// レバーとドアを対応させるための数字
+		float left_door_end_posY_;				// 左ドアのY座標終点
+
+	float right_door_start_posY_;				// 右ドアのY座標始点
+
+	UPROPERTY(EditAnywhere)
+		int door_filter_num_;					// レバーとドアを対応させるための数字
 
 	FVector lamp_generate_pos_;					// ランプを生成する場所
 
-	bool m_isSwitchOn;							// 自動ドアを作動させるためのフラグ
+	bool is_switch_on_;							// 自動ドアを作動させるためのフラグ
 
-	bool m_isOverlap;							// プレイヤーもしくは敵が検知内に入っているかのフラグ
+	bool is_overlap_;							// プレイヤーもしくは敵が検知内に入っているかのフラグ
 
-	float m_openTimeCount;						// 開いている時間のカウント
+	float open_time_count_;						// 開いている時間のカウント
 
-	float m_requiredTime;						// 開閉の所要時間
+	float required_time_for_open_and_close_;	// 開閉の所要時間
 
-	float m_leftDoorMoveDirection;				// 移動するときの向き
+	float left_door_dire_for_move_;				// 移動するときの向き
 
-	float m_distanceStartToEnd;					// ドアの始点から終点までの距離(片方で取得し、もう片方でもそれを利用)
+	float distance_start_to_end_;				// ドアの始点から終点までの距離(片方で取得し、もう片方でもそれを利用)
 
-	int m_detectNum;							// 検知範囲内いるプレイヤー、敵の総和
+	int detect_num_;							// 検知範囲内いるプレイヤー、敵の総和
 
-	DOOR_STATE m_doorState;						// ドアの状態
+	DOOR_STATE door_state_;						// ドアの状態
 
 	TArray<AAutomaticDoorLever*> filter_match_levers_;	// 対応するレバーを保存する配列
 
@@ -130,7 +130,7 @@ public:
 	void UpdateSwitchState(const AAutomaticDoorLever* const operated_lever = nullptr);
 
 	// ドアのフィルター番号を返す
-	int GetDoorFilter()const { return m_doorFilter; }
+	int GetDoorFilter()const { return door_filter_num_; }
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
 		int items_Mission_Num;					// 持っているミッションナンバー、ないなら0 (作成者:林雲暉)
