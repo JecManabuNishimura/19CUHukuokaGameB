@@ -20,12 +20,12 @@ class HUKUOKAGAME_API ACardkeyDoorBody : public AItemBase
 	// ドアの状態
 	enum DOOR_STATE
 	{
-		DOOR_STATE_LOADING = 0,			// カードキー読み込み中
-		DOOR_STATE_ERROR,				// 読み取り失敗
-		DOOR_STATE_CLOSED,				// 閉じきっている
-		DOOR_STATE_OPENED,				// 開ききっている
-		DOOR_STATE_CLOSING,				// 閉じ途中（開→閉）
-		DOOR_STATE_OPENING,				// 開き途中（閉→開）
+		kDoorStateLoading = 0,			// カードキー読み込み中
+		kDoorStateError,				// 読み取り失敗
+		kDoorStateClosed,				// 閉じきっている
+		kDoorStateOpened,				// 開ききっている
+		kDoorStateClosing,				// 閉じ途中（開→閉）
+		kDoorStateOpening,				// 開き途中（閉→開）
 	};
 
 	GENERATED_BODY()
@@ -53,61 +53,61 @@ private:
 
 private:
 	UPROPERTY(EditAnywhere)
-		UBoxComponent* door_body_eventtriggerbox_;	// プレイヤー、敵挟み防止用トリガーボックス
+		UBoxComponent* p_door_body_eventtriggerbox_;	// プレイヤー、敵挟み防止用トリガーボックス
 
 	UPROPERTY(EditAnywhere)
-		UStaticMeshComponent* cardreader_mesh_1_;	// カード読み込み口のメッシュコンポーネントその1
+		UStaticMeshComponent* p_cardreader_mesh_1_;	// カード読み込み口のメッシュコンポーネントその1
 
 	UPROPERTY(EditAnywhere)
-		UStaticMeshComponent* cardreader_mesh_2_;	// カード読み込み口のメッシュコンポーネントその2
+		UStaticMeshComponent* p_cardreader_mesh_2_;	// カード読み込み口のメッシュコンポーネントその2
 
 	UPROPERTY(EditAnywhere)
-		UStaticMeshComponent* leftdoor_mesh_;		// 左ドアのメッシュコンポーネント
+		UStaticMeshComponent* p_leftdoor_mesh_;		// 左ドアのメッシュコンポーネント
 
 	UPROPERTY(EditAnywhere)
-		UStaticMeshComponent* rightdoor_mesh_;		// 右ドアのメッシュコンポーネント
+		UStaticMeshComponent* p_rightdoor_mesh_;		// 右ドアのメッシュコンポーネント
 
 	UPROPERTY(EditAnywhere)
-		UStaticMeshComponent* door_state_mesh_1_;	// 左ドアのロック状態メッシュコンポーネント
+		UStaticMeshComponent* p_door_state_mesh_1_;	// 左ドアのロック状態メッシュコンポーネント
 
 	UPROPERTY(EditAnywhere)
-		UStaticMeshComponent* door_state_mesh_2_;	// 右ドアのロック状態メッシュコンポーネント
+		UStaticMeshComponent* p_door_state_mesh_2_;	// 右ドアのロック状態メッシュコンポーネント
 
-	UMaterial* door_state_material;					// ドアのロック状態を表すマテリアル
+	UMaterial* p_door_state_material_;				// ドアのロック状態を表すマテリアル
 
-	UMaterialInstanceDynamic* material_instance_dynamic_;
-
-	UPROPERTY(EditAnywhere)
-		USoundBase* sound_door_open_;			// ドアが開く時のSE
+	UMaterialInstanceDynamic* p_material_instance_dynamic_;
 
 	UPROPERTY(EditAnywhere)
-		USoundBase* sound_door_close_;			// ドアが閉じる時のSE
+		USoundBase* p_sound_door_open_;			// ドアが開く時のSE
 
 	UPROPERTY(EditAnywhere)
-		FLinearColor standby_state_color;
+		USoundBase* p_sound_door_close_;		// ドアが閉じる時のSE
 
 	UPROPERTY(EditAnywhere)
-		FLinearColor success_state_color;
+		FLinearColor state_color_standby_;		// リーダーの状態色（読み取り可能時）
 
 	UPROPERTY(EditAnywhere)
-		FLinearColor loading_state_color;
+		FLinearColor state_color_success_;		// リーダーの状態色（読み取り成功時）
 
 	UPROPERTY(EditAnywhere)
-		FLinearColor error_state_color;
+		FLinearColor state_color_loading_;		// リーダーの状態色（読み取り中の時）
 
 	UPROPERTY(EditAnywhere)
-		USoundBase* sound_loading_success;
+		FLinearColor state_color_error_;		// リーダーの状態色（読み取り失敗時）
 
 	UPROPERTY(EditAnywhere)
-		USoundBase* sound_loading_error;
-
-	APlayerCharacter* player_character_;
+		USoundBase* p_sound_loading_success_;	// 読み取り成功時の音
 
 	UPROPERTY(EditAnywhere)
-		float m_detectSpan;						// 敵、プレイヤーの検知スパン
+		USoundBase* p_sound_loading_error_;		// 読み取り失敗時の音
+
+	APlayerCharacter* p_player_character_;		// プレイヤーキャラクター
+
+	UPROPERTY(EditAnywhere)
+		float detect_span_;						// 敵、プレイヤーの検知スパン
 	
 	UPROPERTY(EditAnywhere)
-		float m_openAndCloseTime;				// 開閉に要する時間
+		float open_and_close_time_;				// 開閉に要する時間
 
 	UPROPERTY(EditAnywhere)
 		float check_cardkey_time_;				// カードキー読み取りに掛かる時間
@@ -117,31 +117,31 @@ private:
 
 	float count_for_check_display_time_;		// カードキー読み取り、エラー表示のカウント用
 
-	float m_leftDoorStartPosY;					// 左ドアのY座標始点
+	float left_door_start_posY_;				// 左ドアのY座標始点
 
 	UPROPERTY(EditAnywhere)
-		float m_leftDoorEndPosY;				// 左ドアのY座標終点
+		float left_door_end_posY_;				// 左ドアのY座標終点
 
-	float m_rightDoorStartPosY;					// 右ドアのY座標始点
+	float right_door_start_posY_;				// 右ドアのY座標始点
 
 	UPROPERTY(EditAnywhere, meta = (ClampMin = 0, ClampMax = 7))
-		int m_doorFilter;						// カードとカードリーダーを対応させるための数字
+		int door_filter_num_;						// カードとカードリーダーを対応させるための数字
 
-	DOOR_STATE m_doorState;						// ドアの状態
-
-	UPROPERTY(EditAnywhere)
-		bool is_doorbody_eventbox_overlap;		// ドア本体のイベントボックスにプレイヤー、敵がオーバーラップしているか
+	DOOR_STATE door_state_;						// ドアの状態
 
 	UPROPERTY(EditAnywhere)
-		int door_eventbox_overlap_sum;			// ドア本体のイベントボックス内に入っているプレイヤー、敵の総和(0でis_door_eventbox_overlap = false)
+		bool is_doorbody_eventbox_overlap_;		// ドア本体のイベントボックスにプレイヤー、敵がオーバーラップしているか
 
-	float m_openTimeCount;						// 開いている時間のカウント
+	UPROPERTY(EditAnywhere)
+		int door_eventbox_overlap_sum_;			// ドア本体のイベントボックス内に入っているプレイヤー、敵の総和(0でis_door_eventbox_overlap = false)
 
-	float m_requiredTime;						// 開閉の所要時間
+	float open_time_count_;						// 開いている時間のカウント
 
-	float m_leftDoorMoveDirection;				// 移動するときの向き
+	float required_time_for_open_and_close_;	// 開閉の所要時間
 
-	float m_distanceStartToEnd;					// ドアの始点から終点までの距離(片方で取得し、もう片方でもそれを利用)
+	float left_door_dire_for_move_;				// 移動するときの向き
+
+	float distance_start_to_end_;				// ドアの始点から終点までの距離(片方で取得し、もう片方でもそれを利用)
 
 	void UpdateDoorState(float _deltatime);		// ドアの状態更新
 
@@ -152,7 +152,7 @@ private:
 public:
 
 	// ドアのフィルター番号を返す
-	int GetDoorFilter()const { return m_doorFilter; }
+	int GetDoorFilter()const { return door_filter_num_; }
 
 	// プレイヤーにチェックされたら呼ばれる(かざす)
 	void CheckedByPlayer();
