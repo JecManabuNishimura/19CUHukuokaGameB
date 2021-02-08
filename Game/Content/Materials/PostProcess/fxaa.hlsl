@@ -11,8 +11,8 @@
 #define FXAA_SUBPIX_CAP                 7.f / 8.f
 #define FXAA_SUBPIX_TRIM_SCALE          1.f
 #define FXAA_SUBPIX_QUALITY             3.f / 4.f
-#define FXAA_QUALITY                    1.5
-#define FXAA_SEARCH_STEPS_INT           12
+#define FXAA_QUALITY                    1.25
+#define FXAA_SEARCH_STEPS_INT           4
 
 // 関数の構造体
 struct FxaaFunc
@@ -92,36 +92,36 @@ abs((0.25f * lumaNE) + (-0.5f * lumaE) + (0.25f * lumaSE));
 bool horzSpan = edgeHorz >= edgeVert;
 
 float stepLength = horzSpan ? TexelSize.y : TexelSize.x;
-//
-//float luma1 = horzSpan ? lumaS : lumaW;
-//float luma2 = horzSpan ? lumaN : lumaE;
-//float gradient1 = luma1 - lumaM;
-//float gradient2 = luma2 - lumaM;
-//
-//bool is1Steepest = abs(gradient1) >= abs(gradient2);
-//
-//float gradientScaled = 0.25f * max(abs(gradient1), abs(gradient2));
-//
-//float lumaLocalAverage = 0.f;
-//if (is1Steepest)
-//{
-//    stepLength = -stepLength;
-//    lumaLocalAverage = (luma1 + lumaM) / 2.f;
-//}
-//else
-//{
-//    lumaLocalAverage = (luma2 + lumaM) / 2.f;
-//}
 
-float2 currentUV = InUV;
-if (horzSpan)
+float luma1 = horzSpan ? lumaS : lumaW;
+float luma2 = horzSpan ? lumaN : lumaE;
+float gradient1 = luma1 - lumaM;
+float gradient2 = luma2 - lumaM;
+
+bool is1Steepest = abs(gradient1) >= abs(gradient2);
+
+float gradientScaled = 0.25f * max(abs(gradient1), abs(gradient2));
+
+float lumaLocalAverage = 0.f;
+if (is1Steepest)
 {
-    currentUV.y += stepLength * 0.5f;
+   stepLength = -stepLength;
+   lumaLocalAverage = (luma1 + lumaM) / 2.f;
 }
 else
 {
-    currentUV.x += stepLength * 0.5f;
+   lumaLocalAverage = (luma2 + lumaM) / 2.f;
 }
+
+float2 currentUV = InUV;
+// if (horzSpan)
+// {
+//     currentUV.y += stepLength * FXAA_QUALITY;
+// }
+// else
+// {
+//     currentUV.x += stepLength * FXAA_QUALITY;
+// }
 
 // End-of-edge Search
 float2 offset = horzSpan ? float2(TexelSize.x, 0) : float2(0, TexelSize.y);
@@ -131,11 +131,9 @@ float3 rgbEndN = f.FxaaTextureOffset(InTex, InUV, -offset);
 float3 rgbEndP = f.FxaaTextureOffset(InTex, InUV, offset);
 float lumaEndN = f.FxaaLuma(rgbEndN);
 float lumaEndP = f.FxaaLuma(rgbEndP);
-//lumaEndN -= lumaLocalAverage;
-//lumaEndP -= lumaLocalAverage;
 
 bool doneN = false, doneP = false;
-float gradientN = lumaL;
+// float gradientN = ;
 
 for (int i = 0; i < FXAA_SEARCH_STEPS_INT; i++)
 {
@@ -144,15 +142,15 @@ for (int i = 0; i < FXAA_SEARCH_STEPS_INT; i++)
     //if (!doneN) lumaEndN = f.FxaaLuma(Texture2DSample(InTex, InTexSampler, uvN).rgb) - lumaLocalAverage;
     //if (!doneP) lumaEndP = f.FxaaLuma(Texture2DSample(InTex, InTexSampler, uvP).rgb) - lumaLocalAverage;
 
-    doneN = doneN || abs(lumaEndN - lumaN) >= gradientN;
-    doneP = doneP || abs(lumaEndP - lumaN) >= gradientN;
+    doneN = doneN || abs(lumaEndN - lumaN) >= gradientScaled;
+    doneP = doneP || abs(lumaEndP - lumaN) >= gradientScaled;
 
     if (doneN && doneP) break;
     if (!doneN)  uvN -= offset * FXAA_QUALITY;
     if (!doneP)  uvP += offset * FXAA_QUALITY;
 }
 
-float3 finalColor = (Texture2DSample(InTex, InTexSampler, uvN).rgb + Texture2DSample(InTex, InTexSampler, uvP).rgb) * 0.5f;
+float3 finalColor = (Texture2DSample(InTex, InTexSampler, uvN).rgb + Texture2DSample(InTex, InTexSampler, uvP).rgb) / 2.f;
 
 // reduce the aliasing
 //float distance1 = horzSpan ? (InUV.x - uvN.x) : (InUV.y - uvN.y);
