@@ -1,7 +1,9 @@
+// targetPointを格納しないとクラッシュ
+
 // ---------------------------------------------
 // 尾崎 蒼宙
-// 2021/01/21 ~ 
-// 
+// 2021/01/21 ~ 02/09
+// 敵のC++化
 // ---------------------------------------------
 
 #pragma once
@@ -19,6 +21,9 @@
 #include "UObject/Class.h"
 #include "Components/BoxComponent.h"
 #include "TimerManager.h"								// 攻撃のSetTimer関数
+#include "Containers/Array.h"							// Emptyチェック
+#include "Math/Vector.h"								// デバッグ用
+#include "Sound/SoundBase.h"
 #include "Enemy.generated.h"
 
 class AAIController;
@@ -57,8 +62,9 @@ public:
 
 private:
 
-	void SetState(EState ChangeState);
+	
 	void CheckMoveToTargetPoint();
+	void IdleCoolDown(float deltatime_);
 
 public:
 	UPROPERTY(EditAnywhere, Category = "tp")
@@ -69,6 +75,8 @@ public:
 
 	UFUNCTION()
 		void OnSeePlayer(APawn* Pawn);
+	UFUNCTION()
+		void OnHear(APawn* OtherActor, const FVector&Location, float Volume);
 
 	UPROPERTY(EditAnywhere, Category = "tp")
 		TArray<FVector> targetpoint_pos;			// 後でprivate推奨
@@ -79,7 +87,8 @@ public:
 	APlayerCharacter* Player;
 
 	void Patrol(FVector pos_);
-	void Pursue();
+	void Pursue_Chase();
+	void Pursue_Hear();
 	void OutSeePlayer();
 
 	int tp_index_;		// targetpointの要素数
@@ -104,4 +113,33 @@ public:
 	bool attack_flag;		// 攻撃終了を検知するためのフラグ
 
 	bool preb_attack_flag_;
+
+	UPROPERTY(EditAnywhere, Category = "tp")
+		float idle_time_;
+	float time_cut_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector noise_pos;
+
+	UFUNCTION(BlueprintCallable, Category = "Set")
+		void SetHearPos(FVector pos_);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "tp")
+		bool is_launch_;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "tp")
+		bool player_can_control_;
+
+	bool is_player_damage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+		USoundBase* hear_se;
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+		USoundBase* chase_se;
+
+	UFUNCTION(BlueprintCallable, Category = "Set")
+		void SetState(EState ChangeState);
+
+	void PlaySE();
 };
