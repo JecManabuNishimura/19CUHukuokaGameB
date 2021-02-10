@@ -1314,11 +1314,6 @@ void APlayerCharacter::Respawn()
 	LevelSwitchHelper::OpenGameOverLevelMap(this);
 }
 
-void APlayerCharacter::SwitchEnemyChased(bool flag_)
-{
-	enemy_chased_ = flag_;
-}
-
 // C++‚Ì‚µ‚á‚ª‚Ş‚ªg‚¦‚È‚¢‚½‚ß
 // CheckStandingVR‚à‰¼•úŠü
 // (ì¬Ò:—Ñ‰_ô)

@@ -33,10 +33,9 @@ void AEnemy::BeginPlay()
 	// ‹”F‚³‚ê‚½‚ÉŒÄ‚Ño‚·ŠÖ”
 	Super::PostInitializeComponents();
 	ppawnsensing_->OnSeePawn.AddDynamic(this, &AEnemy::OnSeePlayer);
-	ppawnsensing_-
 	//ppawnsensing_->OnHearNoise.AddDynamic(this, &AEnemy::OnSeePlayer);
 
-	attack_collision_->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::OnOverlapBegin);
+	attack_collision_ ->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::OnOverlapBegin);
 
 	// İ’è‚µ‚½targetpoint‚Ì”•ª‚¾‚¯À•W‚Ìæ“¾
 	if (ptargetpoint_.Num() != 0)
