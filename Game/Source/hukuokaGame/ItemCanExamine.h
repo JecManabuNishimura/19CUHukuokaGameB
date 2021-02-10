@@ -1,8 +1,8 @@
 //-------------------------------------------------------------------
-// ファイル		：CanExamineItem.h
+// ファイル		：ItemCanExamine.h
 // 概要			：ItemBaseクラスを継承するファイル等の調べられるアイテムクラス
 // 作成者		：19CU0233 増井悠斗
-// 作成日		：2020/10/26
+// 作成日		：2021/02/10
 //-------------------------------------------------------------------
 
 #pragma once
@@ -12,15 +12,15 @@
 #include "PlayerCharacter.h"
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "CanExamineItem.generated.h"
+#include "ItemCanExamine.generated.h"
 
 UCLASS()
-class HUKUOKAGAME_API ACanExamineItem : public AItemBase
+class HUKUOKAGAME_API AItemCanExamine : public AItemBase
 {
 	GENERATED_BODY()
 
 public:
-	ACanExamineItem();
+	AItemCanExamine();
 
 protected:
 	virtual void BeginPlay() override;

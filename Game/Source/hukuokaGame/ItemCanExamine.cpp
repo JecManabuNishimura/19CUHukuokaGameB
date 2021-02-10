@@ -1,13 +1,13 @@
 //-------------------------------------------------------------------
-// ファイル		：CanExamineItem.cpp
+// ファイル		：ItemCanExamine.cpp
 // 概要			：ItemBaseクラスを継承するファイル等の調べられるアイテムクラス
 // 作成者		：19CU0233 増井悠斗
-// 作成日		：2020/10/26
+// 作成日		：2021/02/10
 //-------------------------------------------------------------------
 
-#include "CanExamineItem.h"
+#include "ItemCanExamine.h"
 
-ACanExamineItem::ACanExamineItem()
+AItemCanExamine::AItemCanExamine()
 	: p_photo_mesh_(NULL)
 	, distance_from_file_to_player_(150.f)
 	, p_playercharacter_(NULL)
@@ -17,10 +17,10 @@ ACanExamineItem::ACanExamineItem()
 {
 	p_photo_mesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PhotoMeshComp"));
 
-	if(p_photo_mesh_ != NULL) p_photo_mesh_->SetupAttachment(RootComponent);
+	if (p_photo_mesh_ != NULL) p_photo_mesh_->SetupAttachment(RootComponent);
 }
 
-void ACanExamineItem::BeginPlay()
+void AItemCanExamine::BeginPlay()
 {
 	// プレイヤーを取得
 	p_playercharacter_ = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
@@ -34,7 +34,7 @@ void ACanExamineItem::BeginPlay()
 	Super::BeginPlay();
 }
 
-void ACanExamineItem::Tick(float DeltaTime)
+void AItemCanExamine::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
@@ -48,7 +48,7 @@ void ACanExamineItem::Tick(float DeltaTime)
 	}
 }
 
-void ACanExamineItem::CheckedByPlayer()
+void AItemCanExamine::CheckedByPlayer()
 {
 	// 現在調べられていないならプレイヤーの目の前に表示
 	if (!is_show_details_)
