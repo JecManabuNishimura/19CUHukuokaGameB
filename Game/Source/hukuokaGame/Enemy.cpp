@@ -33,6 +33,7 @@ void AEnemy::BeginPlay()
 	// 視認された時に呼び出す関数
 	Super::PostInitializeComponents();
 	ppawnsensing_->OnSeePawn.AddDynamic(this, &AEnemy::OnSeePlayer);
+	ppawnsensing_-
 	//ppawnsensing_->OnHearNoise.AddDynamic(this, &AEnemy::OnSeePlayer);
 
 	attack_collision_->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::OnOverlapBegin);
@@ -95,25 +96,27 @@ void AEnemy::Tick(float DeltaTime)
 		Patrol(targetpoint_pos[tp_index_]);
 		CheckMoveToTargetPoint();
 	}
-	else if (enemy_state_ == EState::kChase1)
+	else if (enemy_state_ == EState::kChase1 || enemy_state_ == EState::kChase2)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Hear");
 		// NULLならプレイヤーが入る
 		FVector enemyHeadPos = GetMesh()->GetSocketLocation("Head");
 
-		GetWorld()->LineTraceSingleByChannel(hitresult_, enemyHeadPos, Player->GetActorLocation(), ECollisionChannel::ECC_Visibility);
+		
 		UKismetSystemLibrary::DrawDebugLine(GetWorld(), enemyHeadPos, Player->GetActorLocation(), FLinearColor(0, 255, 0, 100), 1, 1);
 
-		if (hitresult_.GetActor() == NULL)
-		{
-			Pursue_Chase();
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "NULL");
-		}
-		else
+		//if (hitresult_.GetActor() == NULL)
+		if (GetWorld()->LineTraceSingleByChannel(hitresult_, enemyHeadPos, Player->GetActorLocation(), ECollisionChannel::ECC_Visibility))
 		{
 			in_eye_ = false;
 			OutSeePlayer();
 		}
+		else
+		{
+			Pursue_Chase();
+			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "NULL");
+		}
+
 	}
 	else if (enemy_state_ == EState::kHear)
 	{
@@ -121,6 +124,17 @@ void AEnemy::Tick(float DeltaTime)
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "Hear");
 	}
 
+	if (enemy_state_ != EState::kChase1 && enemy_state_ != EState::kChase2)
+	{
+		if (a == true)
+		{
+			if (Player != NULL)
+			{
+				
+				a = false;
+			}
+		}
+	}
 	preb_attack_flag_ = attack_flag;
 }
 
@@ -146,6 +160,8 @@ void AEnemy::OnSeePlayer (APawn* Pawn)
 	{
 		in_eye_ = true;
 		SetState(EState::kChase1);
+		Player->SetEnemyChased(true);
+		a = true;
 	}
 }
 
@@ -179,6 +195,7 @@ void AEnemy::OutSeePlayer()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "OutSee");
 	SetState(EState::kIdle);
+	Player->SetEnemyChased(false);
 }
 
 void AEnemy::OnHear(APawn* OtherActor, const FVector& Location, float Volume)

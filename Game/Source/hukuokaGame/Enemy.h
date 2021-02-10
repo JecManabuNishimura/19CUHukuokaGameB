@@ -142,4 +142,5 @@ public:
 		void SetState(EState ChangeState);
 
 	void PlaySE();
+	bool a;
 };

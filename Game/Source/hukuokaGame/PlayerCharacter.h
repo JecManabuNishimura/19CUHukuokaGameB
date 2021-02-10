@@ -462,4 +462,7 @@ public:
 	void SetPlayerCameraControlFlag(const bool _flag) { can_player_camera_control_ = _flag; }
 
 	void Respawn();	// リスポーンする関数(作成者：尾崎)
+
+	bool enemy_chased_;
+	void SetEnemyChased(const bool _flag) { enemy_chased_ = _flag; }
 };
