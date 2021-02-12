@@ -26,8 +26,10 @@
 #include "Sound/SoundBase.h"
 #include "Enemy.generated.h"
 
+// 前方宣言
 class AAIController;
 
+// 敵のステートの宣言
 UENUM(BlueprintType)
 enum class EState : uint8
 {
@@ -62,85 +64,82 @@ public:
 
 private:
 
-	
-	void CheckMoveToTargetPoint();
-	void IdleCoolDown(float deltatime_);
+	TArray<FVector> targetpoint_pos_;		// 対応しているtargetpointの位置情報取得用
+
+	void CheckMoveToTargetPoint();			// 移動先に到着したか確認する関数
+	void IdleCoolDown(float _deltatime);	// Idle状態の解除をするか確認する関数
+	void Patrol(FVector _pos);		// Patrol状態の時に呼ばれる関数
+	void Pursue_Chase();			// Chase状態の時に呼ばれる関数
+	void Pursue_Hear();				// Hear状態の時に呼ばれる関数
+	void OutSeePlayer();			// Chase状態で、Playerが視野の外にいる場合に呼ばれる関数
+	void PlaySE();					// SEを鳴らす関数
 
 public:
-	UPROPERTY(EditAnywhere, Category = "tp")
-		TArray<ATargetPoint*> ptargetpoint_;
-
-	UPROPERTY(VisibleAnywhere, Category = "pawnsensing")
-		class UPawnSensingComponent* ppawnsensing_;
-
-	UFUNCTION()
-		void OnSeePlayer(APawn* Pawn);
-	UFUNCTION()
-		void OnHear(APawn* OtherActor, const FVector&Location, float Volume);
-
-	UPROPERTY(EditAnywhere, Category = "tp")
-		TArray<FVector> targetpoint_pos;			// 後でprivate推奨
-
-	// コントローラー取得
-	AEnemyMyAIController* AIController;
-	// player取得
-	APlayerCharacter* Player;
-
-	void Patrol(FVector pos_);
-	void Pursue_Chase();
-	void Pursue_Hear();
-	void OutSeePlayer();
-
-	int tp_index_;		// targetpointの要素数
-	bool in_eye_;
-	FHitResult hitresult_;	// レイキャストの結果
-
-	UPROPERTY(EditAnywhere, Category = "tp")
-		float headLine_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		EState enemy_state_;
+		bool attack_flag_;							// 攻撃終了を検知するためのフラグ
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "tp")
+		bool is_launch_;							// ゲーム開始時に動かして良いかどうかのフラグ
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "tp")
+		bool player_can_control_;					// プレイヤーの操作可能かどうかのフラグ
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		EState enemy_state_;						// 敵の状態格納用
+
+	UPROPERTY(EditAnywhere, Category = "tp")
+		float headLine_;							// 頭の高さの設定用(レイを飛ばす処理にて使用)
+
+	UPROPERTY(EditAnywhere, Category = "tp")
+		float idle_time_;							// 待機時間
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FVector noise_pos_;							// 音を発した地点
+
+	UPROPERTY(VisibleAnywhere, Category = "pawnsensing")
+		class UPawnSensingComponent* ppawnsensing_;	// pawnsensing格納用
+
+	UPROPERTY(EditAnywhere, Category = "tp")
+		TArray<ATargetPoint*> ptargetpoint_;		// targetpoint格納用
+
+			// 攻撃の当たり判定
 	UPROPERTY(EditAnywhere, Category = "tp")
 		UBoxComponent* attack_collision_;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+		USoundBase* hear_se_;						// 音を検知した際に鳴らすSE格納用
+
+	UPROPERTY(EditAnywhere, Category = "Sound")
+		USoundBase* chase_se_;						// 視覚で検知した際に鳴らすSE格納用
+
+// ----------------------------------------------------------------------------------------
+
+	UFUNCTION()
+		void OnSeePlayer(APawn* Pawn);											// プレイヤーを視認した際に呼ばれる
+
+	UFUNCTION()
+		void OnHear(APawn* OtherActor, const FVector& Location, float Volume);	// 実装の目処が立ってない
+
+	// attack_collision_にて使用
 	UFUNCTION()
 		void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	FTimerHandle timer_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool attack_flag;		// 攻撃終了を検知するためのフラグ
-
-	bool preb_attack_flag_;
-
-	UPROPERTY(EditAnywhere, Category = "tp")
-		float idle_time_;
-	float time_cut_;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector noise_pos;
+	UFUNCTION(BlueprintCallable, Category = "Set")								// 外部オブジェクトにて音を発した地点を格納する関数
+		void SetHearPos(FVector _pos);
 
 	UFUNCTION(BlueprintCallable, Category = "Set")
-		void SetHearPos(FVector pos_);
+		void SetState(EState _changeState);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "tp")
-		bool is_launch_;
+// ----------------------------------------------------------------------------------------
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "tp")
-		bool player_can_control_;
+	bool in_eye_;				// 視野の中にいるかどうか
+	bool chase_flag_;			// 視認した際にたてるフラグ
+	bool is_player_damage_;		// ダメージを受ける状態か否かを確認する関数(これが無いとtick関数で何度も呼ばれてしまうため作成)
+	FHitResult hitresult_;		// レイキャストの結果
+	float time_cut_;			// Idle状態の経過時間格納用
+	int tp_index_;				// targetpointの要素数
 
-	bool is_player_damage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
-		USoundBase* hear_se;
-
-	UPROPERTY(EditAnywhere, Category = "Sound")
-		USoundBase* chase_se;
-
-	UFUNCTION(BlueprintCallable, Category = "Set")
-		void SetState(EState ChangeState);
-
-	void PlaySE();
-	bool a;
+	AEnemyMyAIController* AIController;		// コントローラー取得
+	APlayerCharacter* Player;				// player取得
 };

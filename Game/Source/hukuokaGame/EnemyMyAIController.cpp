@@ -15,7 +15,7 @@ AEnemyMyAIController::AEnemyMyAIController()//(const class FObjectInitializer& O
    // ConstructorHelpers::FObjectFinder<UBehaviorTree> BTFinder(TEXT("/Game/C++Enemy/Enemy_BT"));
     //BehaviorTree = BTFinder.Object;
 
-    PlayerActorKeyName = "PlayerActor";
+   // PlayerActorKeyName = "PlayerActor";
 }
 
 void AEnemyMyAIController::BeginPlay()

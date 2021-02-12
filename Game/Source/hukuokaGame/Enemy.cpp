@@ -2,15 +2,25 @@
 
 // Sets default values
 AEnemy::AEnemy()
-	: enemy_state_(EState::kPatrol)
-	, ptargetpoint_()
-	, ppawnsensing_(NULL)
-	, targetpoint_pos()
-	, tp_index_(0)
-	, in_eye_(false)
-	, hitresult_(NULL)
+	: targetpoint_pos_()
+	, attack_flag_(false)
+	, is_launch_(false)
+	, player_can_control_(true)
+	, enemy_state_(EState::kPatrol)
 	, headLine_(0.f)
+	, idle_time_(0.f)
+	, noise_pos_(FVector::ZeroVector)
+	, ppawnsensing_(NULL)
+	, ptargetpoint_()
 	, attack_collision_(NULL)
+	, hear_se_(NULL)
+	, chase_se_(NULL)
+	, in_eye_(false)
+	, chase_flag_(false)
+	, is_player_damage_(false)
+	, hitresult_(NULL)
+	, time_cut_(0.f)
+	, tp_index_(0)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -20,7 +30,7 @@ AEnemy::AEnemy()
 	attack_collision_ = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCollision"));
 	attack_collision_->SetupAttachment(RootComponent);
 
-	is_player_damage = false;
+	is_player_damage_ = false;
 }
 
 // Called when the game starts or when spawned
@@ -33,6 +43,7 @@ void AEnemy::BeginPlay()
 	// 視認された時に呼び出す関数
 	Super::PostInitializeComponents();
 	ppawnsensing_->OnSeePawn.AddDynamic(this, &AEnemy::OnSeePlayer);
+	// 実装が上手くできない為BPに記入
 	//ppawnsensing_->OnHearNoise.AddDynamic(this, &AEnemy::OnSeePlayer);
 
 	attack_collision_ ->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::OnOverlapBegin);
@@ -42,17 +53,12 @@ void AEnemy::BeginPlay()
 	{
 		for (int i = 0; i < ptargetpoint_.Num(); ++i)
 		{
-			targetpoint_pos.Add(ptargetpoint_[i]->GetActorLocation());
+			targetpoint_pos_.Add(ptargetpoint_[i]->GetActorLocation());
 		}
 	}
 
 	// コントローラー取得(移動に使用)
 	AIController = Cast<AEnemyMyAIController>(GetController());
-
-	if (!is_launch_)
-	{
-		SetState(EState::kIdle);
-	}
 }
 
 // Called every frame
@@ -60,52 +66,54 @@ void AEnemy::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// 起動可能でないならIdle状態にしてretrunする
 	if (is_launch_ == false)
 	{
 		SetState(EState::kIdle);
 		return;
 	}
 
-	if (attack_flag)
+	// 攻撃状態になり、攻撃のフラグが立てられたとき
+	if (attack_flag_)
 	{
+		// プレイヤーが動かせるようになったら
 		if (player_can_control_)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Idoukanou");
 			if (Player != NULL)
 			{
+				// プレイヤー側を捕まっていない状態
 				Player->SetIsFound(false, FVector(0.f, 0.f, 0.f));
-				if(is_player_damage)
+				// 一度だけダメージを与える
+				if(is_player_damage_)
 				{
 					Player->AttackFromEnemy();
-					is_player_damage = false;
+					is_player_damage_ = false;
 				}
 
 			}
 		}
 	}
-
+	// 待機状態
 	if (enemy_state_ == EState::kIdle)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Idle");
-		IdleCoolDown(DeltaTime);
+		IdleCoolDown(DeltaTime);		// 一定時間待機
 	}
+	// 巡回状態
 	else if (enemy_state_ == EState::kPatrol)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Patrol");
-		Patrol(targetpoint_pos[tp_index_]);
-		CheckMoveToTargetPoint();
+		Patrol(targetpoint_pos_[tp_index_]);		// 指定された地点を徘徊
+		CheckMoveToTargetPoint();					// 目的地に着いたかチェックする関数
 	}
+	// 追跡状態
 	else if (enemy_state_ == EState::kChase1 || enemy_state_ == EState::kChase2)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "Hear");
 		// NULLならプレイヤーが入る
 		FVector enemyHeadPos = GetMesh()->GetSocketLocation("Head");
 
-		
-		UKismetSystemLibrary::DrawDebugLine(GetWorld(), enemyHeadPos, Player->GetActorLocation(), FLinearColor(0, 255, 0, 100), 1, 1);
+		UKismetSystemLibrary::DrawDebugLine(GetWorld(), enemyHeadPos, Player->GetCameraLocation(), FLinearColor(0, 255, 0, 100), 1, 1);
 
-		//if (hitresult_.GetActor() == NULL)
-		if (GetWorld()->LineTraceSingleByChannel(hitresult_, enemyHeadPos, Player->GetActorLocation(), ECollisionChannel::ECC_Visibility))
+		// レイを飛ばしてプレイヤーが隠れる様であれば
+		if (GetWorld()->LineTraceSingleByChannel(hitresult_, enemyHeadPos, Player->GetCameraLocation(), ECollisionChannel::ECC_Visibility))
 		{
 			in_eye_ = false;
 			OutSeePlayer();
@@ -113,28 +121,28 @@ void AEnemy::Tick(float DeltaTime)
 		else
 		{
 			Pursue_Chase();
-			GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, "NULL");
 		}
 
 	}
+	// 聴覚検知状態
 	else if (enemy_state_ == EState::kHear)
 	{
+		// 音の鳴るほうへ移動
 		Pursue_Hear();
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, "Hear");
 	}
 
+	// 直前まで追跡を行っていた場合
 	if (enemy_state_ != EState::kChase1 && enemy_state_ != EState::kChase2)
 	{
-		if (a == true)
+		if (chase_flag_ == true)
 		{
 			if (Player != NULL)
 			{
-				
-				a = false;
+				chase_flag_ = false;
+				Player->SetEnemyChased(false);
 			}
 		}
 	}
-	preb_attack_flag_ = attack_flag;
 }
 
 // Called to bind functionality to input
@@ -160,7 +168,7 @@ void AEnemy::OnSeePlayer (APawn* Pawn)
 		in_eye_ = true;
 		SetState(EState::kChase1);
 		Player->SetEnemyChased(true);
-		a = true;
+		chase_flag_ = true;
 	}
 }
 
@@ -187,7 +195,7 @@ void AEnemy::Pursue_Chase()
 
 void AEnemy::Pursue_Hear()
 {
-	AIController->MoveToLocation(noise_pos);
+	AIController->MoveToLocation(noise_pos_);
 }
 
 void AEnemy::OutSeePlayer()
@@ -204,14 +212,13 @@ void AEnemy::OnHear(APawn* OtherActor, const FVector& Location, float Volume)
 
 void AEnemy::CheckMoveToTargetPoint()
 {
-	if (this->GetActorLocation().X >= targetpoint_pos[tp_index_].X - 100.f && this->GetActorLocation().X <= targetpoint_pos[tp_index_].X + 100)
+	if (this->GetActorLocation().X >= targetpoint_pos_[tp_index_].X - 100.f && this->GetActorLocation().X <= targetpoint_pos_[tp_index_].X + 100)
 	{
-		if (this->GetActorLocation().Y >= targetpoint_pos[tp_index_].Y - 100.f && this->GetActorLocation().Y <= targetpoint_pos[tp_index_].Y + 100)
+		if (this->GetActorLocation().Y >= targetpoint_pos_[tp_index_].Y - 100.f && this->GetActorLocation().Y <= targetpoint_pos_[tp_index_].Y + 100)
 		{
 			++tp_index_;
 			tp_index_ = tp_index_ % ptargetpoint_.Num();
 			SetState(EState::kIdle);
-
 		}
 	}
 }
@@ -228,14 +235,14 @@ void AEnemy::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 		SetState(EState::kAttack);
 		Player->SetIsFound(true, this->GetActorLocation());
 		player_can_control_ = false;
-		attack_flag = true;
-		is_player_damage = true;
+		attack_flag_ = true;
+		is_player_damage_ = true;
 	}
 }
 
-void AEnemy::IdleCoolDown(float deltatime)
+void AEnemy::IdleCoolDown(float _deltatime)
 {
-	time_cut_ += deltatime;
+	time_cut_ += _deltatime;
 	if (time_cut_ >= idle_time_)
 	{
 		time_cut_ = 0.f;
@@ -243,19 +250,19 @@ void AEnemy::IdleCoolDown(float deltatime)
 	}
 }
 
-void AEnemy::SetHearPos(FVector pos_)
+void AEnemy::SetHearPos(FVector _pos)
 {
-	noise_pos = pos_;
+	noise_pos_ = _pos;
 }
 
 void AEnemy::PlaySE() 
 {
-	if(enemy_state_ == EState::kChase1 && chase_se != NULL)
+	if(enemy_state_ == EState::kChase1 && chase_se_ != NULL)
 	{
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), chase_se, GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), chase_se_, GetActorLocation());
 	}
-	else if (enemy_state_ == EState::kHear && hear_se != NULL)
+	else if (enemy_state_ == EState::kHear && hear_se_ != NULL)
 	{
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), hear_se, GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), hear_se_, GetActorLocation());
 	}
 }
