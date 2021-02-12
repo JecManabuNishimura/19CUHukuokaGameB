@@ -53,7 +53,6 @@
 APlayerCharacter::APlayerCharacter()
 	: isHeartBeatOn(false)
 	, in_the_locker_(false)
-	, m_isStanding(true)
 	, have_cardkey_state_(0)
 	, player_threshold_to_run_(1.0f)
 	, player_run_speed_(500.0f)
@@ -80,6 +79,7 @@ APlayerCharacter::APlayerCharacter()
 	, can_player_move_control_(true)
 	, can_player_camera_control_(true)
 	, is_damaged_(false)
+	, is_chased_from_enemy_(false)
 	, m_playerMoveSpeed(0.0f)
 	, damage_count_(0)
 	, m_playerMoveInput(FVector2D::ZeroVector)
@@ -99,6 +99,7 @@ APlayerCharacter::APlayerCharacter()
 	, film_toe_for_debuff_(0.8f)
 	, vr_HitResult(NULL)
 	, vr_ItemHitPoint(FVector::ZeroVector)
+	, m_isStanding(true)
 	, m_pSpringArm(NULL)
 	, m_pCameraBase(NULL)
 	, m_pCamera(NULL)
@@ -663,48 +664,56 @@ void APlayerCharacter::CheckItem()
 	// ライントレースからボックストレースに変更(11/20 増井)
 	if(UKismetSystemLibrary::BoxTraceSingle(this, start, end, box_half_size_, GetActorRotation(), TraceTypeQuery3, false, actors_to_ignore, draw_debug_trace_type_, outHit, true, FLinearColor::Red, FLinearColor::Green, 1.0f))
 	{
-		// アイテム基本クラスにキャスト
+		// 基本クラスにキャスト
 		m_pCheckingItem = Cast<AItemBase>(outHit.GetActor());
 
 		if (m_pCheckingItem != NULL)
 		{
-
-			// 1フレーム前のアイテムと違うなら更新
-			if (m_pCheckingItem != m_pPrevCheckItem)
+			// 追われていない、もしくは追われていてもチェックできるアイテムか(追われているとチェックできないアイテムが存在)
+			if(!is_chased_from_enemy_ || m_pCheckingItem->GetCanCheckedWhenPlayerChased())
 			{
-				checking_item_comp_ = outHit.GetComponent();
-
-				// ヒットしたコンポーネントのインデックスを取得
-				for (int i = 0; i < m_pCheckingItem->GetRootComponent()->GetNumChildrenComponents(); ++i)
+				// 1フレーム前のアイテムと違うなら更新
+				if (m_pCheckingItem != m_pPrevCheckItem)
 				{
-					if (checking_item_comp_ == m_pCheckingItem->GetRootComponent()->GetChildComponent(i))
+					checking_item_comp_ = outHit.GetComponent();
+
+					// ヒットしたコンポーネントのインデックスを取得
+					for (int i = 0; i < m_pCheckingItem->GetRootComponent()->GetNumChildrenComponents(); ++i)
 					{
-						checking_item_comp_index_ = i;
-						break;
+						if (checking_item_comp_ == m_pCheckingItem->GetRootComponent()->GetChildComponent(i))
+						{
+							checking_item_comp_index_ = i;
+							break;
+						}
 					}
+
+					// 前フレームで有効なオブジェクトをチェックしていたら
+					if (m_pPrevCheckItem != NULL)
+					{
+						// 前フレームでチェックしていたオブジェクトの被チェックを無効に
+						m_pPrevCheckItem->SetCheckedState(false);
+
+						// 白枠を非表示にする	by	朱適
+						m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
+
+						// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
+						OnItemCheckEndEventDispatcher.Broadcast();
+					}
+					// 新しくチェックしたオブジェクトの被チェックを有効に
+					m_pCheckingItem->SetCheckedState(true);
+
+					// 白枠を表示にする		by	朱適
+					m_pCheckingItem->SetOutline(true, checking_item_comp_index_);
+
+					// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートに追加)
+					OnItemCheckBeginEventDispatcher.Broadcast();
 				}
+			}
+			else
+			{
+				m_pCheckingItem = NULL;
 
-				// 前フレームで有効なオブジェクトをチェックしていたら
-				if (m_pPrevCheckItem != NULL)
-				{
-					// 前フレームでチェックしていたオブジェクトの被チェックを無効に
-					m_pPrevCheckItem->SetCheckedState(false);
-
-					// 白枠を非表示にする	by	朱適
-					m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
-
-					// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
-					OnItemCheckEndEventDispatcher.Broadcast();
-				}
-				// 新しくチェックしたオブジェクトの被チェックを有効に
-				m_pCheckingItem->SetCheckedState(true);
-
-				// 白枠を表示にする		by	朱適
-				m_pCheckingItem->SetOutline(true, checking_item_comp_index_);
-
-				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートに追加)
-				OnItemCheckBeginEventDispatcher.Broadcast();
-				
+				if (m_pPrevCheckItem != NULL) m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);	// 白枠を非表示にする
 			}
 		}
 		else
@@ -1205,58 +1214,67 @@ void APlayerCharacter::UpdateVRLaser()
 
 		if (m_pCheckingItem != NULL)
 		{
-			vr_ItemHitPoint = vr_HitResult.ImpactPoint;
-
-			// 1フレーム前のアイテムと違うなら更新
-			if (m_pCheckingItem != m_pPrevCheckItem)
+			// 追われていない、もしくは追われていてもチェックできるアイテムか(追われているとチェックできないアイテムが存在)
+			if (!is_chased_from_enemy_ || m_pCheckingItem->GetCanCheckedWhenPlayerChased())
 			{
-				checking_item_comp_ = vr_HitResult.GetComponent();
+				vr_ItemHitPoint = vr_HitResult.ImpactPoint;
 
-				// ヒットしたコンポーネントのインデックスを取得
-				for (int i = 0; i < m_pCheckingItem->GetRootComponent()->GetNumChildrenComponents(); ++i)
+				// 1フレーム前のアイテムと違うなら更新
+				if (m_pCheckingItem != m_pPrevCheckItem)
 				{
-					if (checking_item_comp_ == m_pCheckingItem->GetRootComponent()->GetChildComponent(i))
+					checking_item_comp_ = vr_HitResult.GetComponent();
+
+					// ヒットしたコンポーネントのインデックスを取得
+					for (int i = 0; i < m_pCheckingItem->GetRootComponent()->GetNumChildrenComponents(); ++i)
 					{
-						checking_item_comp_index_ = i;
-						break;
+						if (checking_item_comp_ == m_pCheckingItem->GetRootComponent()->GetChildComponent(i))
+						{
+							checking_item_comp_index_ = i;
+							break;
+						}
 					}
+
+					// 前フレームで有効なオブジェクトをチェックしていたら
+					if (m_pPrevCheckItem != NULL)
+					{
+						// 前フレームでチェックしていたオブジェクトの被チェックを無効に
+						m_pPrevCheckItem->SetCheckedState(false);
+
+						// 白枠を非表示にする	by	朱適
+						m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
+
+						// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
+						// OnItemCheckEndEventDispatcher.Broadcast();
+					}
+					// 新しくチェックしたオブジェクトの被チェックを有効に
+					m_pCheckingItem->SetCheckedState(true);
+
+					// 白枠を表示にする		by	朱適
+					m_pCheckingItem->SetOutline(true, prev_check_item_comp_index_);
+
+					// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートに追加)
+					// OnItemCheckBeginEventDispatcher.Broadcast();
+
+					const FTransform SpawnTransform = FTransform(FRotator(0.0f, 0.0f, 0.0f), vr_ItemHitPoint, FVector(1.0f, 1.0f, 1.0f));
+					AActor* vr_ItemActor;
+
+					// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("=== %s"), *outHit.ImpactPoint.ToString()));
+
+					TSubclassOf<class AActor> vr_ItemCommand = TSoftClassPtr<AActor>(FSoftObjectPath("Blueprint'/Game/Blueprints/BP_VR_3DUI_ItemCommandActor.BP_VR_3DUI_ItemCommandActor_C'")).LoadSynchronous();	// pathにあるクラスを取得
+					if (vr_ItemCommand != nullptr)
+					{
+						vr_ItemActor = GetWorld()->SpawnActor<AActor>(vr_ItemCommand, SpawnTransform);						// VRのItem UIをActorとして生成する
+						vr_ItemActor->SetActorEnableCollision(false);
+					} // end if()
+
 				}
-
-				// 前フレームで有効なオブジェクトをチェックしていたら
-				if (m_pPrevCheckItem != NULL)
-				{
-					// 前フレームでチェックしていたオブジェクトの被チェックを無効に
-					m_pPrevCheckItem->SetCheckedState(false);
-
-					// 白枠を非表示にする	by	朱適
-					m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
-
-					// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートから消す)
-					// OnItemCheckEndEventDispatcher.Broadcast();
-				}
-				// 新しくチェックしたオブジェクトの被チェックを有効に
-				m_pCheckingItem->SetCheckedState(true);
-
-				// 白枠を表示にする		by	朱適
-				m_pCheckingItem->SetOutline(true, prev_check_item_comp_index_);
-
-				// イベントディスパッチャー呼び出し(アイテムコマンドUIをビューポートに追加)
-				// OnItemCheckBeginEventDispatcher.Broadcast();
-
-				const FTransform SpawnTransform = FTransform(FRotator(0.0f, 0.0f, 0.0f), vr_ItemHitPoint, FVector(1.0f, 1.0f, 1.0f));
-				AActor* vr_ItemActor;
-
-				// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("=== %s"), *outHit.ImpactPoint.ToString()));
-
-				TSubclassOf<class AActor> vr_ItemCommand = TSoftClassPtr<AActor>(FSoftObjectPath("Blueprint'/Game/Blueprints/BP_VR_3DUI_ItemCommandActor.BP_VR_3DUI_ItemCommandActor_C'")).LoadSynchronous();	// pathにあるクラスを取得
-				if (vr_ItemCommand != nullptr)
-				{
-					vr_ItemActor = GetWorld()->SpawnActor<AActor>(vr_ItemCommand, SpawnTransform);						// VRのItem UIをActorとして生成する
-					vr_ItemActor->SetActorEnableCollision(false);
-				} // end if()
-
 			}
+			else
+			{
+				m_pCheckingItem = NULL;
 
+				if(m_pPrevCheckItem != NULL) m_pPrevCheckItem->SetOutline(false, prev_check_item_comp_index_);
+			}
 
 			if (vr_InCameraMode == false)
 			{

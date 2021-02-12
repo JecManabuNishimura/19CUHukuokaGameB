@@ -46,12 +46,18 @@ protected:
 	UPROPERTY(EditAnywhere)
 		FString command_name_;				// コマンドの名前(種類)
 
+	UPROPERTY(EditAnywhere)
+		bool can_checked_when_player_chased_;	// プレイヤーが敵に追われているときにチェックできるアイテムか
+
 protected:
 	bool is_checked_;						// プレイヤーにチェックされているか
 
 public:
 	// プレイヤーによる被チェック状態を設定
 	void SetCheckedState(const bool _new_state) { is_checked_ = _new_state; }
+
+	// プレイヤーが敵に追われているときにチェック出来るアイテムかどうかを返す
+	bool GetCanCheckedWhenPlayerChased()const { return can_checked_when_player_chased_; }
 
 	// コマンド名を返す
 	FString GetCommandName()const { return command_name_; }

@@ -21,6 +21,7 @@
 AItemBase::AItemBase()
 	: sound_when_checked_(NULL)
 	, command_name_("")
+	, can_checked_when_player_chased_(true)
 	, is_checked_(false)
 	, items_Mission_Num(0)
 	, isMissionComplete(false)

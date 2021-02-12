@@ -210,10 +210,6 @@ private:
 	UPROPERTY(BlueprintAssignable)
 		FOnItemCheckEndEventDispatcher  OnItemCheckEndEventDispatcher;
 
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move")
-		bool m_isStanding;						// 立っているかどうかのフラグ(作成者:林雲暉)(12/06 CategoryをNewMoveからMoveに変更 修正者:増井悠斗)
-
 private:
 	// カードキーの所持状態
 	unsigned char have_cardkey_state_;
@@ -293,6 +289,8 @@ private:
 
 	bool is_damaged_;
 
+	bool is_chased_from_enemy_;					// 敵に追われているか
+
 	float m_playerMoveSpeed;					// プレイヤーの移動速度
 
 	int damage_count_;							// 敵から攻撃を受けた回数(1回…聴覚デバフ、2回…触覚デバフ、3回…視覚デバフ、4回…死)
@@ -367,6 +365,9 @@ private:
 
 public: 
 	// ===== 移動としゃがむ　プロパティ  (作成者:林雲暉) =====
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move")
+		bool m_isStanding;						// 立っているかどうかのフラグ(作成者:林雲暉)(12/06 CategoryをNewMoveからMoveに変更 修正者:増井悠斗)
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (作成者:林雲暉)
 
@@ -463,6 +464,5 @@ public:
 
 	void Respawn();	// リスポーンする関数(作成者：尾崎)
 
-	bool enemy_chased_;
-	void SetEnemyChased(const bool _flag) { enemy_chased_ = _flag; }
+	void SetEnemyChased(const bool _flag) { is_chased_from_enemy_ = _flag; }
 };
