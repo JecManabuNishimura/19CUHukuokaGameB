@@ -46,4 +46,10 @@ public:
 		void GetIsCry(bool flag) { m_is_baby_cry = flag; }
 	UPROPERTY(EditAnywhere, Category = "Mesh")
 		float m_disappea_collision_time_;		// ‰½•bŠÔ“–‚½‚è”»’è‚ð‚È‚­‚·‚©
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+		USoundBase* glass_se_;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+		USoundBase* door_se_;
+	UPROPERTY(EditAnywhere, Category = "Mesh")
+		USceneComponent* root;
 };

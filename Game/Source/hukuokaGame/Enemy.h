@@ -65,6 +65,7 @@ public:
 private:
 
 	TArray<FVector> targetpoint_pos_;		// 対応しているtargetpointの位置情報取得用
+	FVector last_see_pos;					// 最後に視認した座標
 
 	void CheckMoveToTargetPoint();			// 移動先に到着したか確認する関数
 	void IdleCoolDown(float _deltatime);	// Idle状態の解除をするか確認する関数
@@ -73,6 +74,9 @@ private:
 	void Pursue_Hear();				// Hear状態の時に呼ばれる関数
 	void OutSeePlayer();			// Chase状態で、Playerが視野の外にいる場合に呼ばれる関数
 	void PlaySE();					// SEを鳴らす関数
+	void LoseSight_Chase();			// 見失った時
+	void CheckMoveToLastSeePos();	// 見失った地点まで行ったかどうかを確認する関数
+
 
 public:
 
