@@ -4,6 +4,7 @@
 // 作成日		：2020/11/18
 // 概要			：全体的なライトを制御するコントローラー
 // 更新履歴		：2020/12/22		ライトのMeshComponentの色変えを追加しました
+// 更新履歴		：2021/02/13		複数のライトコンポネントに対応しました
 //-------------------------------------------------------------------
 
 #include "GlobalLightController.h"
@@ -37,11 +38,17 @@ void AGlobalLightController::BeginPlay()
 	for (AActor* actor : lightActors)
 	{
 		// LightComponentを取得する
-		auto lightCmp = actor->GetComponentByClass(ULightComponent::StaticClass());
-		if (lightCmp != NULL)
+		// auto lightCmp = actor->GetComponentByClass(ULightComponent::StaticClass());
+		// 複数のライトに対応しました		by 朱適
+		auto lightCmpList = actor->GetComponentsByClass(ULightComponent::StaticClass());
+		if (lightCmpList.Num() > 0)
 		{
-			lightComponentsArray.Add(Cast<ULightComponent>(lightCmp));
+			for(auto* lightCmp : lightCmpList)
+			{
+				lightComponentsArray.Add(Cast<ULightComponent>(lightCmp));
+			}
 		}
+		
 
 		// MeshComponentを取得する		by 朱適
 		auto lightMeshCmpList = actor->GetComponentsByClass(UStaticMeshComponent::StaticClass());

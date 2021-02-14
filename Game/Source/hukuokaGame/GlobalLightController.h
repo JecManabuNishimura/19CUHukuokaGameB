@@ -4,6 +4,7 @@
 // 作成日		：2020/11/18
 // 概要			：全てのライトを制御するコントローラー
 // 更新履歴		：2020/12/22		ライトのMeshComponentの色変えを追加しました
+// 更新履歴		：2021/02/13		複数のライトコンポネントに対応しました
 //-------------------------------------------------------------------
 
 #pragma once
@@ -34,9 +35,11 @@ public:
 
 private:
 	// 全てのライトコンポネントを格納する配列
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Global Light Array List", meta = (AllowPrivateAccess = "true"))
 	TArray<ULightComponent*> lightComponentsArray;
 
 	// 全てのライトのMeshComponentを格納する配列	by	朱適
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Global Light Array List", meta = (AllowPrivateAccess = "true"))
 	TArray<UStaticMeshComponent*> lightMeshCompArray;
 
 public:
