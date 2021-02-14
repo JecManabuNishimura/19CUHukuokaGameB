@@ -13,12 +13,21 @@ ADestroyDoor::ADestroyDoor()
 	: m_is_baby_cry(false)
 	, m_pdoor_mesh_(NULL)
 	, m_impulsevalue_(FVector::ZeroVector)
-	, m_disappea_collision_time_(0.f)
 	, m_time_cnt_(0.f)
 	, m_impuls_flag_(false)
+	, m_disappea_collision_time_(0.f)
+	, glass_se_(NULL)
+	, door_se_(NULL)
+	, root(NULL)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	if (root)
+	{
+		RootComponent = root;
+	}
 
 	// m_pdoor_mesh_�̍쐬
 	m_pdoor_mesh_ = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("m_pdoor_mesh_"));

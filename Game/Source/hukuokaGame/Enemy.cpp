@@ -3,6 +3,7 @@
 // Sets default values
 AEnemy::AEnemy()
 	: targetpoint_pos_()
+	, last_see_pos(FVector::ZeroVector)
 	, attack_flag_(false)
 	, is_launch_(false)
 	, player_can_control_(true)
@@ -115,8 +116,8 @@ void AEnemy::Tick(float DeltaTime)
 		// レイを飛ばしてプレイヤーが隠れる様であれば
 		if (GetWorld()->LineTraceSingleByChannel(hitresult_, enemyHeadPos, Player->GetCameraLocation(), ECollisionChannel::ECC_Visibility))
 		{
-			in_eye_ = false;
-			OutSeePlayer();
+			LoseSight_Chase();
+			CheckMoveToLastSeePos();
 		}
 		else
 		{
@@ -157,8 +158,6 @@ void AEnemy::OnSeePlayer (APawn* Pawn)
 	{
 		return;
 	}
-	// ログ
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "See");
 
 	// プレイヤー取得
 
@@ -191,6 +190,7 @@ void AEnemy::Patrol(FVector pos_)
 void AEnemy::Pursue_Chase()
 {
 	AIController->MoveToActor(Player);
+	last_see_pos = Player->GetActorLocation();
 }
 
 void AEnemy::Pursue_Hear()
@@ -200,7 +200,6 @@ void AEnemy::Pursue_Hear()
 
 void AEnemy::OutSeePlayer()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, "OutSee");
 	SetState(EState::kIdle);
 	Player->SetEnemyChased(false);
 }
@@ -230,7 +229,7 @@ void AEnemy::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 		return;
 	}
 
-	if (OtherActor->ActorHasTag("Player"))
+	if (OtherActor->ActorHasTag("Player") && enemy_state_ != EState::kAttack)
 	{
 		SetState(EState::kAttack);
 		Player->SetIsFound(true, this->GetActorLocation());
@@ -264,5 +263,25 @@ void AEnemy::PlaySE()
 	else if (enemy_state_ == EState::kHear && hear_se_ != NULL)
 	{
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), hear_se_, GetActorLocation());
+	}
+}
+
+void AEnemy::LoseSight_Chase()
+{
+	AIController->MoveToLocation(last_see_pos);
+}
+
+void AEnemy::CheckMoveToLastSeePos()
+{
+	//FVector a = this->GetActorLocation();
+	//UE_LOG(LogTemp, Warning, TEXT("a( X : %f, Y : %f, Z : %f)"), a.X, a.Y, a.Z);
+	//UE_LOG(LogTemp, Warning, TEXT("a( X : %f, Y : %f, Z : %f)"), last_see_pos.X, last_see_pos.Y, last_see_pos.Z);
+	if (this->GetActorLocation().X >= last_see_pos.X - 100.f && this->GetActorLocation().X <= last_see_pos.X + 100)
+	{
+		if (this->GetActorLocation().Y >= last_see_pos.Y - 100.f && this->GetActorLocation().Y <= last_see_pos.Y + 100)
+		{
+			in_eye_ = false;
+			OutSeePlayer();
+		}
 	}
 }
