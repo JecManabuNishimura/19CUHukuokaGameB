@@ -205,7 +205,10 @@ void ALocker::SetDoorRotationValue(float DeltaTime)
 				now_rotation_value_ = 0.f;
 				if (close_se_!= NULL)	UGameplayStatics::PlaySoundAtLocation(GetWorld(), close_se_, GetActorLocation());	// (修正者：増井)開ける音を指定していたので修正
 				// 閉まるときは要らない(移動してしまう為)
-				//is_end_rotation_ = true;			
+				//is_end_rotation_ = true;
+				player->SetPlayerMoveControlFlag(true);
+				player->SetPlayerCameraControlFlag(true);
+
 			}
 		}
 	}
@@ -288,8 +291,8 @@ void ALocker::OutToLocker(float DeltaTime)
 		is_in_player_ = false;					// ロッカーの中にいないのでfalse
 		can_input_ = true;						// 入力受け付けを可能に
 		player->SetInTheLocker(false);			// Playerをロッカーの中にいない状態に
-		player->SetPlayerMoveControlFlag(true);
-		player->SetPlayerCameraControlFlag(true);
+		player->SetPlayerMoveControlFlag(false);
+		player->SetPlayerCameraControlFlag(false);
 	}
 }
 
