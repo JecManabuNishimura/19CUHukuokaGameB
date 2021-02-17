@@ -98,6 +98,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "tp")
 		float idle_time_;							// 待機時間
 
+	UPROPERTY(EditAnywhere, Category = "tp")
+		float chase_end_length_;					// 追跡終了をさせる距離
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FVector noise_pos_;							// 音を発した地点
 
