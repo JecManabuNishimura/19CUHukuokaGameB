@@ -33,13 +33,13 @@ public:
 private:
 	float m_time_cnt_;	// タイムカウント
 	bool m_impuls_flag_;
-	bool m_is_baby_cry;
+	//bool m_is_baby_cry;
 
 public:
 	UPROPERTY(EditAnywhere, Category = "Mesh")
 		UStaticMeshComponent* m_pdoor_mesh_;		// 扉本体のメッシュ
-	//UPROPERTY(EditAnywhere, Category = "Baby")
-	//	bool m_is_baby_cry;								// 終わったらprivateに移動
+	UPROPERTY(EditAnywhere, Category = "Baby")
+		bool m_is_baby_cry;								// 終わったらprivateに移動
 	UPROPERTY(EditAnywhere, Category = "ImpulseValue")
 		FVector m_impulsevalue_;
 	UFUNCTION(BlueprintCallable, Category = "Baby")
