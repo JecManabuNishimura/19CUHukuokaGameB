@@ -10,23 +10,24 @@ AEnemy::AEnemy()
 	, enemy_state_(EState::kPatrol)
 	, headLine_(0.f)
 	, idle_time_(0.f)
+	, chase_end_length_(0.f)
 	, noise_pos_(FVector::ZeroVector)
 	, ppawnsensing_(NULL)
 	, ptargetpoint_()
-	, attack_collision_(NULL)
-	, hear_se_(NULL)
-	, chase_se_(NULL)
-	, in_eye_(false)
-	, chase_flag_(false)
-	, is_player_damage_(false)
-	, hitresult_(NULL)
-	, time_cut_(0.f)
-	, tp_index_(0)
+, attack_collision_(NULL)
+, hear_se_(NULL)
+, chase_se_(NULL)
+, in_eye_(false)
+, chase_flag_(false)
+, is_player_damage_(false)
+, hitresult_(NULL)
+, time_cut_(0.f)
+, tp_index_(0)
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	ppawnsensing_ = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));	
+	ppawnsensing_ = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensing"));
 
 	attack_collision_ = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCollision"));
 	attack_collision_->SetupAttachment(RootComponent);
@@ -47,7 +48,7 @@ void AEnemy::BeginPlay()
 	// 実装が上手くできない為BPに記入
 	//ppawnsensing_->OnHearNoise.AddDynamic(this, &AEnemy::OnSeePlayer);
 
-	attack_collision_ ->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::OnOverlapBegin);
+	attack_collision_->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::OnOverlapBegin);
 
 	// 設定したtargetpointの数分だけ座標の取得
 	if (ptargetpoint_.Num() != 0)
@@ -85,7 +86,7 @@ void AEnemy::Tick(float DeltaTime)
 				// プレイヤー側を捕まっていない状態
 				Player->SetIsFound(false, FVector(0.f, 0.f, 0.f));
 				// 一度だけダメージを与える
-				if(is_player_damage_)
+				if (is_player_damage_)
 				{
 					Player->AttackFromEnemy();
 					is_player_damage_ = false;
@@ -111,18 +112,28 @@ void AEnemy::Tick(float DeltaTime)
 		// NULLならプレイヤーが入る
 		FVector enemyHeadPos = GetMesh()->GetSocketLocation("Head");
 
-		UKismetSystemLibrary::DrawDebugLine(GetWorld(), enemyHeadPos, Player->GetCameraLocation(), FLinearColor(0, 255, 0, 100), 1, 1);
-
-		// レイを飛ばしてプレイヤーが隠れる様であれば
-		if (GetWorld()->LineTraceSingleByChannel(hitresult_, enemyHeadPos, Player->GetCameraLocation(), ECollisionChannel::ECC_Visibility))
+		// UKismetSystemLibrary::DrawDebugLine(GetWorld(), enemyHeadPos, Player->GetCameraLocation(), FLinearColor(0, 255, 0, 100), 1, 1);
+		UE_LOG(LogTemp, Warning, TEXT("distance = %f"), (GetActorLocation() - Player->GetActorLocation()).Size());
+		if (chase_end_length_ > (GetActorLocation() - Player->GetActorLocation()).Size())
 		{
-			LoseSight_Chase();
-			CheckMoveToLastSeePos();
+			// レイを飛ばしてプレイヤーが隠れる様であれば
+			if (GetWorld()->LineTraceSingleByChannel(hitresult_, enemyHeadPos, Player->GetCameraLocation(), ECollisionChannel::ECC_Visibility))
+			{
+				LoseSight_Chase();
+				CheckMoveToLastSeePos();
+			}
+			else
+			{
+				Pursue_Chase();
+			}
 		}
 		else
 		{
-			Pursue_Chase();
+			in_eye_ = false;
+			OutSeePlayer();
 		}
+
+
 
 	}
 	// 聴覚検知状態
@@ -211,9 +222,9 @@ void AEnemy::OnHear(APawn* OtherActor, const FVector& Location, float Volume)
 
 void AEnemy::CheckMoveToTargetPoint()
 {
-	if (this->GetActorLocation().X >= targetpoint_pos_[tp_index_].X - 100.f && this->GetActorLocation().X <= targetpoint_pos_[tp_index_].X + 100)
+	if (this->GetActorLocation().X >= targetpoint_pos_[tp_index_].X - 200.f && this->GetActorLocation().X <= targetpoint_pos_[tp_index_].X + 200)
 	{
-		if (this->GetActorLocation().Y >= targetpoint_pos_[tp_index_].Y - 100.f && this->GetActorLocation().Y <= targetpoint_pos_[tp_index_].Y + 100)
+		if (this->GetActorLocation().Y >= targetpoint_pos_[tp_index_].Y - 200.f && this->GetActorLocation().Y <= targetpoint_pos_[tp_index_].Y + 200)
 		{
 			++tp_index_;
 			tp_index_ = tp_index_ % ptargetpoint_.Num();
@@ -258,7 +269,10 @@ void AEnemy::PlaySE()
 {
 	if(enemy_state_ == EState::kChase1 && chase_se_ != NULL)
 	{
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), chase_se_, GetActorLocation());
+		if (chase_end_length_ > (GetActorLocation() - Player->GetActorLocation()).Size())
+		{
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), chase_se_, GetActorLocation());
+		}
 	}
 	else if (enemy_state_ == EState::kHear && hear_se_ != NULL)
 	{
