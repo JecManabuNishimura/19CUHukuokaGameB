@@ -219,11 +219,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Move")
 		float player_threshold_to_run_;			// 走る閾値(0 < this <= 1)
 
-	UPROPERTY(EditAnywhere, Category = "Move")
-		float player_run_speed_;					// プレイヤーの歩く速度
+	//UPROPERTY(EditAnywhere, Category = "Move")
+	//	float player_run_speed_;					// プレイヤーの歩く速度
 
-	UPROPERTY(EditAnywhere, Category = "Move")
-		float player_walk_speed_;				// プレイヤーの走る速度
+	//UPROPERTY(EditAnywhere, Category = "Move")
+	//	float player_walk_speed_;				// プレイヤーの走る速度
 
 	UPROPERTY(EditAnyWhere, Category = "Move")
 		float player_footstep_span_;			// プレイヤーの足音の間隔(プレイヤーの速度 / 間隔 = 1秒間に鳴る足音の数)
@@ -282,8 +282,6 @@ private:
 	float eyelevel_for_camera_shaking;			// カメラの縦揺れの度合い
 
 	bool can_make_footstep;						// 足音発生許可フラグ
-
-	bool can_player_move_control_;				// プレイヤーの移動が出来るか
 
 	bool can_player_camera_control_;			// プレイヤーの視点操作が出来るか
 
@@ -367,6 +365,17 @@ public:
 	// ===== 移動としゃがむ　プロパティ  (作成者:林雲暉) =====
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move")
 		bool m_isStanding;						// 立っているかどうかのフラグ(作成者:林雲暉)(12/06 CategoryをNewMoveからMoveに変更 修正者:増井悠斗)
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Move")
+	bool can_player_move_control_;				// プレイヤーの移動が出来るか
+
+	// 展示用加速
+	// Line 222
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move")
+		float player_run_speed_;				// プレイヤーの歩く速度
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Move")
+		float player_walk_speed_;				// プレイヤーの走る速度
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 		class USpringArmComponent* m_pSpringArm;		// スプリングアーム  (作成者:林雲暉)
