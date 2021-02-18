@@ -1278,7 +1278,7 @@ void APlayerCharacter::UpdateVRLaser()
 
 			if (vr_InCameraMode == false)
 			{
-				LineBatcher->DrawLine(StartPoint, EndPoint, FLinearColor::Red, 10, 0.f, 0.05f);
+				LineBatcher->DrawLine(StartPoint, EndPoint, FLinearColor::Red, 10, 0.3f, 0.05f);
 			} // end if()
 			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("RayHit: %s"), *HitResult.Actor->GetName()));
 
@@ -1304,7 +1304,7 @@ void APlayerCharacter::UpdateVRLaser()
 	{
 		if (vr_InCameraMode == false)
 		{
-			LineBatcher->DrawLine(StartPoint, EndPoint, FLinearColor::Green, 10, 0.f, 0.05f);
+			LineBatcher->DrawLine(StartPoint, EndPoint, FLinearColor::Green, 10, 0.3f, 0.05f);
 		} // end if()
 
 
