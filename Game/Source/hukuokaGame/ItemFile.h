@@ -19,7 +19,7 @@
 #include "ItemFile.generated.h"
 
 // イベントディスパッチャー宣言
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFileTrunPageEventDispatcher);		// ページをめくる(=テキストUIの更新)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnFileUpdatePageEventDispatcher);		// ページをめくる(=テキストUIの更新)
 
 // ファイルの構造体(string型10個)
 USTRUCT(BlueprintType)
@@ -75,7 +75,7 @@ protected:
 
 private:
 	UPROPERTY(BlueprintAssignable)
-		FOnFileTrunPageEventDispatcher  OnFileTrunPageEventDispatcher;
+		FOnFileUpdatePageEventDispatcher  OnFileUpdatePageEventDispatcher;
 
 	// プレイヤー
 	APlayerCharacter* player_character_;
@@ -125,7 +125,7 @@ private:
 
 	bool do_file_loc_correction_;		// ファイル位置補正用フラグ
 
-	void TurnPage();
+	void UpdatePage(const bool _make_sound);
 
 public:
 	virtual void Tick(float DeltaTime) override;
