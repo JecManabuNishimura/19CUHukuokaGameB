@@ -33,6 +33,8 @@ ACardkeyDoorBody::ACardkeyDoorBody()
 	, right_door_start_posY_(0.0f)
 	, door_filter_num_(0)
 	, door_state_(kDoorStateClosed)
+	, p_alert_lever_(NULL)
+	, is_alert_lever_on_(false)
 	, is_doorbody_eventbox_overlap_(false)
 	, door_eventbox_overlap_sum_(0)
 	, open_time_count_(0.0f)
@@ -96,6 +98,26 @@ void ACardkeyDoorBody::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 非常レバー取得、保存
+	TSubclassOf<AAutomaticDoorLever> findClass;
+	findClass = AAutomaticDoorLever::StaticClass();
+	TArray<AActor*> actors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), findClass, actors);
+
+	if (actors.Num() > 0)
+	{
+		for (int idx = 0; idx < actors.Num(); ++idx)
+		{
+			AAutomaticDoorLever* p_lever = Cast<AAutomaticDoorLever>(actors[idx]);
+
+			// 非常レバーなら保存
+			if (p_lever->ActorHasTag("AlertLever"))
+			{
+				p_alert_lever_ = p_lever;
+			}
+		}
+	}
+
 	if (p_door_state_material_ != NULL)
 	{
 		p_material_instance_dynamic_ = p_door_state_mesh_1_->CreateAndSetMaterialInstanceDynamicFromMaterial(0, p_door_state_material_);
@@ -130,9 +152,26 @@ void ACardkeyDoorBody::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	CheckAlertLeverState();
+
 	UpdateDoorState(DeltaTime);
 
 	UpdateDoorMove(DeltaTime);
+}
+
+void ACardkeyDoorBody::CheckAlertLeverState()
+{
+	if (is_alert_lever_on_)	return;
+
+	if (p_alert_lever_ != NULL)
+	{
+		is_alert_lever_on_ = p_alert_lever_->GetLeverState();
+
+		if (is_alert_lever_on_)
+		{
+			door_state_ = kDoorStateOpening;
+		}
+	}
 }
 
 void ACardkeyDoorBody::UpdateDoorState(float _deltatime)
@@ -250,6 +289,8 @@ void ACardkeyDoorBody::UpdateDoorMove(float _deltatime)
 
 void ACardkeyDoorBody::CheckDetectSpan(float _deltatime)
 {
+	if (is_alert_lever_on_)	return;
+
 	open_time_count_ += _deltatime;
 
 	// 決めた時間を超えたらチェック

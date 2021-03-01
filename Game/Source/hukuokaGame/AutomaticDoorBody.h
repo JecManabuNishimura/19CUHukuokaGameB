@@ -111,11 +111,17 @@ private:
 
 	DOOR_STATE door_state_;						// ドアの状態
 
+	AAutomaticDoorLever* p_alert_lever_;		// 非常レバー(降ろされると強制的に開く)
+
+	bool is_alert_lever_on_;					// 非常レバーが降ろされているか
+
 	TArray<AAutomaticDoorLever*> filter_match_levers_;	// 対応するレバーを保存する配列
 
 	int filter_match_levers_num_;				// 対応するレバーの数
 
 	TArray<UStaticMeshComponent*> match_lever_state_lamps_;	// 対応するレバーの状態を表すランプメッシュ
+
+	void CheckAlertLeverState();				// 非常レバーの状態チェック
 
 	void UpdateDoorState();						// ドアの状態更新
 

@@ -12,6 +12,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "PlayerCharacter.h"
+#include "AutomaticDoorLever.h"
 #include "CardkeyDoorBody.generated.h"
 
 UCLASS()
@@ -129,6 +130,10 @@ private:
 
 	DOOR_STATE door_state_;						// ドアの状態
 
+	AAutomaticDoorLever* p_alert_lever_;		// 非常レバー(降ろされると強制的に開く)
+
+	bool is_alert_lever_on_;					// 非常レバーが降ろされているか
+
 	UPROPERTY(EditAnywhere)
 		bool is_doorbody_eventbox_overlap_;		// ドア本体のイベントボックスにプレイヤー、敵がオーバーラップしているか
 
@@ -142,6 +147,8 @@ private:
 	float left_door_dire_for_move_;				// 移動するときの向き
 
 	float distance_start_to_end_;				// ドアの始点から終点までの距離(片方で取得し、もう片方でもそれを利用)
+
+	void CheckAlertLeverState();				// 非常レバーの状態チェック
 
 	void UpdateDoorState(float _deltatime);		// ドアの状態更新
 

@@ -33,6 +33,8 @@ AAutomaticDoorBody::AAutomaticDoorBody()
 	, distance_start_to_end_(0.0f)
 	, detect_num_(0)
 	, door_state_(kDoorStateClosed)
+	, p_alert_lever_(NULL)
+	, is_alert_lever_on_(false)
 	, items_Mission_Num(0)
 	, next_Items_Mission_Num(0)
 	, isMissionComplete(false)
@@ -86,7 +88,7 @@ void AAutomaticDoorBody::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// フィルター番号が一致するレバー取得、保存
+	// フィルター番号が一致するレバーと非常レバー取得、保存
 	TSubclassOf<AAutomaticDoorLever> findClass;
 	findClass = AAutomaticDoorLever::StaticClass();
 	TArray<AActor*> actors;
@@ -96,11 +98,18 @@ void AAutomaticDoorBody::BeginPlay()
 	{
 		for (int idx = 0; idx < actors.Num(); ++idx)
 		{
-			AAutomaticDoorLever* pLever = Cast<AAutomaticDoorLever>(actors[idx]);
+			AAutomaticDoorLever* p_lever = Cast<AAutomaticDoorLever>(actors[idx]);
+
 			// レバーのフィルター番号がドア自身のフィルター番号と一致していれば配列に追加する
-			if (pLever->GetLeverFilter() == door_filter_num_)
+			if (p_lever->GetLeverFilter() == door_filter_num_)
 			{
-				filter_match_levers_.Add(pLever);
+				filter_match_levers_.Add(p_lever);
+			}
+
+			// 非常レバーなら保存
+			if (p_lever->ActorHasTag("AlertLever"))
+			{
+				p_alert_lever_ = p_lever;
 			}
 		}
 
@@ -145,9 +154,27 @@ void AAutomaticDoorBody::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	CheckAlertLeverState();
+
 	UpdateDoorState();
 
 	UpdateDoorMove(DeltaTime);
+}
+
+void AAutomaticDoorBody::CheckAlertLeverState()
+{
+	if (is_alert_lever_on_)	return;
+
+	if (p_alert_lever_ != NULL)
+	{
+		is_alert_lever_on_ = p_alert_lever_->GetLeverState();
+
+		if (is_alert_lever_on_)
+		{
+			is_switch_on_ = true;
+			door_state_ = kDoorStateOpening;
+		}
+	}
 }
 
 void AAutomaticDoorBody::UpdateDoorState()
@@ -165,7 +192,7 @@ void AAutomaticDoorBody::UpdateDoorState()
 		break;
 
 	case kDoorStateOpened:
-		if (!is_switch_on_)
+		if (!is_switch_on_ && !is_alert_lever_on_)
 		{
 			door_state_ = kDoorStateClosing;
 		}
@@ -186,7 +213,7 @@ void AAutomaticDoorBody::UpdateDoorState()
 		break;
 
 	case kDoorStateOpening:
-		if (!is_switch_on_)
+		if (!is_switch_on_ && !is_alert_lever_on_)
 		{
 			door_state_ = kDoorStateClosing;
 		}
@@ -237,6 +264,8 @@ void AAutomaticDoorBody::UpdateDoorMove(float _deltaTime)
 
 void AAutomaticDoorBody::CheckDetectSpan(float _deltaTime)
 {
+	if (is_alert_lever_on_)	return;
+
 	open_time_count_ += _deltaTime;
 
 	// 決めた時間を超えたらチェック
