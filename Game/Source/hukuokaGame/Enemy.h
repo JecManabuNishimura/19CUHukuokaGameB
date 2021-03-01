@@ -76,6 +76,7 @@ private:
 	void PlaySE();					// SEを鳴らす関数
 	void LoseSight_Chase();			// 見失った時
 	void CheckMoveToLastSeePos();	// 見失った地点まで行ったかどうかを確認する関数
+	void CheckIsStuck(float _deltatime);			// スタックしているかどうかのチェック
 
 
 public:
@@ -100,6 +101,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "tp")
 		float chase_end_length_;					// 追跡終了をさせる距離
+
+	UPROPERTY(EditAnywhere, Category = "tp")
+		float stuck_time_;							// スタックした際に何秒で巡回状態に戻すか
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FVector noise_pos_;							// 音を発した地点
@@ -144,7 +148,9 @@ public:
 	bool chase_flag_;			// 視認した際にたてるフラグ
 	bool is_player_damage_;		// ダメージを受ける状態か否かを確認する関数(これが無いとtick関数で何度も呼ばれてしまうため作成)
 	FHitResult hitresult_;		// レイキャストの結果
-	float time_cut_;			// Idle状態の経過時間格納用
+	FVector preb_pos_;
+	float idle_time_cut_;		// Idle状態の経過時間格納用
+	float stuck_time_cnt_;		// スタックの経過時間格納用
 	int tp_index_;				// targetpointの要素数
 
 	AEnemyMyAIController* AIController;		// コントローラー取得

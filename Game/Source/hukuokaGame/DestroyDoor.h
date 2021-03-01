@@ -36,7 +36,7 @@ private:
 	//bool m_is_baby_cry;
 
 public:
-	UPROPERTY(EditAnywhere, Category = "Mesh")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 		UStaticMeshComponent* m_pdoor_mesh_;		// 扉本体のメッシュ
 	UPROPERTY(EditAnywhere, Category = "Baby")
 		bool m_is_baby_cry;								// 終わったらprivateに移動
