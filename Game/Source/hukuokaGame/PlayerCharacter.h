@@ -50,7 +50,7 @@ public:
 	// コンストラクタ
 	APlayerCharacter();
 	// デストラクタ
-	~APlayerCharacter();
+	virtual ~APlayerCharacter();
 
 protected:
 	// 実行時に一度呼ばれる

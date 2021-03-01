@@ -8,25 +8,28 @@
 #include "ItemFile.h"
 
 AItemFile::AItemFile()
-	: player_character_(NULL)
-	, file_mesh_(NULL)
-	, datatable_(NULL)
-	, transform_on_map_(FTransform::Identity)
-	, text_linear_color_(FLinearColor::Transparent)
+	: p_file_mesh_(NULL)
+	, p_datatable_(NULL)
+	, p_sound_when_turnpage_(NULL)
 	, file_kind_(0)
-	, page_num_(0)
-	, left_page_open_now_num_(-1)
 	, time_open_close_(1.f)
 	, time_display_text_(2.f)
 	, distance_from_file_to_player_(150.f)
+	, p_player_character_(NULL)
+	, transform_on_map_(FTransform::Identity)
+	, text_linear_color_(FLinearColor::Transparent)
+	, left_text_("")
+	, right_text_("")
+	, page_num_(0)
+	, left_page_open_now_num_(-1)
 	, count_for_time_open_close_(0.f)
 	, is_show_details_(false)
 	, can_start_anim_(false)
 	, can_turn_page_(false)
 	, can_show_detial_(true)
 	, do_file_loc_correction_(false)
-	, widget_comp_(NULL)
-	, sound_when_turnpage_(NULL)
+	, p_widget_comp_(NULL)
+
 {
 	// 動的配列の初期化
 	text_in_file_kind_.Reset();
@@ -36,36 +39,36 @@ AItemFile::AItemFile()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComp"));
 
 	// ファイルのメッシュ生成
-	file_mesh_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FileMeshComp"));
+	p_file_mesh_ = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FileMeshComp"));
 
 	// ウィジェットコンポーネント生成
-	widget_comp_ = CreateDefaultSubobject<UWidgetComponent>(TEXT("WidgetComp"));
+	p_widget_comp_ = CreateDefaultSubobject<UWidgetComponent>(TEXT("WidgetComp"));
 
-	if (file_mesh_ != NULL)		file_mesh_->SetupAttachment(RootComponent);
-	if (widget_comp_ != NULL)	widget_comp_->SetupAttachment(file_mesh_);
+	if (p_file_mesh_ != NULL)	p_file_mesh_->SetupAttachment(RootComponent);
+	if (p_widget_comp_ != NULL)	p_widget_comp_->SetupAttachment(p_file_mesh_);
 }
 
 void AItemFile::BeginPlay()
 {
 	// プレイヤーを取得
-	player_character_ = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	p_player_character_ = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 
 	// プレイヤーが取得できなければメッセージ表示
-	if (player_character_ == NULL) GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, TEXT("PlayerCharacter Not be Found !"));
+	if (p_player_character_ == NULL) GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, TEXT("PlayerCharacter Not be Found !"));
 
 	// データテーブルがセットされていればファイルに対応したテキストを移す
-	if (datatable_ != NULL)
+	if (p_datatable_ != NULL)
 	{
 		TArray<FFileTextStruct*> datatable_struct_;
 
 		// rowのデータ(struct)*行の(テーブル全部の)データを取得
-		datatable_->GetAllRows<FFileTextStruct>(FString(), datatable_struct_);
+		p_datatable_->GetAllRows<FFileTextStruct>(FString(), datatable_struct_);
 
 		// 要素数0のデータには挿入できないので1を設定
 		text_in_file_kind_.SetNum(1);
 
 		// 構造体に設定されているファイル番号を指定していたらテキストを設定
-		if (file_kind_ <= datatable_->GetRowNames().Num())
+		if (file_kind_ <= p_datatable_->GetRowNames().Num())
 		{
 			// 空データでも構わずに挿入し要素数 11 (= 10 + 1)個のデータを作る
 			text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page10, 0);
@@ -111,8 +114,8 @@ void AItemFile::Tick(float DeltaTime)
 		do_file_loc_correction_ = false;
 
 		// プレイヤーの目の前に表示
-		SetActorLocation(player_character_->GetCameraLocation() + (player_character_->GetCameraForwardVector() * distance_from_file_to_player_));
-		SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), player_character_->GetCameraLocation()));
+		SetActorLocation(p_player_character_->GetCameraLocation() + (p_player_character_->GetCameraForwardVector() * distance_from_file_to_player_));
+		SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), p_player_character_->GetCameraLocation()));
 	}
 
 	count_for_time_open_close_ += DeltaTime;
@@ -145,9 +148,9 @@ void AItemFile::Tick(float DeltaTime)
 				if (abs(GetActorLocation().X - transform_on_map_.GetLocation().X) > 10.f)
 				{
 					// プレイヤーの操作を有効に
-					player_character_->SetPlayerMoveControlFlag(true);
-					player_character_->SetPlayerCameraControlFlag(true);
-					player_character_->TakeOutTheSmartPhone(true);			// スマホを使かえる追加(作成者:林雲暉)
+					p_player_character_->SetPlayerMoveControlFlag(true);
+					p_player_character_->SetPlayerCameraControlFlag(true);
+					p_player_character_->TakeOutTheSmartPhone(true);			// スマホを使かえる追加(作成者:林雲暉)
 
 					SetActorTransform(transform_on_map_);
 
@@ -170,9 +173,9 @@ void AItemFile::CheckedByPlayer()
 			if (sound_when_checked_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_when_checked_);
 
 			// プレイヤーの操作を不可にする
-			player_character_->SetPlayerMoveControlFlag(false);
-			player_character_->SetPlayerCameraControlFlag(false);
-			player_character_->TakeOutTheSmartPhone(false);			// スマホを使えない追加(作成者:林雲暉)
+			p_player_character_->SetPlayerMoveControlFlag(false);
+			p_player_character_->SetPlayerCameraControlFlag(false);
+			p_player_character_->TakeOutTheSmartPhone(false);			// スマホを使えない追加(作成者:林雲暉)
 
 			// 調べているフラグを立てる
 			is_show_details_ = true;
@@ -203,7 +206,7 @@ void AItemFile::UpdatePage(const bool _make_sound)
 	if ((left_page_open_now_num_ + 1) < page_num_)
 	{
 		// ページをめくる音を鳴らす
-		if (sound_when_turnpage_ != NULL && _make_sound)	UGameplayStatics::PlaySound2D(GetWorld(), sound_when_turnpage_);
+		if (p_sound_when_turnpage_ != NULL && _make_sound)	UGameplayStatics::PlaySound2D(GetWorld(), p_sound_when_turnpage_);
 
 		++left_page_open_now_num_;
 		left_text_ = text_in_file_kind_[left_page_open_now_num_];

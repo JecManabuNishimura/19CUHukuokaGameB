@@ -70,6 +70,8 @@ class HUKUOKAGAME_API AItemFile : public AItemBase
 public:
 	AItemFile();
 
+	virtual ~AItemFile() {}
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -77,15 +79,30 @@ private:
 	UPROPERTY(BlueprintAssignable)
 		FOnFileUpdatePageEventDispatcher  OnFileUpdatePageEventDispatcher;
 
-	// プレイヤー
-	APlayerCharacter* player_character_;
-
 	// ファイルのスケルタルメッシュ
 	UPROPERTY(EditAnywhere)
-		USkeletalMeshComponent* file_mesh_;
+		USkeletalMeshComponent* p_file_mesh_;
 
-	UPROPERTY(EditAnyWhere)
-		UDataTable* datatable_;			// ファイルのテキストデータ
+	UPROPERTY(EditAnywhere)
+		UDataTable* p_datatable_;			// ファイルのテキストデータ
+
+	UPROPERTY(EditAnywhere)
+		USoundBase* p_sound_when_turnpage_;	// チェックされた時の効果音
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 1))
+		int file_kind_;					// ファイルの識別番号
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0))
+		float time_open_close_;			// 調べてからアニメーションし始めるまでの秒数
+
+	UPROPERTY(EditAnywhere, meta = (ClampMin = 0))
+		float time_display_text_;		// 調べてからテキストがフェードインし始めるまでの秒数
+
+	UPROPERTY(EditAnywhere)
+		float distance_from_file_to_player_;	// 調べたときのプレイヤーからファイルまでの距離
+
+private:
+	APlayerCharacter* p_player_character_;		// プレイヤー
 
 	FTransform transform_on_map_;		// マップ上に配置されている時の情報(調べ終えたときに利用)
 
@@ -97,21 +114,9 @@ private:
 
 	FString right_text_;				// 右ページに表示する文字
 
-	UPROPERTY(EditAnywhere, meta = (ClampMin = 1))
-		int file_kind_;					// ファイルの識別番号
-
 	int page_num_;						// 総ページ数
 
 	int left_page_open_now_num_;		// 表示中の左ページ数
-
-	UPROPERTY(EditAnywhere, meta = (ClampMin = 0))
-		float time_open_close_;			// 調べてからアニメーションし始めるまでの秒数
-
-	UPROPERTY(EditAnywhere, meta = (ClampMin = 0))
-		float time_display_text_;		// 調べてからテキストがフェードインし始めるまでの秒数
-
-	UPROPERTY(EditAnywhere)
-		float distance_from_file_to_player_;	// 調べたときのプレイヤーからファイルまでの距離
 
 	float count_for_time_open_close_;	// アニメーション、テキストフェードイン管理用のカウント
 
@@ -128,13 +133,11 @@ private:
 	void UpdatePage(const bool _make_sound);
 
 public:
-	virtual void Tick(float DeltaTime) override;
-
 	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-		UWidgetComponent* widget_comp_;	// エディタ上で生成したものを取得
+		UWidgetComponent* p_widget_comp_;	// エディタ上で生成したものを取得
 
-	UPROPERTY(EditAnywhere)
-		USoundBase* sound_when_turnpage_;	// チェックされた時の効果音
+public:
+	virtual void Tick(float DeltaTime) override;
 
 	// プレイヤーにチェックされたら呼ばれる(調べる)
 	void CheckedByPlayer();

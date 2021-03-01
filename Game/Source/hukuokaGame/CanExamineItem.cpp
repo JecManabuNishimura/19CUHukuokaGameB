@@ -9,7 +9,7 @@
 
 ACanExamineItem::ACanExamineItem()
 	: p_photo_mesh_(NULL)
-	, distance_from_file_to_player_(150.f)
+	, distance_file_to_player_(150.f)
 	, p_playercharacter_(NULL)
 	, transform_on_map_(FTransform::Identity)
 	, is_show_details_(false)
@@ -43,7 +43,7 @@ void ACanExamineItem::Tick(float DeltaTime)
 		do_file_loc_correction_ = false;
 
 		// プレイヤーの目の前に表示
-		SetActorLocation(p_playercharacter_->GetCameraLocation() + (p_playercharacter_->GetCameraForwardVector() * distance_from_file_to_player_));
+		SetActorLocation(p_playercharacter_->GetCameraLocation() + (p_playercharacter_->GetCameraForwardVector() * distance_file_to_player_));
 		SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), p_playercharacter_->GetCameraLocation()));
 	}
 }

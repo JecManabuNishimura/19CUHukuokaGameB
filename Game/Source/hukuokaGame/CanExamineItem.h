@@ -22,6 +22,8 @@ class HUKUOKAGAME_API ACanExamineItem : public AItemBase
 public:
 	ACanExamineItem();
 
+	virtual ~ACanExamineItem() {}
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -30,7 +32,7 @@ private:
 		UStaticMeshComponent* p_photo_mesh_;	// 写真のメッシュ
 
 	UPROPERTY(EditAnywhere)
-		float distance_from_file_to_player_;	// 調べたときのプレイヤーからファイルまでの距離
+		float distance_file_to_player_;	// 調べたときのプレイヤーからファイルまでの距離
 private:
 	// プレイヤー
 	APlayerCharacter* p_playercharacter_;
