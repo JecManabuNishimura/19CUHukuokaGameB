@@ -64,51 +64,39 @@ void AItemFile::BeginPlay()
 		// 要素数0のデータには挿入できないので1を設定
 		text_in_file_kind_.SetNum(1);
 
-		// 空データでも構わずに挿入し要素数 11 (= 10 + 1)個のデータを作る
-		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page10, 0);
-		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page9, 0);
-		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page8, 0);
-		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page7, 0);
-		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page6, 0);
-		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page5, 0);
-		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page4, 0);
-		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page3, 0);
-		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page2, 0);
-		text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page1, 0);
+		// 構造体に設定されているファイル番号を指定していたらテキストを設定
+		if (file_kind_ <= datatable_->GetRowNames().Num())
+		{
+			// 空データでも構わずに挿入し要素数 11 (= 10 + 1)個のデータを作る
+			text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page10, 0);
+			text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page9, 0);
+			text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page8, 0);
+			text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page7, 0);
+			text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page6, 0);
+			text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page5, 0);
+			text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page4, 0);
+			text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page3, 0);
+			text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page2, 0);
+			text_in_file_kind_.Insert(datatable_struct_[file_kind_ - 1]->page1, 0);
 
-		// 空データの有無でページ数を設定
-		for (page_num_ = 0; text_in_file_kind_[page_num_] != ""; ++page_num_);
+			// 空データの有無でページ数を設定
+			for (page_num_ = 0; text_in_file_kind_[page_num_] != ""; ++page_num_);
 
-		// ページ数0(=不正なファイル)なら削除
-		if (page_num_ == 0)	this->Destroy();
+			// 最初に不正なアクセスを回避するために設定した 11 番目のデータを削除
+			text_in_file_kind_.SetNum(page_num_);
 
-		// 最初に不正なアクセスを回避するために設定した 11 番目のデータを削除
-		text_in_file_kind_.SetNum(page_num_);
+			// マップに置かれている時のトランスフォームを格納
+			transform_on_map_ = GetActorTransform();
+
+			// 初期テキストに更新
+			UpdatePage(false);
+		}
+		else this->Destroy();
 	}
-	else	GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, TEXT("DataTable Not be Found !"));
-
-	// マップに置かれている時のトランスフォームを格納
-	transform_on_map_ = GetActorTransform();
-
-	// 初期テキスト表示
-	// TurnPage();
-	if ((left_page_open_now_num_ + 1) < page_num_)
+	else
 	{
-		++left_page_open_now_num_;
-		left_text_ = text_in_file_kind_[left_page_open_now_num_];
-
-		++left_page_open_now_num_;
-
-		// 次の右ページが有効ならテキスト切り替え
-		if ((left_page_open_now_num_) < page_num_)
-		{
-			right_text_ = text_in_file_kind_[left_page_open_now_num_];
-		}
-		// 無効なら空白1文字に
-		else
-		{
-			right_text_ = " ";
-		}
+		GEngine->AddOnScreenDebugMessage(-1, 20.0f, FColor::Red, TEXT("DataTable Not be Found !"));
+		this->Destroy();
 	}
 
 	Super::BeginPlay();
@@ -185,6 +173,7 @@ void AItemFile::CheckedByPlayer()
 			player_character_->SetPlayerMoveControlFlag(false);
 			player_character_->SetPlayerCameraControlFlag(false);
 			player_character_->TakeOutTheSmartPhone(false);			// スマホを使えない追加(作成者:林雲暉)
+
 			// 調べているフラグを立てる
 			is_show_details_ = true;
 
@@ -192,26 +181,29 @@ void AItemFile::CheckedByPlayer()
 			do_file_loc_correction_ = true;
 
 			count_for_time_open_close_ = 0.0f;
+
+			// テキスト更新
+			OnFileUpdatePageEventDispatcher.Broadcast();
 		}
 		else
 		{
 			// ページをめくる許可が出ていればテキスト更新
-			if (can_turn_page_)	TurnPage();
+			if (can_turn_page_)	UpdatePage(true);
 
-			// テキスト切り替え
-			OnFileTrunPageEventDispatcher.Broadcast();
+			// テキスト更新
+			OnFileUpdatePageEventDispatcher.Broadcast();
 		}
 	}
 }
 
 // ページをめくる
-void AItemFile::TurnPage()
+void AItemFile::UpdatePage(const bool _make_sound)
 {
 	// 次の左ページが有効ならテキスト切り替え
 	if ((left_page_open_now_num_ + 1) < page_num_)
 	{
 		// ページをめくる音を鳴らす
-		if (sound_when_turnpage_ != NULL)	UGameplayStatics::PlaySound2D(GetWorld(), sound_when_turnpage_);
+		if (sound_when_turnpage_ != NULL && _make_sound)	UGameplayStatics::PlaySound2D(GetWorld(), sound_when_turnpage_);
 
 		++left_page_open_now_num_;
 		left_text_ = text_in_file_kind_[left_page_open_now_num_];
