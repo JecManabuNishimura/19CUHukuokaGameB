@@ -11,18 +11,20 @@ AEnemy::AEnemy()
 	, headLine_(0.f)
 	, idle_time_(0.f)
 	, chase_end_length_(0.f)
+	, stuck_time_(0.f)
 	, noise_pos_(FVector::ZeroVector)
 	, ppawnsensing_(NULL)
 	, ptargetpoint_()
-, attack_collision_(NULL)
-, hear_se_(NULL)
-, chase_se_(NULL)
-, in_eye_(false)
-, chase_flag_(false)
-, is_player_damage_(false)
-, hitresult_(NULL)
-, time_cut_(0.f)
-, tp_index_(0)
+	, attack_collision_(NULL)
+	, hear_se_(NULL)
+	, chase_se_(NULL)
+	, in_eye_(false)
+	, chase_flag_(false)
+	, is_player_damage_(false)
+	, hitresult_(NULL)
+	, preb_pos_(FVector::ZeroVector)
+	, idle_time_cut_(0.f)
+	, tp_index_(0)
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -98,47 +100,63 @@ void AEnemy::Tick(float DeltaTime)
 	// 待機状態
 	if (enemy_state_ == EState::kIdle)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("State::Idle"));
 		IdleCoolDown(DeltaTime);		// 一定時間待機
 	}
 	// 巡回状態
 	else if (enemy_state_ == EState::kPatrol)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("State::Patrol"));
 		Patrol(targetpoint_pos_[tp_index_]);		// 指定された地点を徘徊
 		CheckMoveToTargetPoint();					// 目的地に着いたかチェックする関数
 	}
 	// 追跡状態
 	else if (enemy_state_ == EState::kChase1 || enemy_state_ == EState::kChase2)
 	{
+		if (enemy_state_ == EState::kChase1)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Chase1"));
+		}
+		if (enemy_state_ == EState::kChase2)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Chase2"));
+		}
+
 		// NULLならプレイヤーが入る
 		FVector enemyHeadPos = GetMesh()->GetSocketLocation("Head");
 
 		// UKismetSystemLibrary::DrawDebugLine(GetWorld(), enemyHeadPos, Player->GetCameraLocation(), FLinearColor(0, 255, 0, 100), 1, 1);
 		UE_LOG(LogTemp, Warning, TEXT("distance = %f"), (GetActorLocation() - Player->GetActorLocation()).Size());
-		if (chase_end_length_ > (GetActorLocation() - Player->GetActorLocation()).Size())
+		// レイを飛ばしてプレイヤーが隠れる様であれば
+		if (GetWorld()->LineTraceSingleByChannel(hitresult_, enemyHeadPos, Player->GetCameraLocation(), ECollisionChannel::ECC_Visibility))
 		{
-			// レイを飛ばしてプレイヤーが隠れる様であれば
-			if (GetWorld()->LineTraceSingleByChannel(hitresult_, enemyHeadPos, Player->GetCameraLocation(), ECollisionChannel::ECC_Visibility))
+			if (chase_end_length_ > (GetActorLocation() - Player->GetActorLocation()).Size())
 			{
+				UE_LOG(LogTemp, Warning, TEXT("loseSight"));
 				LoseSight_Chase();
 				CheckMoveToLastSeePos();
 			}
 			else
 			{
-				Pursue_Chase();
+				UE_LOG(LogTemp, Warning, TEXT("OutseePlayer"));
+				in_eye_ = false;
+				OutSeePlayer();
 			}
 		}
 		else
 		{
-			in_eye_ = false;
-			OutSeePlayer();
+			UE_LOG(LogTemp, Warning, TEXT("Chase"));
+			Pursue_Chase();
 		}
 
-
-
+		CheckIsStuck(DeltaTime);
+		preb_pos_ = this->GetActorLocation();
 	}
+
 	// 聴覚検知状態
 	else if (enemy_state_ == EState::kHear)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Hear"));
 		// 音の鳴るほうへ移動
 		Pursue_Hear();
 	}
@@ -176,9 +194,12 @@ void AEnemy::OnSeePlayer (APawn* Pawn)
 	if (Player != NULL)
 	{
 		in_eye_ = true;
-		SetState(EState::kChase1);
-		Player->SetEnemyChased(true);
-		chase_flag_ = true;
+		if (enemy_state_ != EState::kChase1 && enemy_state_ != EState::kChase2)
+		{
+			SetState(EState::kChase1);
+			Player->SetEnemyChased(true);
+			chase_flag_ = true;
+		}
 	}
 }
 
@@ -252,10 +273,10 @@ void AEnemy::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 
 void AEnemy::IdleCoolDown(float _deltatime)
 {
-	time_cut_ += _deltatime;
-	if (time_cut_ >= idle_time_)
+	idle_time_cut_ += _deltatime;
+	if (idle_time_cut_ >= idle_time_)
 	{
-		time_cut_ = 0.f;
+		idle_time_cut_ = 0.f;
 		SetState(EState::kPatrol);
 	}
 }
@@ -283,6 +304,7 @@ void AEnemy::PlaySE()
 void AEnemy::LoseSight_Chase()
 {
 	AIController->MoveToLocation(last_see_pos);
+	
 }
 
 void AEnemy::CheckMoveToLastSeePos()
@@ -297,5 +319,29 @@ void AEnemy::CheckMoveToLastSeePos()
 			in_eye_ = false;
 			OutSeePlayer();
 		}
+	}
+}
+
+void AEnemy::CheckIsStuck(float _deltatime)
+{
+	if (enemy_state_ == EState::kChase1)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("retrun"));
+		return;
+	}
+
+	if (preb_pos_ == this->GetActorLocation())
+	{
+		stuck_time_cnt_ += _deltatime;
+		UE_LOG(LogTemp, Warning, TEXT("++"));
+		if (stuck_time_cnt_ >= stuck_time_)
+		{
+			stuck_time_cnt_ = 0.f;
+			SetState(EState::kPatrol);
+		}
+	}
+	else
+	{
+		stuck_time_cnt_ = 0.f;
 	}
 }
