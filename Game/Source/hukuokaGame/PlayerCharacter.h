@@ -50,7 +50,7 @@ public:
 	// コンストラクタ
 	APlayerCharacter();
 	// デストラクタ
-	virtual ~APlayerCharacter();
+	~APlayerCharacter();
 
 protected:
 	// 実行時に一度呼ばれる
@@ -452,7 +452,11 @@ public:
 	// ダメージ状態３になった時呼び出す関数。Blueprintにオーバーライドする（作成者：朱適）
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlayerDamage")
 		void EyeDamaged();
-	
+
+	// ダメージ状態4になった時呼び出す関数。Blueprintにオーバーライドする（作成者：尾崎）
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "PlayerDamage")
+		void FadeDameged();
+
 	// カードキーの所持状態を設定
 	void SetHaveCardkeyState(const int _cardkey_filter);
 

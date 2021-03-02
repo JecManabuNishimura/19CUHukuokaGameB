@@ -861,7 +861,8 @@ void APlayerCharacter::AttackFromEnemy()
 		break;
 	case 4:
 		// 被ダメージ4回目(死:リスポーン)
-		Respawn();
+		// Respawn()->FadeDameged() に変更
+		FadeDameged();
 		break;
 	default:
 		break;
@@ -885,8 +886,12 @@ void APlayerCharacter::SetIsFound(const bool _flag, const FVector _enemy_locatio
 	}
 	else
 	{
-		can_player_move_control_ = true;
-		can_player_camera_control_ = true;
+		// 4回目にダメージを受ける際は移動・視点移動不可
+		if (damage_count_ < 3)
+		{
+			can_player_move_control_ = true;
+			can_player_camera_control_ = true;
+		}
 	}
 }
 
@@ -1057,6 +1062,9 @@ void APlayerCharacter::HandDamaged_Implementation()
 {
 }
 void APlayerCharacter::EyeDamaged_Implementation()
+{
+}
+void APlayerCharacter::FadeDameged_Implementation()
 {
 }
 
