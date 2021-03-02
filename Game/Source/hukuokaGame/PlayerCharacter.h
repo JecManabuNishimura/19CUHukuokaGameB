@@ -466,6 +466,7 @@ public:
 	FVector GetCameraForwardVector()const;
 
 	// プレイヤーの移動許可を設定
+	UFUNCTION(BlueprintCallable, Category = "ControlFlag")
 	void SetPlayerMoveControlFlag(const bool _flag) { can_player_move_control_ = _flag; }
 
 	// カメラの回転許可を設定

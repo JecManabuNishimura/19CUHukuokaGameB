@@ -428,7 +428,9 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	// ‘€ì•s‰Â‚È‚çreturn
 	if (!can_player_move_control_ || in_the_locker_)
 	{
-		GetCharacterMovement()->StopMovementImmediately();
+		// GetCharacterMovement()->StopMovementImmediately();
+		GetCharacterMovement()->Velocity.X = 0.f;
+		GetCharacterMovement()->Velocity.Y = 0.f;
 		return;
 	}
 
