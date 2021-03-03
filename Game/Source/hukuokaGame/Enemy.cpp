@@ -2,8 +2,7 @@
 
 // Sets default values
 AEnemy::AEnemy()
-	: targetpoint_pos_()
-	, last_see_pos(FVector::ZeroVector)
+	: last_see_pos(FVector::ZeroVector)
 	, attack_flag_(false)
 	, is_launch_(false)
 	, player_can_control_(true)
@@ -15,6 +14,7 @@ AEnemy::AEnemy()
 	, noise_pos_(FVector::ZeroVector)
 	, ppawnsensing_(NULL)
 	, ptargetpoint_()
+	, targetpoint_pos_()
 	, attack_collision_(NULL)
 	, hear_se_(NULL)
 	, chase_se_(NULL)
@@ -63,6 +63,11 @@ void AEnemy::BeginPlay()
 
 	// コントローラー取得(移動に使用)
 	AIController = Cast<AEnemyMyAIController>(GetController());
+
+	if (is_launch_ == false)
+	{
+		SetState(EState::kIdle);
+	}
 }
 
 // Called every frame
@@ -73,7 +78,6 @@ void AEnemy::Tick(float DeltaTime)
 	// 起動可能でないならIdle状態にしてretrunする
 	if (is_launch_ == false)
 	{
-		SetState(EState::kIdle);
 		return;
 	}
 
@@ -125,29 +129,33 @@ void AEnemy::Tick(float DeltaTime)
 		// NULLならプレイヤーが入る
 		FVector enemyHeadPos = GetMesh()->GetSocketLocation("Head");
 
-		// UKismetSystemLibrary::DrawDebugLine(GetWorld(), enemyHeadPos, Player->GetCameraLocation(), FLinearColor(0, 255, 0, 100), 1, 1);
-		UE_LOG(LogTemp, Warning, TEXT("distance = %f"), (GetActorLocation() - Player->GetActorLocation()).Size());
-		// レイを飛ばしてプレイヤーが隠れる様であれば
-		if (GetWorld()->LineTraceSingleByChannel(hitresult_, enemyHeadPos, Player->GetCameraLocation(), ECollisionChannel::ECC_Visibility))
+		if (Player != NULL)
 		{
-			if (chase_end_length_ > (GetActorLocation() - Player->GetActorLocation()).Size())
+			// UKismetSystemLibrary::DrawDebugLine(GetWorld(), enemyHeadPos, Player->GetCameraLocation(), FLinearColor(0, 255, 0, 100), 1, 1);
+			UE_LOG(LogTemp, Warning, TEXT("distance = %f"), (GetActorLocation() - Player->GetActorLocation()).Size());
+			// レイを飛ばしてプレイヤーが隠れる様であれば
+			if (GetWorld()->LineTraceSingleByChannel(hitresult_, enemyHeadPos, Player->GetCameraLocation(), ECollisionChannel::ECC_Visibility))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("loseSight"));
-				LoseSight_Chase();
-				CheckMoveToLastSeePos();
+				if (chase_end_length_ > (GetActorLocation() - Player->GetActorLocation()).Size())
+				{
+					UE_LOG(LogTemp, Warning, TEXT("loseSight"));
+					LoseSight_Chase();
+					CheckMoveToLastSeePos();
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("OutseePlayer"));
+					in_eye_ = false;
+					OutSeePlayer();
+				}
 			}
 			else
 			{
-				UE_LOG(LogTemp, Warning, TEXT("OutseePlayer"));
-				in_eye_ = false;
-				OutSeePlayer();
+				UE_LOG(LogTemp, Warning, TEXT("Chase"));
+				Pursue_Chase();
 			}
 		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Chase"));
-			Pursue_Chase();
-		}
+		
 
 		CheckIsStuck(DeltaTime);
 		preb_pos_ = this->GetActorLocation();
@@ -221,8 +229,11 @@ void AEnemy::Patrol(FVector pos_)
 
 void AEnemy::Pursue_Chase()
 {
-	AIController->MoveToActor(Player);
-	last_see_pos = Player->GetActorLocation();
+	if (Player != NULL)
+	{
+		AIController->MoveToActor(Player);
+		last_see_pos = Player->GetActorLocation();
+	}
 }
 
 void AEnemy::Pursue_Hear()
@@ -288,17 +299,21 @@ void AEnemy::SetHearPos(FVector _pos)
 
 void AEnemy::PlaySE() 
 {
-	if(enemy_state_ == EState::kChase1 && chase_se_ != NULL)
+	if (Player != NULL)
 	{
-		if (chase_end_length_ > (GetActorLocation() - Player->GetActorLocation()).Size())
+		if (enemy_state_ == EState::kChase1 && chase_se_ != NULL)
 		{
-			UGameplayStatics::PlaySoundAtLocation(GetWorld(), chase_se_, GetActorLocation());
+			if (chase_end_length_ > (GetActorLocation() - Player->GetActorLocation()).Size())
+			{
+				UGameplayStatics::PlaySoundAtLocation(GetWorld(), chase_se_, GetActorLocation());
+			}
+		}
+		else if (enemy_state_ == EState::kHear && hear_se_ != NULL)
+		{
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), hear_se_, GetActorLocation());
 		}
 	}
-	else if (enemy_state_ == EState::kHear && hear_se_ != NULL)
-	{
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), hear_se_, GetActorLocation());
-	}
+	
 }
 
 void AEnemy::LoseSight_Chase()
