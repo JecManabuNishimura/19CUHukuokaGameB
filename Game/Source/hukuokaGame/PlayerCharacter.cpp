@@ -1044,12 +1044,10 @@ void APlayerCharacter::TakeOutTheSmartPhone(bool _bool)
 {
 	if (_bool)
 	{
-		holdingSmartphoneState = 1;
 		vr_Phone->SetActorHiddenInGame(false);
 	}
 	else
 	{
-		holdingSmartphoneState = 0;
 		vr_Phone->SetActorHiddenInGame(true);
 	} // end else
 
