@@ -167,6 +167,8 @@ void AEnemy::Tick(float DeltaTime)
 		UE_LOG(LogTemp, Warning, TEXT("Hear"));
 		// ‰¹‚Ì–Â‚é‚Ù‚¤‚ÖˆÚ“®
 		Pursue_Hear();
+		CheckIsStuck(DeltaTime);
+		preb_pos_ = this->GetActorLocation();
 	}
 
 	// ’¼‘O‚Ü‚Å’ÇÕ‚ðs‚Á‚Ä‚¢‚½ê‡
