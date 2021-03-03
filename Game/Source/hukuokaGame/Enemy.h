@@ -64,7 +64,6 @@ public:
 
 private:
 
-	TArray<FVector> targetpoint_pos_;		// 対応しているtargetpointの位置情報取得用
 	FVector last_see_pos;					// 最後に視認した座標
 
 	void CheckMoveToTargetPoint();			// 移動先に到着したか確認する関数
@@ -113,6 +112,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "tp")
 		TArray<ATargetPoint*> ptargetpoint_;		// targetpoint格納用
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		TArray<FVector> targetpoint_pos_;		// 対応しているtargetpointの位置情報取得用
 
 			// 攻撃の当たり判定
 	UPROPERTY(EditAnywhere, Category = "tp")
