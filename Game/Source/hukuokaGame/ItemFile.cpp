@@ -145,7 +145,7 @@ void AItemFile::Tick(float DeltaTime)
 		{
 			if (count_for_time_open_close_ > time_open_close_)
 			{
-				if (abs(GetActorLocation().X - transform_on_map_.GetLocation().X) > 10.f)
+				if ((GetActorLocation() - transform_on_map_.GetLocation()).Size() > 5.f)
 				{
 					// プレイヤーの操作を有効に
 					p_player_character_->SetPlayerMoveControlFlag(true);
