@@ -478,5 +478,6 @@ public:
 
 	void Respawn();	// リスポーンする関数(作成者：尾崎)
 
-	void SetEnemyChased(const bool _flag) { is_chased_from_enemy_ = _flag; }
+	UFUNCTION(BlueprintCallable, Category = "PlayerDamage")
+		void SetEnemyChased(const bool _flag) { is_chased_from_enemy_ = _flag; }
 };
