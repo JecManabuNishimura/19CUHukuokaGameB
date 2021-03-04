@@ -75,6 +75,22 @@ void AAutomaticDoorLever::CheckedByPlayer()
 		// レバーの状態を反転
 		is_lever_on_ = true;
 
+		// ミッションに反映する場合、スマホのミッションをアップデート
+		if (this->isMissionComplete == false) {
+
+			if (this->items_Mission_Num != 0)
+			{
+				APlayerCharacter* player_character_;
+				player_character_ = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+
+				if (player_character_ != NULL)
+				{
+					player_character_->UpdateTheMission(2, this->items_Mission_Num, this->isMissionComplete);
+				} // end if()
+			} // end if()
+		} // end if()
+
+
 		// ドア本体の作動フラグを更新
 		if (p_door_body_ != NULL)
 		{
