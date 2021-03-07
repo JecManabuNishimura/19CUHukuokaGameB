@@ -5,6 +5,12 @@
 // 作成日		：2020/10/22
 //-------------------------------------------------------------------
 
+//-------------------------------------------------------------------
+// ファイル		：CardkeyDoorBody.cpp
+// 作成者		：19CU0236 林雲暉 
+// 更新日		：2021/03/07			アイテムヒントを追加
+//-------------------------------------------------------------------
+
 #include "CardkeyDoorBody.h"
 #include "Engine.h"				// GEngineを呼び出すためのヘッダ
 
@@ -41,6 +47,8 @@ ACardkeyDoorBody::ACardkeyDoorBody()
 	, required_time_for_open_and_close_(0.0f)
 	, left_door_dire_for_move_(1.0f)
 	, distance_start_to_end_(0.0f)
+	, infoPosition2(FVector(0.f, 0.f, 20.f))
+	, itemInfoActor2(NULL)
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -146,6 +154,76 @@ void ACardkeyDoorBody::BeginPlay()
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 10.0f, FColor::Red, TEXT("PlayerCharacter is None."));
 	}
+
+	// アイテムヒントを生成する (作成者:林雲暉)
+	bp_ItemInfo = TSoftClassPtr<AActor>(FSoftObjectPath("Blueprint'/Game/Blueprints/BP_ItemHint3D.BP_ItemHint3D_C'")).LoadSynchronous();	// pathにあるクラスを取得
+	if (bp_ItemInfo != nullptr && isNeedToDiaplsy == true)
+	{
+		itemInfoActor = GetWorld()->SpawnActor<AActor>(bp_ItemInfo);						// CardKey Reader1のアイテムヒントをActorとして生成する
+		itemInfoActor2 = GetWorld()->SpawnActor<AActor>(bp_ItemInfo);						// CardKey Reader2のアイテムヒントをActorとして生成する
+
+		// 一つ目カードキーリーダー
+		if (itemInfoActor != NULL)
+		{
+
+			itemInfoActor->SetActorEnableCollision(false);
+
+			if (p_cardreader_mesh_1_ != NULL)
+			{
+				itemInfoActor->SetActorLocation((p_cardreader_mesh_1_->GetComponentLocation() + infoPosition));
+			} // end if()
+
+			FOutputDeviceNull ar;
+			FString FuncName_and_Solution1 = FString::Printf(TEXT("InitialHeight "));
+			FString FuncName_and_Solution2 = FString::Printf(TEXT("InitialScale "));
+			FString FuncName_and_Solution3 = FString::Printf(TEXT("InitialDistance "));
+
+			FuncName_and_Solution1 += FString::SanitizeFloat(infoWorkingHeight);
+			FuncName_and_Solution2 += FString::SanitizeFloat(infoScale);
+			FuncName_and_Solution3 += FString::SanitizeFloat(toPlayers_MinDistance);
+
+			itemInfoActor->CallFunctionByNameWithArguments(*FuncName_and_Solution1, ar, NULL, true);
+			itemInfoActor->CallFunctionByNameWithArguments(*FuncName_and_Solution2, ar, NULL, true);
+			itemInfoActor->CallFunctionByNameWithArguments(*FuncName_and_Solution3, ar, NULL, true);
+
+		} // end if()
+		else {
+			UE_LOG(LogTemp, Log, TEXT("itemInfoActor is not valid (CardkeyDoorBody)"));
+		} // end else
+
+		// 二つ目カードキーリーダー
+		if (itemInfoActor2 != NULL)
+		{
+
+			itemInfoActor2->SetActorEnableCollision(false);
+
+			if (p_cardreader_mesh_2_ != NULL)
+			{
+				itemInfoActor2->SetActorLocation((p_cardreader_mesh_2_->GetComponentLocation() + infoPosition2));
+			} // end if()
+
+			FOutputDeviceNull ar;
+			FString FuncName_and_Solution1 = FString::Printf(TEXT("InitialHeight "));
+			FString FuncName_and_Solution2 = FString::Printf(TEXT("InitialScale "));
+			FString FuncName_and_Solution3 = FString::Printf(TEXT("InitialDistance "));
+
+			FuncName_and_Solution1 += FString::SanitizeFloat(infoWorkingHeight);
+			FuncName_and_Solution2 += FString::SanitizeFloat(infoScale);
+			FuncName_and_Solution3 += FString::SanitizeFloat(toPlayers_MinDistance);
+
+			itemInfoActor2->CallFunctionByNameWithArguments(*FuncName_and_Solution1, ar, NULL, true);
+			itemInfoActor2->CallFunctionByNameWithArguments(*FuncName_and_Solution2, ar, NULL, true);
+			itemInfoActor2->CallFunctionByNameWithArguments(*FuncName_and_Solution3, ar, NULL, true);
+
+		} // end if()
+		else {
+			UE_LOG(LogTemp, Log, TEXT("itemInfoActor2 is not valid (CardkeyDoorBody)"));
+		} // end else
+	} // end if()
+	else {
+		UE_LOG(LogTemp, Log, TEXT("item hint BP is not exist (CardkeyDoorBody)"));
+	} // end else
+
 }
 
 void ACardkeyDoorBody::Tick(float DeltaTime)

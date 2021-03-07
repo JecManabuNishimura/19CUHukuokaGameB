@@ -32,6 +32,41 @@ void AItemCanExamine::BeginPlay()
 	transform_on_map_ = GetActorTransform();
 
 	Super::BeginPlay();
+
+	// アイテムヒントを生成する (作成者:林雲暉)
+	bp_ItemInfo = TSoftClassPtr<AActor>(FSoftObjectPath("Blueprint'/Game/Blueprints/BP_ItemHint3D.BP_ItemHint3D_C'")).LoadSynchronous();	// pathにあるクラスを取得
+	if (bp_ItemInfo != nullptr && isNeedToDiaplsy == true)
+	{
+		itemInfoActor = GetWorld()->SpawnActor<AActor>(bp_ItemInfo);						// アイテムヒントをActorとして生成する
+
+		if (itemInfoActor != NULL)
+		{
+
+			itemInfoActor->SetActorEnableCollision(false);
+
+			itemInfoActor->SetActorLocation((this->GetActorLocation() + infoPosition));
+
+			FOutputDeviceNull ar;
+			FString FuncName_and_Solution1 = FString::Printf(TEXT("InitialHeight "));
+			FString FuncName_and_Solution2 = FString::Printf(TEXT("InitialScale "));
+			FString FuncName_and_Solution3 = FString::Printf(TEXT("InitialDistance "));
+
+			FuncName_and_Solution1 += FString::SanitizeFloat(infoWorkingHeight);
+			FuncName_and_Solution2 += FString::SanitizeFloat(infoScale);
+			FuncName_and_Solution3 += FString::SanitizeFloat(toPlayers_MinDistance);
+
+			itemInfoActor->CallFunctionByNameWithArguments(*FuncName_and_Solution1, ar, NULL, true);
+			itemInfoActor->CallFunctionByNameWithArguments(*FuncName_and_Solution2, ar, NULL, true);
+			itemInfoActor->CallFunctionByNameWithArguments(*FuncName_and_Solution3, ar, NULL, true);
+
+		} // end if()
+		else {
+			UE_LOG(LogTemp, Log, TEXT("itemInfoActor is not valid (ItemCanExamine)"));
+		} // end else
+	} // end if()
+	else {
+		UE_LOG(LogTemp, Log, TEXT("item hint BP is not exist (ItemCanExamine)"));
+	} // end else
 }
 
 void AItemCanExamine::Tick(float DeltaTime)

@@ -12,12 +12,20 @@
 // 更新日		：2020/12/12		SetOutlineのオブジェクトを指定できるようにする
 //-------------------------------------------------------------------
 
+//-------------------------------------------------------------------
+// ファイル		：ItemBase.h
+// 作成者		：19CU0236 林雲暉 
+// 更新日		：2020/11/28		アイテムにミッションを対応
+//				：2021/03/06		アイテムヒントを追加
+//-------------------------------------------------------------------
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Sound/SoundBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/OutputDeviceNull.h"
 #include "ItemBase.generated.h"
 
 UCLASS()
@@ -72,6 +80,29 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR_Phone|Mission")
 		bool isMissionComplete;					// 対応したミッション完成しましたか			(作成者:林雲暉)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ItemInfo")
+		float infoWorkingHeight;				// プレイヤー接近の時アイテムヒントの高さ	(作成者:林雲暉)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ItemInfo")
+		float toPlayers_MinDistance;			// プレイヤー接近判定の距離					(作成者:林雲暉)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ItemInfo")
+		float infoScale;						// アイテムヒントの大きさ					(作成者:林雲暉)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ItemInfo")
+		bool isNeedToDiaplsy;					// アイテムヒントを表示するか				(作成者:林雲暉)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ItemInfo")
+		FVector infoPosition;					// アイテムヒントの位置調整用				(作成者:林雲暉)
+
+	// アイテムヒントのActor	(作成者:林雲暉)
+	UPROPERTY(VisibleAnywhere, Category = "ItemInfo")
+		AActor* itemInfoActor;
+
+protected:
+	// アイテムヒントのオブジェクト	(作成者:林雲暉)
+	TSubclassOf<class AActor> bp_ItemInfo;
 
 public:
 	void SetOutline(bool _isCustomDepthOn, const int _checking_comp_index);
