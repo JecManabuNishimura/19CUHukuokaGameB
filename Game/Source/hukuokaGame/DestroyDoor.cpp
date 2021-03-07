@@ -19,6 +19,7 @@ ADestroyDoor::ADestroyDoor()
 	, glass_se_(NULL)
 	, door_se_(NULL)
 	, root(NULL)
+	, flag_(false)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -52,6 +53,7 @@ void ADestroyDoor::Tick(float DeltaTime)
 	{	m_pdoor_mesh_ ->SetSimulatePhysics(true);
 		m_pdoor_mesh_->AddImpulse(m_impulsevalue_);
 		m_is_baby_cry = false;
+		flag_ = true;
 		m_pdoor_mesh_->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 		m_impuls_flag_ = true;
 	}
