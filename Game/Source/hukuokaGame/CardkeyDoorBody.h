@@ -5,6 +5,12 @@
 // 作成日		：2020/10/22
 //-------------------------------------------------------------------
 
+//-------------------------------------------------------------------
+// ファイル		：CardkeyDoorBody.h
+// 作成者		：19CU0236 林雲暉 
+// 更新日		：2021/03/07			アイテムヒントを追加
+//-------------------------------------------------------------------
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -163,4 +169,11 @@ public:
 
 	// プレイヤーにチェックされたら呼ばれる(かざす)
 	void CheckedByPlayer();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ItemInfo")
+		FVector infoPosition2;					// アイテムヒントの位置調整用(二つめのカードキーリーダー)	(作成者:林雲暉)
+
+	// アイテムヒントのActor(二つめのカードキーリーダー)	(作成者:林雲暉)
+	UPROPERTY(VisibleAnywhere, Category = "ItemInfo")
+		AActor* itemInfoActor2;
 };

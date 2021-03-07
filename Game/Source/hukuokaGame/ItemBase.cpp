@@ -12,6 +12,13 @@
 // 更新日		：2020/12/12		SetOutlineのオブジェクトを指定できるようにする
 //-------------------------------------------------------------------
 
+//-------------------------------------------------------------------
+// ファイル		：ItemBase.cpp
+// 作成者		：19CU0236 林雲暉 
+// 更新日		：2020/11/28		アイテムにミッションを対応
+//				：2021/03/06		アイテムヒントを追加
+//-------------------------------------------------------------------
+
 #include "ItemBase.h"
 // PrimitiveComponentをインクルード		by	朱適
 #include "Components/StaticMeshComponent.h"
@@ -25,14 +32,21 @@ AItemBase::AItemBase()
 	, is_checked_(false)
 	, items_Mission_Num(0)
 	, isMissionComplete(false)
+	, infoWorkingHeight(100.f)
+	, toPlayers_MinDistance(500.f)
+	, infoScale(0.1f)
+	, isNeedToDiaplsy(false)
+	, infoPosition(FVector(0.f, 0.f, 20.f))
+	, itemInfoActor(NULL)
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
 
 void AItemBase::BeginPlay()
 {
+
 	Super::BeginPlay();
-	
+
 }
 
 void AItemBase::Tick(float DeltaTime)
