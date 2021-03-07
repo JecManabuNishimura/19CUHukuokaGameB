@@ -40,10 +40,14 @@ public:
 		UStaticMeshComponent* m_pdoor_mesh_;		// 扉本体のメッシュ
 	UPROPERTY(EditAnywhere, Category = "Baby")
 		bool m_is_baby_cry;								// 終わったらprivateに移動
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
+		bool flag_;
 	UPROPERTY(EditAnywhere, Category = "ImpulseValue")
 		FVector m_impulsevalue_;
 	UFUNCTION(BlueprintCallable, Category = "Baby")
 		void GetIsCry(bool flag) { m_is_baby_cry = flag; }
+	UFUNCTION(BlueprintCallable, Category = "Baby")
+		bool ReturnIsCry() { return m_is_baby_cry; }
 	UPROPERTY(EditAnywhere, Category = "Mesh")
 		float m_disappea_collision_time_;		// 何秒間当たり判定をなくすか
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
