@@ -126,6 +126,16 @@ private:
 	// プレイヤーアクション：しゃがむ
 	void PlayerSquat();
 
+	// 移動入力を有効化する
+	void EnableMoveInput();
+	// 移動入力を無効化する
+	void DisableMoveInput();
+
+	// タッチパッドに触れたときの座標情報を保存
+	void SaveStartPosWhenTouchTheTouchpad();
+	// タッチパッドに触れたときの座標情報を初期化
+	void InitStartPosWhenTouchTheTouchpad();
+
 	// プレイヤーアクション：拾う、調べる、作動させる
 	void CheckToActor();
 
@@ -217,7 +227,10 @@ private:
 // エディタに公開する変数
 private:
 	UPROPERTY(EditAnywhere, Category = "Move")
-		float player_threshold_to_run_;			// 走る閾値(0 < this <= 1)
+		float player_threshold_to_run_;			// 歩き-走りの入力の閾値(0 < this <= 1)
+
+	UPROPERTY(EditAnywhere, Category = "Move")
+		float player_threshold_to_walk_;		// 停止-歩きの入力の閾値(0 <= this <= player_threshold_to_run_)
 
 	//UPROPERTY(EditAnywhere, Category = "Move")
 	//	float player_run_speed_;					// プレイヤーの歩く速度
@@ -281,6 +294,8 @@ private:
 
 	float eyelevel_for_camera_shaking;			// カメラの縦揺れの度合い
 
+	bool enable_player_move_input_;				// 移動入力の有効フラグ(VR版の入力でのみ使用)
+
 	bool can_make_footstep;						// 足音発生許可フラグ
 
 	bool can_player_camera_control_;			// プレイヤーの視点操作が出来るか
@@ -295,6 +310,8 @@ private:
 
 	FVector2D m_playerMoveInput;				// プレイヤーの移動入力量
 	FVector2D m_cameraRotateInput;				// カメラの回転入力量
+
+	FVector2D start_pos_when_touch_the_touchpad_;	// タッチパッドに触れたときのタッチパッドの座標
 
 	AItemBase* m_pCheckingItem;					// チェック中のアイテム(Actor)
 	AItemBase* m_pPrevCheckItem;				// 1フレーム前にチェックしていたアイテム(Actor)
