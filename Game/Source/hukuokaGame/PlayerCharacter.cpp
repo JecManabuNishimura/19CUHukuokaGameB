@@ -55,6 +55,7 @@ APlayerCharacter::APlayerCharacter()
 	, in_the_locker_(false)
 	, have_cardkey_state_(0)
 	, player_threshold_to_run_(1.0f)
+	, player_threshold_to_walk_(0.1f)
 	, player_run_speed_(500.0f)
 	, player_walk_speed_(250.0f)
 	, player_footstep_span_(100.0f)
@@ -75,6 +76,7 @@ APlayerCharacter::APlayerCharacter()
 	, draw_debug_trace_type_(EDrawDebugTrace::None)
 	, count_for_footstep_(0.0f)
 	, eyelevel_for_camera_shaking(0.0f)
+	, enable_player_move_input_(true)
 	, can_make_footstep(true)
 	, can_player_move_control_(true)
 	, can_player_camera_control_(true)
@@ -84,6 +86,7 @@ APlayerCharacter::APlayerCharacter()
 	, damage_count_(0)
 	, m_playerMoveInput(FVector2D::ZeroVector)
 	, m_cameraRotateInput(FVector2D::ZeroVector)
+	, start_pos_when_touch_the_touchpad_(FVector2D::ZeroVector)
 	, m_pCheckingItem(NULL)
 	, m_pPrevCheckItem(NULL)
 	, checking_item_comp_(NULL)
@@ -205,6 +208,8 @@ void APlayerCharacter::BeginPlay()
 	// もしタイトル画面にモードを選択するなら、ifの条件を変えます
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 	{
+//		enable_player_move_input_ = false;		// VR版ではパッドを押し込む事で移動できるようにする（03/08 増井）
+
 		// Epic Comment :D // Spawn and attach both motion controllers
 		const FTransform SpawnTransform = FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f), FVector(1.0f, 1.0f, 1.0f)); // = FTransform::Identity;
 		FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, false);
@@ -349,6 +354,14 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	// プレイヤーアクション：拾う、調べる、作動させる
 	InputComponent->BindAction("PickUpandCheck", IE_Released, this, &APlayerCharacter::CheckToActor);
 
+	// 移動入力を有効・無効化する
+	InputComponent->BindAction("EnableMove", IE_Pressed, this, &APlayerCharacter::EnableMoveInput);
+	InputComponent->BindAction("EnableMove", IE_Released, this, &APlayerCharacter::DisableMoveInput);
+
+	// 触れたタッチパッドの座標の保存、初期化
+	InputComponent->BindAction("StartPosTouch", IE_Pressed, this, &APlayerCharacter::SaveStartPosWhenTouchTheTouchpad);
+	InputComponent->BindAction("StartPosTouch", IE_Released, this, &APlayerCharacter::InitStartPosWhenTouchTheTouchpad);
+
 	// スマホを構える・構えを解除(作成者：尾崎)　
 	// 今は使いていない (作成者:林雲暉、更新12/11)
 	//	InputComponent->BindAction("HaveSmartphone", IE_Pressed, this, &APlayerCharacter::ChangeHaveSmartphoneFlag);
@@ -425,8 +438,8 @@ void APlayerCharacter::UpdateCameraYaw(const float _deltaTime)
 // プレイヤーの移動処理
 void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 {
-	// 操作不可ならreturn
-	if (!can_player_move_control_ || in_the_locker_)
+	// 操作不可ならreturn（増井：重力は効くようにしました）
+	if (!can_player_move_control_ || in_the_locker_ || !enable_player_move_input_)
 	{
 		// GetCharacterMovement()->StopMovementImmediately();
 		GetCharacterMovement()->Velocity.X = 0.f;
@@ -434,8 +447,16 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 		return;
 	}
 
+	m_playerMoveInput.X -= start_pos_when_touch_the_touchpad_.X;
+	m_playerMoveInput.Y -= start_pos_when_touch_the_touchpad_.Y;
+
+	GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, FString::Printf(TEXT("InputX : %f, InputY : %f"), m_playerMoveInput.X, m_playerMoveInput.Y));
+	GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, FString::Printf(TEXT("StartPosX : %f, StartPosY : %f"), start_pos_when_touch_the_touchpad_.X, start_pos_when_touch_the_touchpad_.Y));
+
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
+
+	GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, FString::Printf(TEXT("VectorLength : %f"), vectorLength));
 
 	// 移動量を決定		(修正者:林雲暉)(12/06 仕様書通りの挙動をしていないため再修正 修正者:増井悠斗)
 	/*
@@ -443,6 +464,7 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 		GetCharacterMovement()->UnCrouch(true);
 	*/
 
+	// 立っている時の速度設定
 	// 走る
 	if (vectorLength >= player_threshold_to_run_)
 	{
@@ -450,7 +472,7 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 		m_playerMoveSpeed = player_run_speed_;
 	}
 	// 歩く
-	else if (vectorLength > 0.0f)
+	else if (vectorLength > player_threshold_to_walk_)
 	{
 		GEngine->AddOnScreenDebugMessage(10, _deltaTime, FColor::Green, TEXT("PlayerMoveState : Walking"));
 		m_playerMoveSpeed = player_walk_speed_;
@@ -462,13 +484,12 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 		m_playerMoveSpeed = 0.0f;
 	}
 
-	// 立っている時の速度設定
 	// VRの判定追加(追加者:林雲暉 20/12/23)
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = m_playerMoveSpeed;
 	} // end if()
-	else 
+	else
 	{
 		GetCharacterMovement()->MaxWalkSpeed = m_playerMoveSpeed * 0.8;
 	} // end else
@@ -491,8 +512,8 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 		*/
 	}
 
-	// ベクトルの正規化
-	NormalizedVector2D(vectorLength, &m_playerMoveInput);
+	// ベクトルの正規化（03/08 増井：切りました）
+	//NormalizedVector2D(vectorLength, &m_playerMoveInput);
 
 	// プレイヤーの移動速度確認用
 	GEngine->AddOnScreenDebugMessage(30, 10.0f, FColor::Purple, FString::SanitizeFloat(GetCharacterMovement()->Velocity.Size()));
@@ -822,6 +843,31 @@ void APlayerCharacter::CheckToActor()
 	{
 		m_pCheckingItem->CheckedByPlayer();
 	}
+}
+
+// 移動入力を有効化する
+void APlayerCharacter::EnableMoveInput()
+{
+	enable_player_move_input_ = true;
+}
+
+// 移動入力を無効化する
+void APlayerCharacter::DisableMoveInput()
+{
+	enable_player_move_input_ = false;
+}
+
+// タッチパッドに触れたときの座標情報を保存
+void APlayerCharacter::SaveStartPosWhenTouchTheTouchpad()
+{
+	start_pos_when_touch_the_touchpad_.X = m_playerMoveInput.X;
+	start_pos_when_touch_the_touchpad_.Y = m_playerMoveInput.Y;
+}
+
+// タッチパッドに触れたときの座標情報を初期化
+void APlayerCharacter::InitStartPosWhenTouchTheTouchpad()
+{
+	start_pos_when_touch_the_touchpad_ = FVector2D::ZeroVector;
 }
 
 // ダメージを受ける時にBPから呼ばれる関数
