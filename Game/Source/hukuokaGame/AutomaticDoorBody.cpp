@@ -365,9 +365,9 @@ void AAutomaticDoorBody::UpdateSwitchState(const AAutomaticDoorLever* const oper
 
 		if (this->items_Mission_Num != 0)
 		{
-			if (is_switch_on_ == true)
+			if (is_switch_on_ == true) {
 				GoToPlayerCharacterAndUpdateMission();
-
+			} // end if()
 		} // end if()
 	} // end if()
 }
@@ -381,6 +381,7 @@ void AAutomaticDoorBody::GoToPlayerCharacterAndUpdateMission()
 
 	if (this->next_Items_Mission_Num != 0)
 	{
+		isMissionComplete = true;
 		bool tempbool = false;
 		player1->UpdateTheMission(0, this->next_Items_Mission_Num, tempbool);
 	} // end if()
