@@ -73,6 +73,7 @@ private:
 	void Pursue_Hear();				// Hear状態の時に呼ばれる関数
 	void OutSeePlayer();			// Chase状態で、Playerが視野の外にいる場合に呼ばれる関数
 	void PlaySE();					// SEを鳴らす関数
+	void PlayIntervalSE(float _deltatime);
 	void LoseSight_Chase();			// 見失った時
 	void CheckMoveToLastSeePos();	// 見失った地点まで行ったかどうかを確認する関数
 	void CheckIsStuck(float _deltatime);			// スタックしているかどうかのチェック
@@ -91,6 +92,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		EState enemy_state_;						// 敵の状態格納用
+
+	UPROPERTY(EditAnywhere, Category = "tp")
+		float chase_se_interval_;
 
 	UPROPERTY(EditAnywhere, Category = "tp")
 		float headLine_;							// 頭の高さの設定用(レイを飛ばす処理にて使用)
@@ -151,6 +155,7 @@ public:
 	bool is_player_damage_;		// ダメージを受ける状態か否かを確認する関数(これが無いとtick関数で何度も呼ばれてしまうため作成)
 	FHitResult hitresult_;		// レイキャストの結果
 	FVector preb_pos_;
+	float chase_se_cnt;
 	float idle_time_cut_;		// Idle状態の経過時間格納用
 	float stuck_time_cnt_;		// スタックの経過時間格納用
 	int tp_index_;				// targetpointの要素数

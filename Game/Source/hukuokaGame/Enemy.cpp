@@ -7,6 +7,7 @@ AEnemy::AEnemy()
 	, is_launch_(false)
 	, player_can_control_(true)
 	, enemy_state_(EState::kPatrol)
+	, chase_se_interval_(0.f)
 	, headLine_(0.f)
 	, idle_time_(0.f)
 	, chase_end_length_(0.f)
@@ -23,6 +24,7 @@ AEnemy::AEnemy()
 	, is_player_damage_(false)
 	, hitresult_(NULL)
 	, preb_pos_(FVector::ZeroVector)
+	, chase_se_cnt(0.f)
 	, idle_time_cut_(0.f)
 	, tp_index_(0)
 {
@@ -106,6 +108,7 @@ void AEnemy::Tick(float DeltaTime)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("State::Idle"));
 		IdleCoolDown(DeltaTime);		// 一定時間待機
+		chase_se_cnt = 0.f;
 	}
 	// 巡回状態
 	else if (enemy_state_ == EState::kPatrol)
@@ -113,6 +116,7 @@ void AEnemy::Tick(float DeltaTime)
 		UE_LOG(LogTemp, Warning, TEXT("State::Patrol"));
 		Patrol(targetpoint_pos_[tp_index_]);		// 指定された地点を徘徊
 		CheckMoveToTargetPoint();					// 目的地に着いたかチェックする関数
+		chase_se_cnt = 0.f;
 	}
 	// 追跡状態
 	else if (enemy_state_ == EState::kChase1 || enemy_state_ == EState::kChase2)
@@ -153,6 +157,7 @@ void AEnemy::Tick(float DeltaTime)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Chase"));
 				Pursue_Chase();
+				PlayIntervalSE(DeltaTime);
 			}
 		}
 		
@@ -316,6 +321,19 @@ void AEnemy::PlaySE()
 		}
 	}
 	
+}
+
+void AEnemy::PlayIntervalSE(float _deltatime)
+{
+	if (chase_se_cnt >= chase_se_interval_ && chase_se_ != NULL)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), chase_se_, GetActorLocation());
+		chase_se_cnt = 0.f;
+	}
+	else
+	{
+		chase_se_cnt += _deltatime;
+	}
 }
 
 void AEnemy::LoseSight_Chase()
