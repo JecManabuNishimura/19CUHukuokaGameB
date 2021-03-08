@@ -94,6 +94,9 @@ public:
 		EState enemy_state_;						// “G‚Ìó‘ÔŠi”[—p
 
 	UPROPERTY(EditAnywhere, Category = "tp")
+		float sight_radius_;
+
+	UPROPERTY(EditAnywhere, Category = "tp")
 		float chase_se_interval_;
 
 	UPROPERTY(EditAnywhere, Category = "tp")

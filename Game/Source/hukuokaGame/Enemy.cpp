@@ -7,6 +7,7 @@ AEnemy::AEnemy()
 	, is_launch_(false)
 	, player_can_control_(true)
 	, enemy_state_(EState::kPatrol)
+	, sight_radius_(5000.f)	// 作成時のpawnsensingのデフォの設定
 	, chase_se_interval_(0.f)
 	, headLine_(0.f)
 	, idle_time_(0.f)
@@ -109,6 +110,7 @@ void AEnemy::Tick(float DeltaTime)
 		UE_LOG(LogTemp, Warning, TEXT("State::Idle"));
 		IdleCoolDown(DeltaTime);		// 一定時間待機
 		chase_se_cnt = 0.f;
+		ppawnsensing_->SightRadius = sight_radius_;
 	}
 	// 巡回状態
 	else if (enemy_state_ == EState::kPatrol)
@@ -117,6 +119,7 @@ void AEnemy::Tick(float DeltaTime)
 		Patrol(targetpoint_pos_[tp_index_]);		// 指定された地点を徘徊
 		CheckMoveToTargetPoint();					// 目的地に着いたかチェックする関数
 		chase_se_cnt = 0.f;
+		ppawnsensing_->SightRadius = sight_radius_;
 	}
 	// 追跡状態
 	else if (enemy_state_ == EState::kChase1 || enemy_state_ == EState::kChase2)
