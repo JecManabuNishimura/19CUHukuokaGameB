@@ -137,6 +137,77 @@
 					}
 				},
 				{
+					"mode": "dpad",
+					"path": "/user/hand/left/input/trackpad",
+					"parameters":
+					{
+						"sub_mode": "click"
+					},
+					"inputs":
+					{
+						"east":
+						{
+							"output": "/actions/main/in/EnableMove"
+						}
+					}
+				},
+				{
+					"mode": "dpad",
+					"path": "/user/hand/left/input/trackpad",
+					"parameters":
+					{
+						"sub_mode": "click"
+					},
+					"inputs":
+					{
+						"west":
+						{
+							"output": "/actions/main/in/EnableMove"
+						}
+					}
+				},
+				{
+					"mode": "dpad",
+					"path": "/user/hand/left/input/trackpad",
+					"parameters":
+					{
+						"sub_mode": "click"
+					},
+					"inputs":
+					{
+						"south":
+						{
+							"output": "/actions/main/in/EnableMove"
+						}
+					}
+				},
+				{
+					"mode": "dpad",
+					"path": "/user/hand/left/input/trackpad",
+					"parameters":
+					{
+						"sub_mode": "click"
+					},
+					"inputs":
+					{
+						"north":
+						{
+							"output": "/actions/main/in/EnableMove"
+						}
+					}
+				},
+				{
+					"mode": "button",
+					"path": "/user/hand/right/input/grip",
+					"inputs":
+					{
+						"click":
+						{
+							"output": "/actions/main/in/RightGrip"
+						}
+					}
+				},
+				{
 					"mode": "trackpad",
 					"path": "/user/hand/left/input/trackpad",
 					"inputs":
