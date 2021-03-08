@@ -86,7 +86,6 @@ APlayerCharacter::APlayerCharacter()
 	, damage_count_(0)
 	, m_playerMoveInput(FVector2D::ZeroVector)
 	, m_cameraRotateInput(FVector2D::ZeroVector)
-	, start_pos_when_touch_the_touchpad_(FVector2D::ZeroVector)
 	, m_pCheckingItem(NULL)
 	, m_pPrevCheckItem(NULL)
 	, checking_item_comp_(NULL)
@@ -114,6 +113,9 @@ APlayerCharacter::APlayerCharacter()
 	, finished_MsiionID(0)
 	, missionTableHasUpdated(false)
 	, isFound(false)
+	, canCheckItem(true)
+	, checkItemCoolTime(0.5f)
+	, checkItemCurrentTime(0.f)
 {
 	// ティックを呼び出すかのフラグ
 	PrimaryActorTick.bCanEverTick = true;
@@ -208,7 +210,7 @@ void APlayerCharacter::BeginPlay()
 	// もしタイトル画面にモードを選択するなら、ifの条件を変えます
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == true)
 	{
-//		enable_player_move_input_ = false;		// VR版ではパッドを押し込む事で移動できるようにする（03/08 増井）
+		enable_player_move_input_ = false;		// VR版ではパッドを押し込む事で移動できるようにする（03/08 増井）
 
 		// Epic Comment :D // Spawn and attach both motion controllers
 		const FTransform SpawnTransform = FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(0.0f, 0.0f, 0.0f), FVector(1.0f, 1.0f, 1.0f)); // = FTransform::Identity;
@@ -256,18 +258,21 @@ void APlayerCharacter::BeginPlay()
 
 			// VR用配置
 			// スマホ他の方向、先に確認しました (仮(メッシュの初期方向対応め)Y X Z)
-			vr_Phone->SetActorRelativeRotation(FRotator(270.f, 0.f, 0.f));			//  ↑
+			// vr_Phone->SetActorRelativeRotation(FRotator(270.f, 0.f, 0.f));			//  ↑
 
 			// vr_Phone->SetActorRelativeRotation(FRotator( 0.f, -180.f, -90.f));		//   display <- ||
 
 			//  vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, -90.f));		//   || -> display
 
-			//  vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, 0.f));			//   ↑display
+			  vr_Phone->SetActorRelativeRotation(FRotator(180.f, 0.f, 0.f));			//   ↑display
 																							//   ||
-			vr_Phone->SetActorRelativeLocation(FVector(20, 0, 10));
+			//vr_Phone->SetActorRelativeLocation(FVector(20, 0, 10));
+
+			  vr_Phone->SetActorRelativeLocation(FVector(0.f, -10.f, 0.f));
 
 			// VRスマホのサイズ
-			vr_Phone->SetActorScale3D(FVector(0.2f, 0.2f, 0.2f));
+			// vr_Phone->SetActorScale3D(FVector(0.2f, 0.2f, 0.2f));
+			vr_Phone->SetActorScale3D(FVector(0.1f, 0.1f, 0.1f));
 
 			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("===== %s"), *vr_Phone->GetActorRotation().ToString()));
 			
@@ -316,6 +321,19 @@ void APlayerCharacter::Tick(float DeltaTime)
 	// プレイヤーキャラクターの更新
 	UpdatePlayerMove(DeltaTime);
 
+	if (canCheckItem == false)
+	{
+		if (checkItemCurrentTime < checkItemCoolTime)
+		{
+			checkItemCurrentTime += DeltaTime ;
+		} // end if()
+		else
+		{
+			canCheckItem = true ;
+			checkItemCurrentTime = 0.f ;
+		} // end else
+	} // end if()
+
 	// ===========  VR Motion Controller's Laser Update (作成者:林雲暉) ===========
 	// 今はVRモード?
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled() == false)
@@ -357,10 +375,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	// 移動入力を有効・無効化する
 	InputComponent->BindAction("EnableMove", IE_Pressed, this, &APlayerCharacter::EnableMoveInput);
 	InputComponent->BindAction("EnableMove", IE_Released, this, &APlayerCharacter::DisableMoveInput);
-
-	// 触れたタッチパッドの座標の保存、初期化
-	InputComponent->BindAction("StartPosTouch", IE_Pressed, this, &APlayerCharacter::SaveStartPosWhenTouchTheTouchpad);
-	InputComponent->BindAction("StartPosTouch", IE_Released, this, &APlayerCharacter::InitStartPosWhenTouchTheTouchpad);
 
 	// スマホを構える・構えを解除(作成者：尾崎)　
 	// 今は使いていない (作成者:林雲暉、更新12/11)
@@ -447,16 +461,8 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 		return;
 	}
 
-	m_playerMoveInput.X -= start_pos_when_touch_the_touchpad_.X;
-	m_playerMoveInput.Y -= start_pos_when_touch_the_touchpad_.Y;
-
-	GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, FString::Printf(TEXT("InputX : %f, InputY : %f"), m_playerMoveInput.X, m_playerMoveInput.Y));
-	GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, FString::Printf(TEXT("StartPosX : %f, StartPosY : %f"), start_pos_when_touch_the_touchpad_.X, start_pos_when_touch_the_touchpad_.Y));
-
 	// ベクトルの長さを取得
 	float vectorLength = ReturnVector2DLength(&m_playerMoveInput);
-
-	GEngine->AddOnScreenDebugMessage(-1, _deltaTime, FColor::Green, FString::Printf(TEXT("VectorLength : %f"), vectorLength));
 
 	// 移動量を決定		(修正者:林雲暉)(12/06 仕様書通りの挙動をしていないため再修正 修正者:増井悠斗)
 	/*
@@ -513,7 +519,7 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	}
 
 	// ベクトルの正規化（03/08 増井：切りました）
-	//NormalizedVector2D(vectorLength, &m_playerMoveInput);
+	NormalizedVector2D(vectorLength, &m_playerMoveInput);
 
 	// プレイヤーの移動速度確認用
 	GEngine->AddOnScreenDebugMessage(30, 10.0f, FColor::Purple, FString::SanitizeFloat(GetCharacterMovement()->Velocity.Size()));
@@ -526,6 +532,17 @@ void APlayerCharacter::UpdatePlayerMove(const float _deltaTime)
 	{
 		// VR's HMD rotation.z maybe is Radian, its between -1 ~ 1
 		// so use VR camera's Rotation
+
+		if (abs(m_playerMoveInput.X) > abs(m_playerMoveInput.Y))
+		{
+			if (m_playerMoveInput.X != 0.0f)	m_playerMoveInput.X /= abs(m_playerMoveInput.X);
+			m_playerMoveInput.Y = 0.0f;
+		}
+		else
+		{
+			m_playerMoveInput.X = 0.0f;
+			if (m_playerMoveInput.Y != 0.0f)	m_playerMoveInput.Y /= abs(m_playerMoveInput.Y);
+		}
 
 		AddMovementInput(m_pCamera->GetForwardVector(), (m_playerMoveSpeed * m_playerMoveInput.X));
 		AddMovementInput(m_pCamera->GetRightVector(), (m_playerMoveSpeed * m_playerMoveInput.Y));
@@ -841,7 +858,13 @@ void APlayerCharacter::CheckToActor()
 {
 	if (m_pCheckingItem != NULL)
 	{
-		m_pCheckingItem->CheckedByPlayer();
+		// アイテムチェックのクールタイム（(作成者:林雲暉)
+		if (canCheckItem == true)
+		{
+			canCheckItem = false ;
+			m_pCheckingItem->CheckedByPlayer();
+		} // end if()
+		
 	}
 }
 
@@ -855,19 +878,6 @@ void APlayerCharacter::EnableMoveInput()
 void APlayerCharacter::DisableMoveInput()
 {
 	enable_player_move_input_ = false;
-}
-
-// タッチパッドに触れたときの座標情報を保存
-void APlayerCharacter::SaveStartPosWhenTouchTheTouchpad()
-{
-	start_pos_when_touch_the_touchpad_.X = m_playerMoveInput.X;
-	start_pos_when_touch_the_touchpad_.Y = m_playerMoveInput.Y;
-}
-
-// タッチパッドに触れたときの座標情報を初期化
-void APlayerCharacter::InitStartPosWhenTouchTheTouchpad()
-{
-	start_pos_when_touch_the_touchpad_ = FVector2D::ZeroVector;
 }
 
 // ダメージを受ける時にBPから呼ばれる関数

@@ -131,11 +131,6 @@ private:
 	// 移動入力を無効化する
 	void DisableMoveInput();
 
-	// タッチパッドに触れたときの座標情報を保存
-	void SaveStartPosWhenTouchTheTouchpad();
-	// タッチパッドに触れたときの座標情報を初期化
-	void InitStartPosWhenTouchTheTouchpad();
-
 	// プレイヤーアクション：拾う、調べる、作動させる
 	void CheckToActor();
 
@@ -311,8 +306,6 @@ private:
 	FVector2D m_playerMoveInput;				// プレイヤーの移動入力量
 	FVector2D m_cameraRotateInput;				// カメラの回転入力量
 
-	FVector2D start_pos_when_touch_the_touchpad_;	// タッチパッドに触れたときのタッチパッドの座標
-
 	AItemBase* m_pCheckingItem;					// チェック中のアイテム(Actor)
 	AItemBase* m_pPrevCheckItem;				// 1フレーム前にチェックしていたアイテム(Actor)
 
@@ -377,6 +370,14 @@ private:
 	// コンストラクタ無し
 	UPROPERTY(EditAnywhere, BlueprintGetter = GetPhoneActor, Category = "VR_Phone", meta = (AllowPrivateAccess = "true"))
 		AActor* vr_Phone;
+
+	
+	bool canCheckItem ;					//  アイテムチェックできるか？		（for VR controller Grip fire twice when pressed） (作成者:林雲暉)
+
+	float checkItemCoolTime;			// アイテムチェックのクールタイム（for VR controller Grip fire twice when pressed） (作成者:林雲暉)
+
+	float checkItemCurrentTime;		// アイテムチェックの今の時間		（for VR controller Grip fire twice when pressed） (作成者:林雲暉)
+
 
 public: 
 	// ===== 移動としゃがむ　プロパティ  (作成者:林雲暉) =====
