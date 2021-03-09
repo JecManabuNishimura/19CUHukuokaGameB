@@ -77,6 +77,7 @@ private:
 	void LoseSight_Chase();			// 見失った時
 	void CheckMoveToLastSeePos();	// 見失った地点まで行ったかどうかを確認する関数
 	void CheckIsStuck(float _deltatime);			// スタックしているかどうかのチェック
+	void AttackCoolDown(float _deltatime);
 
 
 public:
@@ -92,6 +93,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		EState enemy_state_;						// 敵の状態格納用
+
+	UPROPERTY(EditAnywhere, Category = "tp")
+		float attackcollision_enable_time_;
 
 	UPROPERTY(EditAnywhere, Category = "tp")
 		float sight_radius_;
@@ -124,7 +128,7 @@ public:
 		TArray<FVector> targetpoint_pos_;		// 対応しているtargetpointの位置情報取得用
 
 			// 攻撃の当たり判定
-	UPROPERTY(EditAnywhere, Category = "tp")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "tp")
 		UBoxComponent* attack_collision_;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
@@ -158,6 +162,7 @@ public:
 	bool is_player_damage_;		// ダメージを受ける状態か否かを確認する関数(これが無いとtick関数で何度も呼ばれてしまうため作成)
 	FHitResult hitresult_;		// レイキャストの結果
 	FVector preb_pos_;
+	float attackcollision_enable_time_cnt;
 	float chase_se_cnt;
 	float idle_time_cut_;		// Idle状態の経過時間格納用
 	float stuck_time_cnt_;		// スタックの経過時間格納用

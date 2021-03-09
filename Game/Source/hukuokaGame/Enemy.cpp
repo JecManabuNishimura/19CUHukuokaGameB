@@ -7,6 +7,7 @@ AEnemy::AEnemy()
 	, is_launch_(false)
 	, player_can_control_(true)
 	, enemy_state_(EState::kPatrol)
+	, attackcollision_enable_time_(0.f)
 	, sight_radius_(5000.f)	// 作成時のpawnsensingのデフォの設定
 	, chase_se_interval_(0.f)
 	, headLine_(0.f)
@@ -25,6 +26,7 @@ AEnemy::AEnemy()
 	, is_player_damage_(false)
 	, hitresult_(NULL)
 	, preb_pos_(FVector::ZeroVector)
+	, attackcollision_enable_time_cnt(0.f)
 	, chase_se_cnt(0.f)
 	, idle_time_cut_(0.f)
 	, tp_index_(0)
@@ -82,6 +84,11 @@ void AEnemy::Tick(float DeltaTime)
 	if (is_launch_ == false)
 	{
 		return;
+	}
+
+	if (!attack_collision_ -> IsCollisionEnabled())
+	{
+		AttackCoolDown(DeltaTime);
 	}
 
 	// 攻撃状態になり、攻撃のフラグが立てられたとき
@@ -381,5 +388,16 @@ void AEnemy::CheckIsStuck(float _deltatime)
 	else
 	{
 		stuck_time_cnt_ = 0.f;
+	}
+}
+
+void AEnemy::AttackCoolDown(float _deltatime)
+{
+	attackcollision_enable_time_cnt += _deltatime;
+
+	if (attackcollision_enable_time_cnt >= attackcollision_enable_time_)
+	{
+		attack_collision_->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+		attackcollision_enable_time_cnt = 0.f;
 	}
 }
